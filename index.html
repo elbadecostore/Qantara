@@ -29,7 +29,7 @@ body{font-family:'Sora','Noto Naskh Arabic',system-ui,sans-serif;background:var(
 #introCanvas{position:absolute;inset:0;width:100%;height:100%}
 
 /* ── APP ─────────────────────────────────────── */
-#app{display:flex;flex-direction:column;align-items:center;padding:14px 12px 44px;opacity:0;transform:translateY(10px);transition:opacity .5s ease,transform .5s ease}
+#app{display:flex;flex-direction:column;align-items:center;padding:14px 12px 44px;opacity:1;transform:translateY(0);transition:opacity .5s ease,transform .5s ease}
 #app.show{opacity:1;transform:translateY(0)}
 .shell{width:100%;max-width:420px;display:flex;flex-direction:column;gap:10px}
 
@@ -331,12 +331,12 @@ body:not(.es) [data-es]{display:none!important}
 <script type="module">
 import { initializeApp }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import { getFirestore, collection, addDoc,
-         onSnapshot, query, where, orderBy, serverTimestamp }
+import { getFirestore, collection, addDoc, getDocs, onSnapshot,
+         serverTimestamp }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 /* ── Firebase init ── */
-const _app = initializeApp({
+const _cfg = {
   apiKey:           'AIzaSyAhefwgwnF2hoipXjEc_rjOW4sSaR1bQCY',
   authDomain:       'qantara-app-cb1c4.firebaseapp.com',
   projectId:        'qantara-app-cb1c4',
@@ -344,9 +344,36 @@ const _app = initializeApp({
   messagingSenderId:'402727898752',
   appId:            '1:402727898752:web:e7be8a336d344ad9566065',
   measurementId:    'G-Y3QZ70GF34'
-});
+};
+const _app       = initializeApp(_cfg);
 const _db        = getFirestore(_app);
 const reportsCol = collection(_db, 'reports');
+
+/* ── Firestore REST helper — works regardless of onSnapshot issues ── */
+const PROJECT = 'qantara-app-cb1c4';
+const API_KEY  = 'AIzaSyAhefwgwnF2hoipXjEc_rjOW4sSaR1bQCY';
+const REST_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/reports`;
+
+async function fetchReports(){
+  try {
+    const res  = await fetch(`${REST_URL}?key=${API_KEY}&pageSize=200`);
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    const docs = json.documents || [];
+    const now  = Date.now();
+    return docs.map(doc => {
+      const f = doc.fields || {};
+      return {
+        lane:   f.lane?.stringValue   || '',
+        status: f.status?.stringValue || '',
+        ts:     parseInt(f.tsMs?.integerValue || '0')
+      };
+    }).filter(r => r.lane && r.status && r.ts && (now - r.ts) <= WIN_MS);
+  } catch(e) {
+    console.warn('[Qantara] REST fetch error:', e.message);
+    return null; // null = error, [] = empty but ok
+  }
+}
 
 /* ── Helpers ── */
 const $ = id => document.getElementById(id);
@@ -388,22 +415,6 @@ function fbAddReport(lane, status){
   return addDoc(reportsCol, { status, lane, timestamp:serverTimestamp(), tsMs:Date.now() })
     .then(() => { Cool.set(); setFbUI(true); return true; })
     .catch(err => { console.error('Firestore write:', err); setFbUI(false); return false; });
-}
-
-/* ── Firebase: realtime — NO tsMs filter in query ──
-   Filter happens in callback so every new doc arrives instantly */
-function fbSubscribeLane(lane, cb){
-  const q = query(reportsCol, where('lane','==',lane), orderBy('tsMs','desc'));
-  return onSnapshot(q,
-    snap => {
-      setFbUI(true);
-      const now = Date.now();
-      cb(snap.docs
-        .map(d => ({ status:d.data().status, ts:d.data().tsMs||now }))
-        .filter(r => (now-r.ts) <= WIN_MS));
-    },
-    err => { console.warn('onSnapshot:', err); setFbUI(false); }
-  );
 }
 
 /* ── GPS ── */
@@ -529,9 +540,13 @@ const Map = {
 };
 
 /* ── UI ── */
-function setFbUI(on){
+let _fbDocCount = 0;
+function setFbUI(on, docCount){
   $('fbBadge').className='fb-badge '+(on?'on':'off');
-  $('fbTxt').textContent=on?'\ud83d\udd25 Firebase Live':'\u26a0\ufe0f Reconnecting\u2026';
+  if(docCount !== undefined) _fbDocCount = docCount;
+  $('fbTxt').textContent = on
+    ? '\ud83d\udd25 Live · ' + _fbDocCount + ' doc' + (_fbDocCount!==1?'s':'')
+    : '\u26a0\ufe0f Reconnecting…';
 }
 function setLang(l){
   lang=l; document.body.classList.toggle('es',l==='es');
@@ -638,10 +653,78 @@ function submit(){
   });
 }
 
-/* ── Realtime listeners ── */
+/* ── applyDocs: shared logic to update UI from a list of docs ── */
+function applyDocs(docs){
+  const now = Date.now();
+  const entry = [], exit_ = [];
+  docs.forEach(r => {
+    if(r.lane === 'entry') entry.push(r);
+    else if(r.lane === 'exit') exit_.push(r);
+  });
+  entry.sort((a,b) => b.ts - a.ts);
+  exit_.sort((a,b) => b.ts - a.ts);
+  cacheEntry = entry;
+  cacheExit  = exit_;
+  const de = calcStatus(entry);
+  const dx = calcStatus(exit_);
+  applyLane('entry', de);
+  applyLane('exit',  dx);
+  buildAI(de.status, dx.status, de.rel);
+  setTime(); setBtn(Cool.get());
+  console.log('[Qantara] UI updated — entry:', entry.length, de.status, '| exit:', exit_.length, dx.status);
+}
+
+/* ── startListeners: onSnapshot + REST polling fallback ── */
 function startListeners(){
-  fbSubscribeLane('entry',reps=>{ cacheEntry=reps; const d=calcStatus(reps); applyLane('entry',d); buildAI(d.status,Map.xS,d.rel); setTime(); setBtn(Cool.get()); });
-  fbSubscribeLane('exit', reps=>{ cacheExit=reps;  const d=calcStatus(reps); applyLane('exit',d);  setTime(); });
+  let snapshotWorking = false;
+
+  /* Layer 1: onSnapshot (real-time, instant) */
+  try {
+    onSnapshot(
+      reportsCol,
+      snap => {
+        snapshotWorking = true;
+        setFbUI(true, snap.size);
+        const now = Date.now();
+        const docs = [];
+        snap.forEach(d => {
+          const f = d.data();
+          if(f.lane && f.status && f.tsMs && (now - f.tsMs) <= WIN_MS)
+            docs.push({ lane: f.lane, status: f.status, ts: f.tsMs });
+        });
+        applyDocs(docs);
+        console.log('[Qantara] onSnapshot fired:', snap.size, 'total docs');
+      },
+      err => {
+        console.warn('[Qantara] onSnapshot failed:', err.code, '— REST polling will cover');
+        setFbUI(false);
+      }
+    );
+  } catch(e) {
+    console.warn('[Qantara] onSnapshot threw:', e.message);
+  }
+
+  /* Layer 2: REST polling every 10s — guaranteed to work */
+  async function poll(){
+    const docs = await fetchReports();
+    if(docs === null){
+      setFbUI(false);
+      return;
+    }
+    if(!snapshotWorking){
+      // onSnapshot didn't fire yet — use REST result
+      setFbUI(true, docs.length);
+      applyDocs(docs);
+    } else {
+      // onSnapshot is working — just update badge doc count
+      setFbUI(true, docs.length);
+    }
+  }
+
+  // First poll immediately on start
+  poll();
+  // Then every 10 seconds
+  setInterval(poll, 10000);
 }
 setInterval(()=>setBtn(Cool.get()),500);
 setInterval(()=>{ setTime(); buildTL(); },60000);
@@ -652,7 +735,7 @@ function runIntro(){
   cv.width=W; cv.height=H;
   const RY=H/2,RH=Math.min(H*.22,130);
   let frame=0,done=false,greetAlpha=0;
-  const T_MEET=85,T_HOLD=150,T_FADE=168,T_END=215,CX=W/2;
+  const T_MEET=40,T_HOLD=65,T_FADE=78,T_END=90,CX=W/2;
   const carA={x:-70,y:RY-RH*.22,w:58,h:28,color:'#00c96a',dir:1};
   const carB={x:W+70,y:RY+RH*.22,w:58,h:28,color:'#ff8f00',dir:-1};
   function drawCar({x,y,w,h,color,dir}){
@@ -693,7 +776,20 @@ function runIntro(){
       drawBubble('Hola',Math.min(carA.x+carA.w/2,CX-10),carA.y-carA.h/2,greetAlpha,'left','#006e36',`800 ${Math.round(H*.052)}px Sora,sans-serif`);
       drawBubble('\u0645\u0631\u062d\u0628\u0627\u064b',Math.max(carB.x-carB.w/2,CX+10),carB.y-carB.h/2,greetAlpha,'right','#a05500',`700 ${Math.round(H*.05)}px sans-serif`);
     }
-    if(frame>=T_END){done=true;$('intro').classList.add('out');setTimeout(()=>{$('intro').style.display='none';$('app').classList.add('show');},680);return;}
+    if(frame>=T_END){
+      done=true;
+      $('intro').classList.add('out');
+      setTimeout(()=>{
+        $('intro').style.display='none';
+        // Re-apply latest snapshot data now that app is fully visible
+        if(cacheEntry.length || cacheExit.length){
+          const de=calcStatus(cacheEntry), dx=calcStatus(cacheExit);
+          applyLane('entry',de); applyLane('exit',dx);
+          buildAI(de.status,dx.status,de.rel);
+        }
+      },680);
+      return;
+    }
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
