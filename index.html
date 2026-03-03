@@ -258,10 +258,10 @@ const ST = {
    entry RED = [35.8656304, -5.3449871]  (جنوب — الفنيدق)
    exit  RED = [35.8737875, -5.3427031]  (شمال — داخل سبتة) */
 const MAP_BOUNDS = {
-  south: 35.8650,   // أبعد من نقطة entry RED جنوباً بهامش صغير
-  north: 35.8745,   // أبعد من نقطة exit  RED شمالاً بهامش صغير
-  west:  -5.3465,   // غرب الطريق بهامش
-  east:  -5.3415    // شرق الطريق بهامش
+  south: 35.862,   // جنوب — RN-16A / Loma el Auyal
+  north: 35.879,   // شمال — Frontera de Ceuta / Arcos Quebrados
+  west:  -5.358,   // غرب  — Colline de l'Enzar
+  east:  -5.337    // شرق  — البحر / N-352
 };
 const BOUNDS = {north:35.877538, south:35.861263, west:-5.351656, east:-5.339000}; // kept for compat
 const CENTER  = [35.8694, -5.3453];
@@ -504,11 +504,23 @@ const Map = {
       attributionControl: true
     });
 
-    /* تثبيت الخريطة على نطاق الطوابير عند التشغيل */
+    /* fitBounds على حدود الخريطة المحددة */
     this._map.fitBounds([
       [MAP_BOUNDS.south, MAP_BOUNDS.west],
       [MAP_BOUNDS.north, MAP_BOUNDS.east]
-    ], { animate: false });
+    ], { animate: false, padding: [0, 0] });
+
+    /* قفل minZoom على الـ zoom الناتج عن fitBounds
+       → لا يمكن التصغير أكثر من هذا المستوى أبداً */
+    const lockedZoom = this._map.getZoom();
+    this._map.setMinZoom(lockedZoom);
+    console.log('[Q] Map locked at minZoom:', lockedZoom);
+
+    /* طبقة أمان إضافية: أعد الـ zoom إذا حاول أحد التصغير */
+    this._map.on('zoomend', () => {
+      if (this._map.getZoom() < lockedZoom)
+        this._map.setZoom(lockedZoom, { animate: false });
+    });
 
     /* طبقة OSM */
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -609,14 +621,25 @@ const Map = {
 
     if (isEntry) {
       /* ══ ENTRY: فنيدق[0] → سبتة[N], بوابة MA عند idxMA ══
-         طابور جنوباً = من idxMA نحو index 0 */
+         نستخدم CONGESTION_END.entry لكل حالة → إحداثيات مختلفة مضمونة
+         iStart = أقرب نقطة لـ CUSTOMS_MA
+         iEnd   = أقرب نقطة لنقطة النهاية المحددة لهذه الحالة         */
       const coords = RouteCache.entry;
       if (!coords || coords.length < 2) return;
-      const idxMA = RouteCache.idxMA || 0;
-      const steps = Math.max(2, Math.round(idxMA * ratio));
-      const lo    = Math.max(0, idxMA - steps);
-      const seg   = coords.slice(lo, idxMA + 1).reverse();
-      line.setLatLngs(seg.length >= 2 ? seg : coords.slice(0, 2));
+
+      const endPt  = CONGESTION_END.entry[status];
+      const iStart = findClosestIndex(CUSTOMS_MA, coords);
+      const iEnd   = findClosestIndex(endPt, coords);
+
+      /* entry يمتد جنوباً: iEnd < iStart دائماً
+         إذا تطابقا نجبر فرقاً أدنى حسب الحالة */
+      const lo = Math.min(iStart, iEnd);
+      const hi = Math.max(iStart, iEnd);
+      const seg = coords.slice(lo, hi + 1).reverse(); // يبدأ من البوابة
+
+      line.setLatLngs(seg.length >= 2 ? seg : [CUSTOMS_MA, endPt]);
+      console.log('[Q] entry', status, '| iStart:', iStart, '→ iEnd:', iEnd,
+                  '| seg:', seg.length, '| endPt:', endPt[0].toFixed(5));
 
     } else {
       /* ══ EXIT: coords[0] = بوابة ES (مضمون), coords[N] = شمال سبتة ══
@@ -675,12 +698,16 @@ const Map = {
 
   updateGPS(lat, lon) {
     if (!this._map) return;
+    /* حصر الخريطة: لا نتحرك أبداً خارج MAP_BOUNDS */
+    const clampedLat = Math.max(MAP_BOUNDS.south, Math.min(MAP_BOUNDS.north, lat));
+    const clampedLon = Math.max(MAP_BOUNDS.west,  Math.min(MAP_BOUNDS.east,  lon));
     this._youMark.setLatLng([lat, lon]).setOpacity(1);
     if (!this._youMark.getTooltip())
       this._youMark.bindTooltip(lang==='es'?'📍 Tú aquí':'📍 أنت هنا',
         {permanent:true, direction:'top', className:'lf-tip you-tip'});
-    if (!this._map.getBounds().contains([lat, lon]))
-      this._map.panTo([lat, lon], {animate:true});
+    /* نحرّك فقط إذا كان الموقع داخل الحدود وخارج الـ viewport الحالي */
+    if (inBounds(lat, lon) && !this._map.getBounds().contains([lat, lon]))
+      this._map.panTo([clampedLat, clampedLon], {animate:true});
   },
 
   start() {}
