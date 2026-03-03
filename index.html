@@ -247,7 +247,266 @@ const COOL_KEY  = 'qnt_v11_cool';
 const COOLDOWN  = 5 * 1000;
 const WIN_MS    = 2 * 60 * 60 * 1000;
 const RECENT_MS = 20 * 60 * 1000;
+
+/* ══════════════════════════════════════════════════════════════
+   TRUST ENGINE — نظام ثقة التقارير (خفيف، بدون قواعد بيانات)
+   يعتمد على localStorage فقط، ذاكرة محدودة بـ 20 تقرير
+   ══════════════════════════════════════════════════════════════ */
+const TrustEngine = (() => {
+  const LS_KEY    = 'qnt_trust_v1';
+  const MAX_REPS  = 20;           // حد أقصى للذاكرة
+  const FLIP_WIN  = 5 * 60 * 1000; // 5 دقائق — نافذة الكشف عن التذبذب
+
+  /* تحميل البيانات من localStorage */
+  function load() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      return raw ? JSON.parse(raw) : { reps: [], score: 1.0 };
+    } catch { return { reps: [], score: 1.0 }; }
+  }
+
+  /* حفظ البيانات */
+  function save(data) {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch {}
+  }
+
+  /* ── حساب الوزن ──
+     مستخدم جديد   → 1.0 (default)
+     تقارير متسقة  → يصل حتى 1.3
+     تقارير متذبذبة → ينزل حتى 0.7                    */
+  function calcScore(reps) {
+    if (reps.length < 2) return 1.0;
+
+    /* عدّ التغييرات المتناقضة (flip) في آخر 5 تقارير */
+    const last5  = reps.slice(0, 5);
+    let flips    = 0;
+    const STATUS_VAL = { green: 0, orange: 1, red: 2 };
+    for (let i = 1; i < last5.length; i++) {
+      if (Math.abs(STATUS_VAL[last5[i-1].status] - STATUS_VAL[last5[i].status]) === 2)
+        flips++; // تغيير جذري: green↔red
+    }
+
+    /* عدّ التقارير المتسقة */
+    const consistent = last5.filter((r, i) =>
+      i === 0 || r.status === last5[i-1].status
+    ).length;
+
+    /* الوزن: يزيد بالاتساق، يقل بالتذبذب */
+    let score = 1.0 + (consistent - 1) * 0.075 - flips * 0.15;
+    return Math.max(0.7, Math.min(1.3, Math.round(score * 100) / 100));
+  }
+
+  /* ── تحقق من التذبذب السريع green→red→green ──
+     يُعيد true إذا يجب تجاهل التقرير الجديد              */
+  function isFlapping(reps, newStatus) {
+    if (reps.length < 2) return false;
+    const now   = Date.now();
+    const r0    = reps[0]; // الأخير
+    const r1    = reps[1]; // قبله
+    const STATUS_VAL = { green: 0, orange: 1, red: 2 };
+
+    /* التقريران الأخيران في نافذة 5 دقائق */
+    if ((now - r1.ts) > FLIP_WIN) return false;
+
+    /* أنماط التذبذب: 0→2→0 أو 2→0→2 */
+    const v0 = STATUS_VAL[r0.status];
+    const v1 = STATUS_VAL[r1.status];
+    const vN = STATUS_VAL[newStatus];
+    const isExtremeFlip = Math.abs(v0 - v1) === 2 && vN === v1;
+    return isExtremeFlip;
+  }
+
+  /* ── تسجيل تقرير جديد ──
+     يُعيد { weight, ignored } */
+  function record(status) {
+    const data    = load();
+    const flapping = isFlapping(data.reps, status);
+
+    if (flapping) {
+      /* خفّض الوزن بدلاً من التجاهل الصامت */
+      data.score = Math.max(0.7, data.score - 0.1);
+      save(data);
+      console.log('[Q] Trust: flapping detected, weight reduced to', data.score);
+      return { weight: 0.5, ignored: true }; // وزن منخفض جداً
+    }
+
+    /* أضف التقرير */
+    data.reps.unshift({ status, ts: Date.now() });
+    if (data.reps.length > MAX_REPS) data.reps.pop();
+
+    /* أعد حساب الوزن */
+    data.score = calcScore(data.reps);
+    save(data);
+
+    console.log('[Q] Trust: score=', data.score, 'reps=', data.reps.length);
+    return { weight: data.score, ignored: false };
+  }
+
+  /* وزن القراءة الحالي بدون تسجيل */
+  function getWeight() {
+    return load().score;
+  }
+
+  /* إحصائيات للـ debug */
+  function getStats() {
+    const d = load();
+    return { score: d.score, reps: d.reps.length };
+  }
+
+  return { record, getWeight, getStats, isFlapping: (s) => isFlapping(load().reps, s) };
+})();
 const HOURLY    = [0,0,0,0,0,0,1,2,2,1,1,2,2,1,1,1,2,2,2,1,1,0,0,0];
+
+/* ══════════════════════════════════════════════════════════════
+   PREDICTOR — نظام التنبؤ الذكي بالازدحام
+   يعمل بدون شبكة، بدون GPS، بدون إبطاء الخريطة
+   ══════════════════════════════════════════════════════════════ */
+const Predictor = (() => {
+
+  /* تاريخ قصير: آخر 12 حالة لكل lane */
+  const hist = { entry: [], exit: [] };
+  const MAX_HIST = 12;
+
+  /* cooldown منفصل لكل lane */
+  const lastNotif = {
+    entry: { key: null, ts: 0 },
+    exit:  { key: null, ts: 0 }
+  };
+  const NOTIF_COOLDOWN = 8 * 60 * 1000;
+
+  const PEAK_HOURS = {
+    entry: [[7,10],[11,14],[16,20]],
+    exit:  [[8,11],[12,15],[17,21]]
+  };
+
+  function isPeak(lane, h) {
+    return PEAK_HOURS[lane].some(([a,b]) => h >= a && h < b);
+  }
+
+  const STATUS_VAL = { green: 0, orange: 1, red: 2 };
+  const VAL_STATUS = ['green','orange','red'];
+
+  function record(lane, status) {
+    hist[lane].unshift({ status, val: STATUS_VAL[status], ts: Date.now() });
+    if (hist[lane].length > MAX_HIST) hist[lane].pop();
+  }
+
+  function predict(lane, density) {
+    /* لا تنبؤ إذا RouteCache غير جاهز */
+    if (!RouteCache.fetched) return null;
+
+    const h   = new Date().getHours();
+    const h20 = (h + 1) % 24;
+    const h40 = (h + 1) % 24;
+
+    /* نمط HOURLY */
+    const nowPattern  = HOURLY[h];
+    const soonPattern = HOURLY[h20];
+
+    /* trend من آخر 4 حالات مع trust weight */
+    const recent = hist[lane].slice(0, 4);
+    let trend = 0;
+    if (recent.length >= 2) {
+      const avg_new = recent.slice(0, 2).reduce((s,r) => s + r.val, 0) / 2;
+      const avg_old = recent.slice(2, 4).length
+        ? recent.slice(2, 4).reduce((s,r) => s + r.val, 0) / recent.slice(2,4).length
+        : avg_new;
+      trend = avg_new - avg_old;
+    }
+
+    /* ذروة */
+    const enteringPeak = !isPeak(lane, h) && isPeak(lane, h20);
+    const leavingPeak  =  isPeak(lane, h) && !isPeak(lane, h40);
+
+    const currentVal = recent.length ? recent[0].val : nowPattern;
+
+    /* ── أوزان ديناميكية حسب كثافة التقارير ──
+       density=1 (كثيفة) → نثق بـ trend أكثر من HOURLY
+       density=0 (قليلة) → نعتمد HOURLY أكثر              */
+    const d         = density !== undefined ? density : 0.5;
+    const wHourly   = 0.6 * (1 - d * 0.5);  // 0.6 → 0.3 مع كثافة عالية
+    const wTrend    = 0.5 * (1 + d * 0.6);  // 0.5 → 0.8 مع كثافة عالية
+
+    /* trust weight من TrustEngine (وزن الجهاز الحالي) */
+    const userTrust = (typeof TrustEngine !== 'undefined') ? TrustEngine.getWeight() : 1.0;
+
+    let predicted = currentVal
+      + (soonPattern - nowPattern) * wHourly
+      + trend * wTrend * userTrust
+      + (enteringPeak ?  0.7 : 0)
+      + (leavingPeak  ? -0.5 : 0);
+
+    predicted = Math.max(0, Math.min(2, Math.round(predicted)));
+
+    return {
+      status:       VAL_STATUS[predicted],
+      val:          predicted,
+      trend:        trend > 0.2 ? 'up' : trend < -0.2 ? 'down' : 'stable',
+      enteringPeak,
+      leavingPeak,
+      horizon:      20,
+      wHourly:      Math.round(wHourly*100)/100,
+      wTrend:       Math.round(wTrend*100)/100
+    };
+  }
+
+  function notify(lane, pred, currentStatus) {
+    /* 6. شرط inBounds — لا إشعار خارج الحدود */
+    if (!gpsPos) return;
+    if (!inBounds(gpsPos.latitude, gpsPos.longitude)) return;
+
+    /* 7. لا إشعار إذا pred = null (RouteCache غير جاهز) */
+    if (!pred) return;
+
+    const now = Date.now();
+    const key = lane + ':' + pred.status + ':' + pred.trend;
+    const ln  = lastNotif[lane];
+
+    /* 4. cooldown منفصل لكل lane */
+    if (ln.key === key && (now - ln.ts) < NOTIF_COOLDOWN) return;
+
+    const isAR = (typeof lang !== 'undefined' ? lang : 'ar') === 'ar';
+    const lbl  = isAR
+      ? (lane==='entry' ? 'الدخول' : 'الخروج')
+      : (lane==='entry' ? 'Entrada' : 'Salida');
+
+    let msg = null;
+
+    /* إشعار 1: ازدحام سيزداد */
+    if (pred.trend === 'up' && pred.val > STATUS_VAL[currentStatus]) {
+      msg = isAR
+        ? `⚠️ ${lbl}: الازدحام سيزداد خلال 20 دقيقة`
+        : `⚠️ ${lbl}: Tráfico aumentará en 20 min`;
+    }
+    /* إشعار 2: وقت مناسب للعبور */
+    else if (pred.status === 'green' && currentStatus !== 'green') {
+      msg = isAR
+        ? `✅ ${lbl}: وقت مناسب للعبور قريباً`
+        : `✅ ${lbl}: Buen momento para cruzar pronto`;
+    }
+    /* إشعار 3: ذروة قادمة */
+    else if (pred.enteringPeak && pred.val >= 1) {
+      msg = isAR
+        ? `🕐 ${lbl}: ذروة ازدحام قادمة — تحرك الآن أو انتظر`
+        : `🕐 ${lbl}: Punta de tráfico próxima — muévete ahora`;
+    }
+    /* إشعار 4: ازدحام مرتفع مستمر */
+    else if (currentStatus === 'red' && pred.trend !== 'down') {
+      msg = isAR
+        ? `🚨 ${lbl}: أكثر من 60 دقيقة انتظار`
+        : `🚨 ${lbl}: > 60 min de espera`;
+    }
+
+    if (msg) {
+      showToast(msg);
+      ln.key = key;
+      ln.ts  = now;
+      console.log('[Q] Notif [' + lane + ']:', msg);
+    }
+  }
+
+  return { record, predict, notify, getHist: lane => hist[lane] };
+})();
 const ST = {
   green:  {ar:'عادي',        es:'Fluido',   war:'أقل من 10 دقائق', wes:'< 10 min',  color:'#00d46e', bg:'rgba(0,212,110,.10)',  fill:15},
   orange: {ar:'متوسط',       es:'Moderado', war:'20–40 دقيقة',      wes:'20-40 min', color:'#ff8f00', bg:'rgba(255,143,0,.10)',  fill:55},
@@ -454,8 +713,14 @@ const Cool = {
   set(){ try{ localStorage.setItem(COOL_KEY, String(Date.now())); }catch(e){} }
 };
 
-function fbAddReport(lane, status) {
-  return addDoc(reportsCol, {status, lane, timestamp:serverTimestamp(), tsMs:Date.now()})
+function fbAddReport(lane, status, weight) {
+  const w = weight || 1.0;
+  return addDoc(reportsCol, {
+    status, lane,
+    timestamp: serverTimestamp(),
+    tsMs:      Date.now(),
+    w:         w   // وزن الثقة — يُستخدم في calcStatus
+  })
     .then(() => { Cool.set(); setFbUI(true); return true; })
     .catch(err => { console.error('[Q] write:', err); setFbUI(false); return false; });
 }
@@ -463,10 +728,27 @@ function fbAddReport(lane, status) {
 let cacheEntry = [], cacheExit = [], lang = 'ar';
 
 function calcStatus(reps) {
-  if (!reps.length) return {status:'green', count:0, rel:0};
-  const now = Date.now(), sc = {green:0, orange:0, red:0};
-  reps.forEach(r => { sc[r.status] = (sc[r.status]||0) + ((now-r.ts) < RECENT_MS ? 2 : 1); });
-  return {status:Object.keys(sc).sort((a,b)=>sc[b]-sc[a])[0], count:reps.length, rel:Math.min(1,reps.length/8)};
+  if (!reps.length) return {status:'green', count:0, rel:0, density:0};
+  const now = Date.now();
+  const sc  = {green:0, orange:0, red:0};
+
+  /* عدد التقارير في آخر 20 دقيقة — لحساب الكثافة */
+  const recentCount = reps.filter(r => (now - r.ts) < RECENT_MS).length;
+  const density     = Math.min(1, recentCount / 5); // 0..1 (5 تقارير = كثافة عالية)
+
+  reps.forEach(r => {
+    /* وزن التقرير: حديث×2، قديم×1، مضروب في trust weight */
+    const timeW  = (now - r.ts) < RECENT_MS ? 2 : 1;
+    const trustW = r.w || 1.0;
+    sc[r.status] = (sc[r.status]||0) + timeW * trustW;
+  });
+
+  return {
+    status:  Object.keys(sc).sort((a,b) => sc[b]-sc[a])[0],
+    count:   reps.length,
+    rel:     Math.min(1, reps.length / 8),
+    density  // كثافة التقارير الحديثة — يستخدمها Predictor
+  };
 }
 
 /* ════════════════════════════════════════════════════
@@ -767,7 +1049,41 @@ function applyDocs(docs) {
   cacheEntry = entry;  cacheExit = exit_;
   const de = calcStatus(entry), dx = calcStatus(exit_);
   applyLane('entry', de);  applyLane('exit', dx);
-  buildAI(de.status, dx.status, de.rel);
+
+  /* تسجيل الحالة الحالية في Predictor */
+  Predictor.record('entry', de.status);
+  Predictor.record('exit',  dx.status);
+
+  /* تنبؤ + إشعارات (بعد 300ms لإعطاء الـ UI أولوية) */
+  setTimeout(() => {
+    /* density من calcStatus — يضبط أوزان predict ديناميكياً */
+    const pEntry = Predictor.predict('entry', de.density);
+    const pExit  = Predictor.predict('exit',  dx.density);
+    Predictor.notify('entry', pEntry, de.status);
+    Predictor.notify('exit',  pExit,  dx.status);
+    buildAI(de.status, dx.status, de.rel, pEntry, pExit);
+    /* ── console.log شامل: trust + density + weights + prediction ── */
+    const trustScore = (typeof TrustEngine !== 'undefined') ? TrustEngine.getWeight() : 1.0;
+    if (pEntry) console.log(
+      '[Q] predict entry →',
+      'status:', pEntry.status,
+      '| trust:', trustScore,
+      '| density:', de.density !== undefined ? de.density.toFixed(2) : 'n/a',
+      '| wHourly:', pEntry.wHourly,
+      '| wTrend:', pEntry.wTrend,
+      '| trend:', pEntry.trend
+    );
+    if (pExit) console.log(
+      '[Q] predict exit  →',
+      'status:', pExit.status,
+      '| trust:', trustScore,
+      '| density:', dx.density !== undefined ? dx.density.toFixed(2) : 'n/a',
+      '| wHourly:', pExit.wHourly,
+      '| wTrend:', pExit.wTrend,
+      '| trend:', pExit.trend
+    );
+  }, 300);
+
   setTime();  setBtn(Cool.get());
 }
 
@@ -785,21 +1101,43 @@ function buildTL() {
   }
 }
 
-function buildAI(eS, xS, rel) {
+function buildAI(eS, xS, rel, pEntry, pExit) {
   const h=new Date().getHours(), ar=[], es=[], tags=[];
-  if(h>=7&&h<=9){  ar.push('⚡ ذروة صباحية');  es.push('⚡ Punta AM');    tags.push({ar:'ذروة AM',   es:'Punta AM',   hot:true});}
-  if(h>=11&&h<=13){ar.push('🌞 ذروة الظهيرة'); es.push('🌞 Mediodía');   tags.push({ar:'ظهيرة',     es:'Mediodía',   hot:true});}
-  if(h>=16&&h<=19){ar.push('🌆 ذروة المساء');  es.push('🌆 Punta tarde');tags.push({ar:'ذروة PM',   es:'Punta PM',   hot:true});}
-  if(h<6||h>=22){  ar.push('✅ أفضل وقت');      es.push('✅ Mejor momento');tags.push({ar:'هادئ',   es:'Tranquilo',  hot:false});}
-  if(eS==='red'){  ar.push('🚨 طابور طويل');    es.push('🚨 Cola larga');  tags.push({ar:'طابور',    es:'Cola',       hot:true});}
-  if(eS==='green'){ar.push('🟢 المعبر مفتوح');  es.push('🟢 Paso libre');}
-  if(xS==='red'){  ar.push('🔴 خروج مزحوم');    es.push('🔴 Salida lenta');}
-  if(rel<0.3){     ar.push('⚠️ بيانات قليلة'); es.push('⚠️ Pocos datos');}
-  if(!ar.length){  ar.push('📊 الوضع مستقر');   es.push('📊 Estable');}
-  $('aiTxt').textContent = (lang==='es'?es:ar).slice(0,2).join(' · ');
+  const isAR = lang !== 'es';
+  const STA  = {green:{ar:'عادي',es:'fluido'}, orange:{ar:'متوسط',es:'moderado'}, red:{ar:'شديد',es:'atasco'}};
+
+  /* الحالة الحالية */
+  if(eS==='red')   { ar.push('🚨 دخول: طابور طويل');  es.push('🚨 Entrada: Cola larga');  tags.push({ar:'دخول احمر', es:'Entrada roja', hot:true});  }
+  if(eS==='orange'){ ar.push('🟠 دخول: متوسط');        es.push('🟠 Entrada: Moderada');    tags.push({ar:'متوسط',     es:'Moderado',     hot:false}); }
+  if(eS==='green') { ar.push('🟢 دخول: سريع');          es.push('🟢 Entrada: Fluida'); }
+  if(xS==='red')   { ar.push('🔴 خروج: مزحوم');        es.push('🔴 Salida: Lenta');        tags.push({ar:'خروج احمر', es:'Salida roja',  hot:true});  }
+  if(xS==='orange'){ ar.push('🟠 خروج: متوسط');         es.push('🟠 Salida: Moderada'); }
+  if(xS==='green') { ar.push('🟢 خروج: سريع');           es.push('🟢 Salida: Fluida'); }
+
+  /* تنبؤ 20 دقيقة */
+  if (pEntry) {
+    const ic = pEntry.trend==='up'?'📈':pEntry.trend==='down'?'📉':'➡️';
+    ar.push(ic+' دخول/20د: '+STA[pEntry.status].ar);
+    es.push(ic+' Entrada/20min: '+STA[pEntry.status].es);
+    if(pEntry.enteringPeak){ ar.push('⏰ ذروة قادمة — تحرك الآن'); es.push('⏰ Punta próxima — sal ya'); tags.push({ar:'ذروة قادمة',es:'Punta próx.',hot:true}); }
+    if(pEntry.trend==='down'&&eS!=='green'){ ar.push('✅ سيخف قريباً'); es.push('✅ Bajará pronto'); tags.push({ar:'يخف',es:'Bajando',hot:false}); }
+  }
+  if (pExit) {
+    const ic = pExit.trend==='up'?'📈':pExit.trend==='down'?'📉':'➡️';
+    ar.push(ic+' خروج/20د: '+STA[pExit.status].ar);
+    es.push(ic+' Salida/20min: '+STA[pExit.status].es);
+  }
+
+  /* السياق الزمني */
+  if(h>=7&&h<=9)  { tags.push({ar:'ذروة AM',es:'Punta AM',hot:true}); }
+  if(h>=16&&h<=19){ tags.push({ar:'ذروة PM',es:'Punta PM',hot:true}); }
+  if(h<6||h>=22)  { ar.push('✅ أفضل وقت'); es.push('✅ Mejor momento'); tags.push({ar:'هادئ',es:'Tranquilo',hot:false}); }
+  if(rel<0.3)     { ar.push('⚠️ بيانات محدودة'); es.push('⚠️ Datos limitados'); }
+  if(!ar.length)  { ar.push('📊 الوضع مستقر'); es.push('📊 Situación estable'); }
+
+  $('aiTxt').textContent = (isAR?ar:es).slice(0,2).join(' · ');
   $('aiTags').innerHTML  = tags.slice(0,3).map(t =>
-    '<span class="ai-tag '+(t.hot?'hot':'')+'">'+
-    (lang==='es'?t.es:t.ar)+'</span>'
+    '<span class="ai-tag '+(t.hot?'hot':'')+'">'+(isAR?t.ar:t.es)+'</span>'
   ).join('');
 }
 
@@ -931,13 +1269,26 @@ function submit() {
   if (!_st) return;
   $('backdrop').classList.remove('open');
 
-  /* تحديث فوري محلي */
-  const nr = {lane:_lane, status:_st, ts:Date.now()};
+  /* ── تحقق TrustEngine: هل التقرير متذبذب؟ ── */
+  const trust = TrustEngine.record(_st);
+
+  if (trust.ignored) {
+    /* تقرير متذبذب — نُظهر تحذيراً ولا نُرسل */
+    showToast(lang==='es'
+      ? '⚠️ Reporte inconsistente, ignorado'
+      : '⚠️ تقرير متناقض، تم تجاهله');
+    setBtn(Cool.get());
+    return;
+  }
+
+  /* ── تحديث فوري محلي مع الوزن ── */
+  const nr = { lane:_lane, status:_st, ts:Date.now(), w: trust.weight };
+
   if (_lane==='entry') {
     cacheEntry = [nr,...cacheEntry].slice(0,50);
     const d = calcStatus(cacheEntry);
     applyLane('entry', d);
-    buildAI(d.status, Map.xS, d.rel);
+    buildAI(d.status, Map.xS, d.rel, null, null);
   } else {
     cacheExit = [nr,...cacheExit].slice(0,50);
     applyLane('exit', calcStatus(cacheExit));
@@ -945,8 +1296,8 @@ function submit() {
   setTime(); setBtn(Cool.get());
   showToast(lang==='es'?'✅ ¡Actualizado!':'✅ تم التحديث!');
 
-  /* Firebase في الخلفية */
-  fbAddReport(_lane, _st).catch(() =>
+  /* ── Firebase مع الوزن في الـ metadata ── */
+  fbAddReport(_lane, _st, trust.weight).catch(() =>
     showToast(lang==='es'?'⚠️ Sin conexión':'⚠️ خطأ في الاتصال')
   );
 }
@@ -1057,7 +1408,7 @@ function runIntro() {
         if (cacheEntry.length||cacheExit.length) {
           applyLane('entry', calcStatus(cacheEntry));
           applyLane('exit',  calcStatus(cacheExit));
-          buildAI(calcStatus(cacheEntry).status, calcStatus(cacheExit).status, calcStatus(cacheEntry).rel);
+          buildAI(calcStatus(cacheEntry).status, calcStatus(cacheExit).status, calcStatus(cacheEntry).rel, null, null);
         }
       }, 680);
       return;
