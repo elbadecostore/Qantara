@@ -254,8 +254,16 @@ const ST = {
   red:    {ar:'ازدحام شديد', es:'Atasco',   war:'أكثر من 60 دقيقة', wes:'> 60 min',  color:'#ff3355', bg:'rgba(255,51,85,.10)', fill:90}
 };
 
-/* ══ إحداثيات معبر باب سبتة — Plus Codes ══ */
-const BOUNDS = {north:35.877538, south:35.861263, west:-5.351656, east:-5.339000};
+/* ══ حدود الخريطة — تعتمد على أبعد نقطة RED لكل جانب ══
+   entry RED = [35.8656304, -5.3449871]  (جنوب — الفنيدق)
+   exit  RED = [35.8737875, -5.3427031]  (شمال — داخل سبتة) */
+const MAP_BOUNDS = {
+  south: 35.8650,   // أبعد من نقطة entry RED جنوباً بهامش صغير
+  north: 35.8745,   // أبعد من نقطة exit  RED شمالاً بهامش صغير
+  west:  -5.3465,   // غرب الطريق بهامش
+  east:  -5.3415    // شرق الطريق بهامش
+};
+const BOUNDS = {north:35.877538, south:35.861263, west:-5.351656, east:-5.339000}; // kept for compat
 const CENTER  = [35.8694, -5.3453];
 const ZOOM_DEF = 16, ZOOM_MIN = 15, ZOOM_MAX = 19;
 
@@ -489,12 +497,18 @@ const Map = {
       zoom:               ZOOM_DEF,
       minZoom:            ZOOM_MIN,
       maxZoom:            ZOOM_MAX,
-      maxBounds:          [[BOUNDS.south-0.002, BOUNDS.west-0.002],
-                           [BOUNDS.north+0.002, BOUNDS.east+0.002]],
-      maxBoundsViscosity: 0.9,
+      maxBounds:          [[MAP_BOUNDS.south, MAP_BOUNDS.west],
+                           [MAP_BOUNDS.north, MAP_BOUNDS.east]],
+      maxBoundsViscosity: 1.0,   // يستحيل السحب خارج الحدود
       zoomControl:        false,
       attributionControl: true
     });
+
+    /* تثبيت الخريطة على نطاق الطوابير عند التشغيل */
+    this._map.fitBounds([
+      [MAP_BOUNDS.south, MAP_BOUNDS.west],
+      [MAP_BOUNDS.north, MAP_BOUNDS.east]
+    ], { animate: false });
 
     /* طبقة OSM */
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -788,24 +802,77 @@ function showToast(msg) {
 
 /* ════ GPS ════ */
 let gpsPos = null;
+
+/* حساب أقرب مسافة من نقطة إلى مسار (مصفوفة نقاط) */
+function minDistToRoute(lat, lon, route) {
+  let best = Infinity;
+  route.forEach(([rl, rlo]) => {
+    const d = (lat-rl)**2 + (lon-rlo)**2;
+    if (d < best) best = d;
+  });
+  return best;
+}
+
+/* تحقق إن كانت الإحداثيات داخل MAP_BOUNDS */
+function inBounds(lat, lon) {
+  return lat >= MAP_BOUNDS.south && lat <= MAP_BOUNDS.north
+      && lon >= MAP_BOUNDS.west  && lon <= MAP_BOUNDS.east;
+}
+
+/* اكتشاف المسار الأقرب للمستخدم */
+function detectLane(lat, lon) {
+  const entryRoute = RouteCache.entry || FALLBACK_ENTRY;
+  const exitRoute  = RouteCache.exit  || EXIT_ROUTE;
+  const dEntry = minDistToRoute(lat, lon, entryRoute);
+  const dExit  = minDistToRoute(lat, lon, exitRoute);
+  return dEntry <= dExit ? 'entry' : 'exit';
+}
+
 function initGPS() {
   if (!navigator.geolocation) { setGpsUI('unavailable'); return; }
   setGpsUI('searching');
   navigator.geolocation.watchPosition(
-    pos => { gpsPos=pos.coords; setGpsUI('active'); Map.updateGPS(pos.coords.latitude, pos.coords.longitude); },
-    ()  => setGpsUI('unavailable'),
+    pos => {
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      gpsPos = pos.coords;
+
+      if (!inBounds(lat, lon)) {
+        /* خارج نطاق المعبر — لا marker، رسالة تحذير */
+        setGpsUI('out');
+        showToast(lang==='es'
+          ? '❌ Estás fuera del paso fronterizo'
+          : '❌ أنت خارج نطاق المعبر');
+        return;
+      }
+
+      /* داخل النطاق */
+      setGpsUI('active');
+      Map.updateGPS(lat, lon);
+
+      /* اكتشاف المسار تلقائياً */
+      const lane = detectLane(lat, lon);
+      const laneMsg = lang==='es'
+        ? (lane==='entry' ? '📍 Estás en la cola de entrada' : '📍 Estás en la cola de salida')
+        : (lane==='entry' ? '📍 أنت في طابور الدخول'         : '📍 أنت في طابور الخروج');
+      setGpsUI('active', laneMsg);
+    },
+    () => setGpsUI('unavailable'),
     {enableHighAccuracy:true, maximumAge:15000}
   );
 }
-function setGpsUI(s) {
+
+function setGpsUI(s, laneLabel) {
   const msgs = {
-    searching:   {ar:'جاري التحديد…', es:'Localizando…'},
-    active:      {ar:'موقعك محدد ✓',  es:'Ubicación activa ✓'},
-    unavailable: {ar:'GPS غير متاح',  es:'GPS no disponible'}
+    searching:   {ar:'جاري التحديد…',           es:'Localizando…'},
+    active:      {ar: laneLabel || 'موقعك محدد ✓', es: laneLabel || 'Ubicación activa ✓'},
+    unavailable: {ar:'GPS غير متاح',             es:'GPS no disponible'},
+    out:         {ar:'خارج نطاق المعبر',         es:'Fuera del paso'}
   };
+  const dotColor = s==='active'?'#4285f4': s==='searching'?'#ff8f00': s==='out'?'#ff3355':'#666';
   $('gpsDot').className = 'gps-dot'+(s==='active'?' on':'');
-  $('gpsDot').style.background = s==='active'?'#4285f4':s==='searching'?'#ff8f00':'#666';
-  $('gpsTxt').innerHTML = '<span data-ar>'+msgs[s].ar+'</span><span data-es>'+msgs[s].es+'</span>';
+  $('gpsDot').style.background = dotColor;
+  const m = msgs[s] || msgs.unavailable;
+  $('gpsTxt').innerHTML = '<span data-ar>'+m.ar+'</span><span data-es>'+m.es+'</span>';
   if (lang==='es') $('gpsTxt').querySelectorAll('[data-ar]').forEach(e=>e.style.display='none');
   else             $('gpsTxt').querySelectorAll('[data-es]').forEach(e=>e.style.display='none');
 }
@@ -981,7 +1048,35 @@ window.onBD      = onBD;
 window.pickLane  = pickLane;
 window.pickSt    = pickSt;
 window.submit    = submit;
-window.locateMe  = () => { initGPS(); showToast(lang==='es'?'📍 Localizando…':'📍 جاري التحديد…'); };
+window.locateMe  = () => {
+  setGpsUI('searching');
+  showToast(lang==='es' ? '📍 Localizando…' : '📍 جاري التحديد…');
+  if (!navigator.geolocation) { setGpsUI('unavailable'); return; }
+  /* طلب موقع فوري عند الضغط */
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      gpsPos = pos.coords;
+      if (!inBounds(lat, lon)) {
+        setGpsUI('out');
+        showToast(lang==='es'
+          ? '❌ Estás fuera del paso fronterizo'
+          : '❌ أنت خارج نطاق المعبر');
+        return;
+      }
+      setGpsUI('active');
+      Map.updateGPS(lat, lon);
+      const lane = detectLane(lat, lon);
+      const laneMsg = lang==='es'
+        ? (lane==='entry' ? '📍 Estás en la cola de entrada' : '📍 Estás en la cola de salida')
+        : (lane==='entry' ? '📍 أنت في طابور الدخول'         : '📍 أنت في طابور الخروج');
+      setGpsUI('active', laneMsg);
+      showToast(laneMsg);
+    },
+    () => { setGpsUI('unavailable'); showToast(lang==='es'?'GPS no disponible':'GPS غير متاح'); },
+    {enableHighAccuracy:true, timeout:8000}
+  );
+};
 
 buildTL(); setTime(); setBtn(0);
 startListeners();
