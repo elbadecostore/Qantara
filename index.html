@@ -84,16 +84,36 @@ body{font-family:'Sora','Noto Naskh Arabic',system-ui,sans-serif;background:var(
 .mfill{height:100%;border-radius:99px;transition:width .7s cubic-bezier(.4,0,.2,1),background .4s}
 /* AI */
 .ai-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px 14px;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden}
-.ai-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(80,150,255,.5),transparent)}
+.ai-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,196,255,.5),transparent)}
 .ai-hd{display:flex;align-items:center;gap:10px}
+.ai-ico{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#1a5fff,#00c4ff);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.ai-ttl{font-size:12px;font-weight:700}
+.ai-sub{font-size:10px;color:var(--muted)}
+.ai-body{display:flex;flex-direction:column;gap:8px}
+.ai-txt{font-size:13px;font-weight:600;color:var(--text);line-height:1.6}
+.ai-60{font-size:11.5px;font-weight:500;color:var(--muted);opacity:0.88;display:block;margin-top:4px;border-top:1px solid var(--border);padding-top:5px}
+.ai-tags{display:flex;gap:5px;flex-wrap:wrap}
+.ai-tag{background:var(--faint);border:1px solid var(--border);border-radius:99px;padding:3px 10px;font-size:10px;color:var(--muted)}
+
+.ai-tag.hot{background:rgba(255,143,0,.18);border-color:rgba(255,143,0,.38);color:var(--orange);font-weight:700}
 .ai-ico{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#1a5fff,#00c4ff);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
 .ai-ttl{font-size:12px;font-weight:700}.ai-sub{font-size:10px;color:var(--muted)}
 .ai-txt{font-size:12px;line-height:1.5}
 .ai-tags{display:flex;gap:5px;flex-wrap:wrap}
+.ai-60{font-size:11.5px;font-weight:500;color:var(--muted);opacity:0.88;display:block;margin-top:4px;border-top:1px solid var(--border);padding-top:5px}
 .ai-tag{background:var(--faint);border:1px solid var(--border);border-radius:99px;padding:3px 10px;font-size:10px;color:var(--muted)}
 .ai-tag.hot{background:rgba(255,51,85,.08);border-color:rgba(255,51,85,.2);color:#ff7090}
 /* Stats */
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.details-panel .stats .sc{padding:8px 5px}
+.details-panel .stats .sc-val{font-size:14px}
+.details-panel .stats .sc-ico{font-size:14px}
+.details-toggle{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:12px;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);user-select:none;transition:background .2s}
+.details-toggle:active{background:var(--border2)}
+.dtl-arrow{font-size:16px;font-weight:400;transition:transform .3s;display:inline-block}
+.dtl-arrow.open{transform:rotate(90deg)}
+.details-panel{display:none;flex-direction:column;gap:8px}
+.details-panel.open{display:flex}
 .sc{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:11px 7px;display:flex;flex-direction:column;gap:3px;align-items:center}
 .sc-ico{font-size:16px}.sc-val{font-size:16px;font-weight:800;letter-spacing:-.02em}.sc-lbl{font-size:9px;color:var(--muted);text-align:center;font-weight:600}
 /* Timeline */
@@ -170,10 +190,18 @@ body:not(.es) [data-es]{display:none!important}
   </div>
 </div>
 
-<div class="zones">
-  <div class="zone zg"    id="z-green"  onclick="setZone('green')"><div class="z-ico">🟢</div><div class="z-name"><span data-ar>عادي</span><span data-es>Fluido</span></div><div class="z-wait"><span data-ar>&lt;10 د</span><span data-es>&lt;10 min</span></div></div>
-  <div class="zone zo on" id="z-orange" onclick="setZone('orange')"><div class="z-ico">🟠</div><div class="z-name"><span data-ar>متوسط</span><span data-es>Moderado</span></div><div class="z-wait"><span data-ar>20–40 د</span><span data-es>20–40 min</span></div></div>
-  <div class="zone zr"    id="z-red"    onclick="setZone('red')"><div class="z-ico">🔴</div><div class="z-name"><span data-ar>ازدحام شديد</span><span data-es>Atasco</span></div><div class="z-wait"><span data-ar>&gt;60 د</span><span data-es>&gt;60 min</span></div></div>
+<div class="ai-card">
+  <div class="ai-hd">
+    <div class="ai-ico">🤖</div>
+    <div>
+      <div class="ai-ttl"><span data-ar>تحليل الذكاء الاصطناعي</span><span data-es>Análisis IA</span></div>
+      <div class="ai-sub"><span data-ar>بناءً على الأنماط التاريخية</span><span data-es>Basado en patrones</span></div>
+    </div>
+  </div>
+  <div class="ai-body">
+    <div class="ai-txt" id="aiTxt">…</div>
+    <div class="ai-tags" id="aiTags"></div>
+  </div>
 </div>
 
 <div class="lanes">
@@ -181,21 +209,35 @@ body:not(.es) [data-es]{display:none!important}
   <div class="lc" id="lc-x"><div class="lc-top"><div class="lc-dir"><span data-ar>↓ خروج الفنيدق</span><span data-es>↓ Salida</span></div><span class="lc-arr">⬇️</span></div><div class="lc-st" id="xSt">—</div><div class="lc-wt" id="xWt">—</div><div class="mbar"><div class="mfill" id="xBar"></div></div></div>
 </div>
 
-<div class="ai-card">
-  <div class="ai-hd"><div class="ai-ico">🤖</div><div><div class="ai-ttl"><span data-ar>تحليل الذكاء الاصطناعي</span><span data-es>Análisis IA</span></div><div class="ai-sub"><span data-ar>بناءً على الأنماط التاريخية</span><span data-es>Basado en patrones</span></div></div></div>
-  <div class="ai-txt" id="aiTxt">…</div>
-  <div class="ai-tags" id="aiTags"></div>
+<div class="zones">
+  <div class="zone zg"    id="z-green"  onclick="setZone('green')"><div class="z-ico">🟢</div><div class="z-name"><span data-ar>عادي</span><span data-es>Fluido</span></div><div class="z-wait"><span data-ar>&lt;10 د</span><span data-es>&lt;10 min</span></div></div>
+  <div class="zone zo on" id="z-orange" onclick="setZone('orange')"><div class="z-ico">🟠</div><div class="z-name"><span data-ar>متوسط</span><span data-es>Moderado</span></div><div class="z-wait"><span data-ar>20–40 د</span><span data-es>20–40 min</span></div></div>
+  <div class="zone zr"    id="z-red"    onclick="setZone('red')"><div class="z-ico">🔴</div><div class="z-name"><span data-ar>ازدحام شديد</span><span data-es>Atasco</span></div><div class="z-wait"><span data-ar>&gt;60 د</span><span data-es>&gt;60 min</span></div></div>
 </div>
 
-<div class="stats">
-  <div class="sc"><div class="sc-ico">📊</div><div class="sc-val" id="stRep">—</div><div class="sc-lbl"><span data-ar>تقرير/2س</span><span data-es>inf./2h</span></div></div>
-  <div class="sc"><div class="sc-ico">🎯</div><div class="sc-val" id="stRel">—%</div><div class="sc-lbl"><span data-ar>موثوقية</span><span data-es>Fiabilidad</span></div></div>
-  <div class="sc"><div class="sc-ico">🕐</div><div class="sc-val" id="stTime">—</div><div class="sc-lbl"><span data-ar>آخر تحديث</span><span data-es>Última act.</span></div></div>
+<div class="details-toggle" onclick="toggleDetails()">
+  <span data-ar>📊 تفاصيل الإحصائيات</span><span data-es>📊 Detalles</span>
+  <span class="dtl-arrow" id="dtlArrow">›</span>
 </div>
+<script>
+function toggleDetails() {
+  var panel = document.getElementById('detailsPanel');
+  var arrow = document.getElementById('dtlArrow');
+  var open  = panel.classList.toggle('open');
+  arrow.classList.toggle('open', open);
+}
+</script>
 
-<div class="tl">
-  <div class="tl-hd"><div class="tl-ttl"><span data-ar>📈 نمط الازدحام اليومي</span><span data-es>📈 Patrón diario</span></div><div class="tl-sub"><span data-ar>تقدير · دخول</span><span data-es>Estimación · Entrada</span></div></div>
-  <div class="tl-bars" id="tlBars"></div>
+<div class="details-panel" id="detailsPanel">
+  <div class="stats">
+    <div class="sc"><div class="sc-ico">📊</div><div class="sc-val" id="stRep">—</div><div class="sc-lbl"><span data-ar>تقرير/2س</span><span data-es>inf./2h</span></div></div>
+    <div class="sc"><div class="sc-ico">🎯</div><div class="sc-val" id="stRel">—%</div><div class="sc-lbl"><span data-ar>موثوقية</span><span data-es>Fiabilidad</span></div></div>
+    <div class="sc"><div class="sc-ico">🕐</div><div class="sc-val" id="stTime">—</div><div class="sc-lbl"><span data-ar>آخر تحديث</span><span data-es>Última act.</span></div></div>
+  </div>
+  <div class="tl">
+    <div class="tl-hd"><div class="tl-ttl"><span data-ar>📈 نمط الازدحام اليومي</span><span data-es>📈 Patrón diario</span></div><div class="tl-sub"><span data-ar>تقدير · دخول</span><span data-es>Estimación · Entrada</span></div></div>
+    <div class="tl-bars" id="tlBars"></div>
+  </div>
 </div>
 
 <button class="btn-cta" id="btnCta" onclick="openSheet()">
@@ -450,6 +492,102 @@ const Predictor = (() => {
     };
   }
 
+  /* ── predict60: تنبؤ الحالة بعد 60 دقيقة ──
+     يعتمد على نفس المتغيرات + أفق زمني أبعد (h+1 ساعة)
+     ويُضيف حساب نسبة الثقة من density + consistency      */
+  function predict60(lane, density) {
+    if (!RouteCache.fetched) return null;
+
+    const h   = new Date().getHours();
+    const h60 = (h + 1) % 24;   // +60 دقيقة = ساعة كاملة للأمام
+    const h80 = (h + 2) % 24;   // نافذة ذروة بعد 60 + 20 دقيقة
+
+    const nowPattern = HOURLY[h];
+    const farPattern = HOURLY[h60];
+
+    /* trend من آخر 6 حالات — أكثر استقراراً للأفق البعيد */
+    const recent = hist[lane].slice(0, 6);
+    let trend = 0;
+    if (recent.length >= 2) {
+      const half = Math.ceil(recent.length / 2);
+      const avg_new = recent.slice(0, half).reduce((s,r) => s+r.val, 0) / half;
+      const avg_old = recent.slice(half).reduce((s,r) => s+r.val, 0) / (recent.length-half);
+      trend = avg_new - avg_old;
+    }
+
+    /* ذروة بعد 60 دقيقة */
+    const enteringPeak60 = !isPeak(lane, h60) && isPeak(lane, h80);
+    const leavingPeak60  =  isPeak(lane, h60) && !isPeak(lane, h80);
+    const inPeak60       =  isPeak(lane, h60);
+
+    const currentVal = recent.length ? recent[0].val : nowPattern;
+    const d = density !== undefined ? density : 0.5;
+
+    /* أوزان أبعد: HOURLY أقوى، trend أخفف (الأفق البعيد أقل تأثراً بالـ trend اللحظي) */
+    const wH60 = 0.75 * (1 - d * 0.35);
+    const wT60 = 0.35 * (1 + d * 0.4);
+    const userTrust = (typeof TrustEngine !== 'undefined') ? TrustEngine.getWeight() : 1.0;
+
+    let predicted60 = currentVal
+      + (farPattern - nowPattern) * wH60
+      + trend * wT60 * userTrust
+      + (enteringPeak60 ?  0.8 : 0)
+      + (leavingPeak60  ? -0.6 : 0)
+      + (inPeak60       ?  0.3 : 0);
+
+    /* ── Temporal Decay ──
+       إذا توقفت التقارير يتراجع التأثير تدريجياً نحو النمط الساعي (HOURLY)
+       لا تأثير < 10 دقائق، smoothstep حتى 40 دقيقة، بعدها HOURLY كامل     */
+    const lastRepTs  = recent.length ? recent[0].ts : 0;
+    const ageMs      = lastRepTs ? (Date.now() - lastRepTs) : Infinity;
+    const ageMin     = ageMs / 60000;
+    let   decayFactor;
+    /* ⚠️ TEST VALUES — original: start=10min end=40min */
+    const DECAY_START = 20/60;   // 20 ثانية
+    const DECAY_END   = 2;       // دقيقتان
+    if      (ageMin < DECAY_START) decayFactor = 1.0;
+    else if (ageMin > DECAY_END)   decayFactor = 0.0;
+    else {
+      const t = (ageMin - DECAY_START) / (DECAY_END - DECAY_START); // 0 → 1
+      decayFactor = 1 - (3*t*t - 2*t*t*t);   // smoothstep: ناعم بدون تذبذب
+    }
+    /* دمج: predicted60 × decay + HOURLY × (1-decay) */
+    const blended60 = predicted60 * decayFactor + farPattern * (1 - decayFactor);
+    predicted60 = Math.max(0, Math.min(2, Math.round(blended60)));
+
+    /* 🔍 DEBUG — احذف بعد الاختبار */
+    console.log('[Q] predict60 DEBUG ['+lane+']',
+      '| ageMin:', ageMin.toFixed(2),
+      '| decay:', decayFactor.toFixed(3),
+      '| predicted_raw:', VAL_STATUS[Math.max(0,Math.min(2,Math.round(predicted60)))],
+      '| blended:', blended60.toFixed(2),
+      '| final:', VAL_STATUS[predicted60],
+      '| lastRepTs:', lastRepTs ? new Date(lastRepTs).toLocaleTimeString() : 'NONE'
+    );
+
+    /* ── نسبة الثقة ──
+       مصادر: density (كثافة التقارير) + consistency (اتساق التاريخ) + بُعد الأفق
+       الأفق البعيد يخفض الثقة تلقائياً بنسبة 15%                              */
+    const consistency = recent.length >= 3
+      ? 1 - (recent.slice(0,3).reduce((s,r,i,a) =>
+          s + (i>0 ? Math.abs(r.val - a[i-1].val) : 0), 0) / (2 * recent.length))
+      : 0.5;
+
+    const rawConf       = (d * 0.45 + consistency * 0.40 + Math.min(recent.length/6, 1) * 0.15) * 0.85;
+    const smoothDensity = 1 / (1 + Math.exp(-6 * (d - 0.5)));   // sigmoid nonlinear
+    const decayConf     = 0.7 + 0.3 * decayFactor;              // decay يخفض الثقة أيضاً
+    const finalConf     = rawConf * (0.85 + 0.3 * smoothDensity) * decayConf;
+    const confidence    = Math.round(Math.max(30, Math.min(82, finalConf * 100)));
+
+    return {
+      status:     VAL_STATUS[predicted60],
+      val:        predicted60,
+      confidence,           // نسبة الثقة 30–82%
+      inPeak60,
+      horizon:    60
+    };
+  }
+
   function notify(lane, pred, currentStatus) {
     /* 6. شرط inBounds — لا إشعار خارج الحدود */
     if (!gpsPos) return;
@@ -505,7 +643,7 @@ const Predictor = (() => {
     }
   }
 
-  return { record, predict, notify, getHist: lane => hist[lane] };
+  return { record, predict, predict60, notify, getHist: lane => hist[lane] };
 })();
 const ST = {
   green:  {ar:'عادي',        es:'Fluido',   war:'أقل من 10 دقائق', wes:'< 10 min',  color:'#00d46e', bg:'rgba(0,212,110,.10)',  fill:15},
@@ -578,6 +716,71 @@ const CONGESTION_END = {
     red:    [35.8737875, -5.3427031]
   }
 };
+
+/* ══════════════════════════════════════════════════════════════
+   ETA ENGINE — تقدير زمن الانتظار الحقيقي
+   المنطق: throughput (سيارات/دقيقة) × موقع السيارة في الصف
+   ══════════════════════════════════════════════════════════════ */
+const ETAEngine = (() => {
+
+  /* طول سيارة متوسطة (م) */
+  const CAR_LEN = 5.0;
+
+  /* طول الخط الحقيقي لكل حالة — مأخوذ من CONGESTION_END + haversine */
+  const QUEUE_M = {
+    entry: { green: 123, orange: 216, red: 371 },
+    exit:  { green:  70, orange: 125, red: 241 }
+  };
+
+  /* throughput: كم سيارة تعبر الجمارك في الدقيقة
+     مصدر: ملاحظات ميدانية لمعبر الفنيدق–سبتة */
+  const THROUGHPUT = {
+    green:  3.5,   // ≈ سيارة كل 17 ثانية — سريع
+    orange: 1.8,   // ≈ سيارة كل 33 ثانية — متوسط
+    red:    0.7    // ≈ سيارة كل 86 ثانية — ازدحام شديد
+  };
+
+  /*  density تُعدّل الـ ETA:
+      density عالية (بيانات كثيرة موثوقة) → نقلّل هامش الخطأ
+      density منخفضة (بيانات قليلة)       → نضيف هامش 20% احتياطي */
+  /* معامل الوقت — يعدّل throughput حسب ساعة اليوم */
+  function timeModifier() {
+    const h = new Date().getHours();
+    if ((h >= 7 && h < 10) || (h >= 17 && h < 21)) return 0.85; // ذروة → أبطأ
+    if (h >= 0 && h < 6)                             return 1.10; // هادئ → أسرع
+    return 1.0;                                                    // عادي
+  }
+
+  function calc(lane, status, density) {
+    const dist       = QUEUE_M[lane][status] || QUEUE_M[lane].green;
+    const queueCars  = dist / CAR_LEN;
+    const baseETA    = queueCars / (THROUGHPUT[status] * timeModifier());
+
+    /* معامل density: 0→+20%، 1→-12% */
+    const d          = (density !== undefined && density >= 0) ? density : 0.5;
+    const densityMod = 1 + 0.20 - d * 0.32;   // range: 1.20 → 0.88
+
+    const eta = Math.round(baseETA * densityMod);
+
+    /* حدود منطقية */
+    const MIN_ETA = { green: 5,  orange: 15, red: 45  };
+    const MAX_ETA = { green: 25, orange: 60, red: 150 };
+    return Math.max(MIN_ETA[status], Math.min(MAX_ETA[status], eta));
+  }
+
+  /* تنسيق النص للعرض */
+  function format(lane, status, density, isAR) {
+    const eta   = calc(lane, status, density);
+    const icon  = '⏳';
+    const lbl   = isAR
+      ? (lane==='entry' ? 'دخول' : 'خروج')
+      : (lane==='entry' ? 'Entrada' : 'Salida');
+    const approx = isAR ? 'دقيقة تقريباً' : 'min aprox.';
+    return `${icon} ${lbl}: ${eta} ${approx}`;
+  }
+
+  return { calc, format };
+})();
 
 /* ══ findClosestIndex — يعيد أقرب نقطة في المسار إلى إحداثية مرجعية ══ */
 function findClosestIndex(point, routeCoords) {
@@ -996,12 +1199,26 @@ const Map = {
 };
 
 /* ════ UI Functions ════ */
+/* ── حالة المؤشر ── */
+let _listenerActive = false;  // هل onSnapshot متصل؟
+let _lastDataTs     = 0;      // آخر بيانات فعلية وصلت
+const LIVE_WINDOW   = 2 * 60 * 1000;  // 120 ثانية
+
 function setFbUI(on, n) {
-  $('fbBadge').className = 'fb-badge ' + (on?'on':'off');
-  $('fbTxt').textContent = on
-    ? '🔥 Live' + (n!==undefined?' · '+n+' doc':'')
+  if (on !== undefined) _listenerActive = on;
+
+  /* الشرط المزدوج: اتصال نشط + بيانات حديثة < 120 ثانية */
+  const hasRecentData = (Date.now() - _lastDataTs) < LIVE_WINDOW;
+  const isLive        = _listenerActive && hasRecentData;
+
+  $('fbBadge').className = 'fb-badge ' + (isLive ? 'on' : 'off');
+  $('fbTxt').textContent = isLive
+    ? '🔥 Live' + (n !== undefined ? ' · ' + n + ' doc' : '')
     : '⚠️ Reconnecting…';
 }
+
+/* فحص دوري كل 30 ثانية — يُحوّل إلى Reconnecting إذا انقطعت البيانات */
+setInterval(() => setFbUI(), 30000);
 
 function setLang(l) {
   lang = l;
@@ -1057,11 +1274,13 @@ function applyDocs(docs) {
   /* تنبؤ + إشعارات (بعد 300ms لإعطاء الـ UI أولوية) */
   setTimeout(() => {
     /* density من calcStatus — يضبط أوزان predict ديناميكياً */
-    const pEntry = Predictor.predict('entry', de.density);
-    const pExit  = Predictor.predict('exit',  dx.density);
+    const pEntry  = Predictor.predict('entry', de.density);
+    const pExit   = Predictor.predict('exit',  dx.density);
+    const p60E    = Predictor.predict60('entry', de.density);
+    const p60X    = Predictor.predict60('exit',  dx.density);
     Predictor.notify('entry', pEntry, de.status);
     Predictor.notify('exit',  pExit,  dx.status);
-    buildAI(de.status, dx.status, de.rel, pEntry, pExit);
+    buildAI(de.status, dx.status, de.rel, pEntry, pExit, de.density, dx.density, p60E, p60X);
     /* ── console.log شامل: trust + density + weights + prediction ── */
     const trustScore = (typeof TrustEngine !== 'undefined') ? TrustEngine.getWeight() : 1.0;
     if (pEntry) console.log(
@@ -1101,20 +1320,25 @@ function buildTL() {
   }
 }
 
-function buildAI(eS, xS, rel, pEntry, pExit) {
+function buildAI(eS, xS, rel, pEntry, pExit, densityE, densityX, p60E, p60X) {
   const h=new Date().getHours(), ar=[], es=[], tags=[];
   const isAR = lang !== 'es';
   const STA  = {green:{ar:'عادي',es:'fluido'}, orange:{ar:'متوسط',es:'moderado'}, red:{ar:'شديد',es:'atasco'}};
 
-  /* الحالة الحالية */
-  if(eS==='red')   { ar.push('🚨 دخول: طابور طويل');  es.push('🚨 Entrada: Cola larga');  tags.push({ar:'دخول احمر', es:'Entrada roja', hot:true});  }
-  if(eS==='orange'){ ar.push('🟠 دخول: متوسط');        es.push('🟠 Entrada: Moderada');    tags.push({ar:'متوسط',     es:'Moderado',     hot:false}); }
-  if(eS==='green') { ar.push('🟢 دخول: سريع');          es.push('🟢 Entrada: Fluida'); }
-  if(xS==='red')   { ar.push('🔴 خروج: مزحوم');        es.push('🔴 Salida: Lenta');        tags.push({ar:'خروج احمر', es:'Salida roja',  hot:true});  }
-  if(xS==='orange'){ ar.push('🟠 خروج: متوسط');         es.push('🟠 Salida: Moderada'); }
-  if(xS==='green') { ar.push('🟢 خروج: سريع');           es.push('🟢 Salida: Fluida'); }
+  /* ── ETA ── */
+  const dE = densityE !== undefined ? densityE : 0.5;
+  const dX = densityX !== undefined ? densityX : 0.5;
+  ar.push(ETAEngine.format('entry', eS, dE, true));
+  es.push(ETAEngine.format('entry', eS, dE, false));
+  ar.push(ETAEngine.format('exit',  xS, dX, true));
+  es.push(ETAEngine.format('exit',  xS, dX, false));
 
-  /* تنبؤ 20 دقيقة */
+  /* ── الحالة الحالية ── */
+  if(eS==='red')   { tags.push({ar:'دخول احمر', es:'Entrada roja', hot:true});  }
+  if(eS==='orange'){ tags.push({ar:'متوسط',     es:'Moderado',     hot:false}); }
+  if(xS==='red')   { tags.push({ar:'خروج احمر', es:'Salida roja',  hot:true});  }
+
+  /* ── تنبؤ 20 دقيقة ── */
   if (pEntry) {
     const ic = pEntry.trend==='up'?'📈':pEntry.trend==='down'?'📉':'➡️';
     ar.push(ic+' دخول/20د: '+STA[pEntry.status].ar);
@@ -1128,14 +1352,31 @@ function buildAI(eS, xS, rel, pEntry, pExit) {
     es.push(ic+' Salida/20min: '+STA[pExit.status].es);
   }
 
-  /* السياق الزمني */
+  /* ── تنبؤ 60 دقيقة ── */
+  const STA60 = {green:{ar:'🟢 عادي',es:'🟢 fluido'}, orange:{ar:'🟠 متوسط',es:'🟠 moderado'}, red:{ar:'🔴 شديد',es:'🔴 atasco'}};
+  if (p60E) {
+    const conf = p60E.confidence;
+    ar.push(`🔮 دخول/60د: ${STA60[p60E.status].ar} (${conf}%)`);
+    es.push(`🔮 Entrada/60min: ${STA60[p60E.status].es} (${conf}%)`);
+  }
+  if (p60X) {
+    const conf = p60X.confidence;
+    ar.push(`🔮 خروج/60د: ${STA60[p60X.status].ar} (${conf}%)`);
+    es.push(`🔮 Salida/60min: ${STA60[p60X.status].es} (${conf}%)`);
+  }
+
+  /* ── السياق الزمني ── */
   if(h>=7&&h<=9)  { tags.push({ar:'ذروة AM',es:'Punta AM',hot:true}); }
   if(h>=16&&h<=19){ tags.push({ar:'ذروة PM',es:'Punta PM',hot:true}); }
   if(h<6||h>=22)  { ar.push('✅ أفضل وقت'); es.push('✅ Mejor momento'); tags.push({ar:'هادئ',es:'Tranquilo',hot:false}); }
   if(rel<0.3)     { ar.push('⚠️ بيانات محدودة'); es.push('⚠️ Datos limitados'); }
   if(!ar.length)  { ar.push('📊 الوضع مستقر'); es.push('📊 Situación estable'); }
 
-  $('aiTxt').textContent = (isAR?ar:es).slice(0,2).join(' · ');
+  /* ── العرض: ETA في الأول دائماً ── */
+  /* ETA السطر 1+2، تنبؤ 60د السطر 3+4 — نعرض أول 4 مع فاصل سطر */
+  const lines = (isAR?ar:es);
+  $('aiTxt').innerHTML = lines.slice(0,2).join('<br>') +
+    (lines[2] ? '<br><span class="ai-60">'+lines.slice(2,4).join('<br>')+'</span>' : '');
   $('aiTags').innerHTML  = tags.slice(0,3).map(t =>
     '<span class="ai-tag '+(t.hot?'hot':'')+'">'+(isAR?t.ar:t.es)+'</span>'
   ).join('');
@@ -1288,7 +1529,7 @@ function submit() {
     cacheEntry = [nr,...cacheEntry].slice(0,50);
     const d = calcStatus(cacheEntry);
     applyLane('entry', d);
-    buildAI(d.status, Map.xS, d.rel, null, null);
+    buildAI(d.status, Map.xS, d.rel, null, null, d.density, 0.5);
   } else {
     cacheExit = [nr,...cacheExit].slice(0,50);
     applyLane('exit', calcStatus(cacheExit));
@@ -1315,9 +1556,11 @@ function startListeners() {
           if (f.lane && f.status && f.tsMs && (now-f.tsMs)<=WIN_MS)
             docs.push({lane:f.lane, status:f.status, ts:f.tsMs});
         });
+        /* تحديث timestamp البيانات الفعلية — شرط LIVE_WINDOW */
+        if (docs.length > 0) _lastDataTs = now;
         setFbUI(true, snap.size);
         applyDocs(docs);
-        console.log('[Q] onSnapshot:', snap.size, 'docs');
+        console.log('[Q] onSnapshot:', snap.size, 'docs | lastDataTs updated:', docs.length>0);
       },
       err => { console.warn('[Q] onSnapshot:', err.code); setFbUI(false); }
     );
@@ -1327,9 +1570,11 @@ function startListeners() {
   async function poll() {
     const docs = await fetchReports();
     if (docs===null) { setFbUI(false); return; }
+    /* حدّث _lastDataTs إذا وجدت بيانات حديثة */
+    if (docs.length > 0) _lastDataTs = Date.now();
     setFbUI(true, docs.length);
     applyDocs(docs);
-    console.log('[Q] REST poll:', docs.length, 'docs');
+    console.log('[Q] REST poll:', docs.length, 'docs | fresh:', docs.length>0);
   }
   poll();
   setInterval(poll, 10000);
@@ -1338,79 +1583,271 @@ function startListeners() {
 setInterval(() => setBtn(Cool.get()), 500);
 setInterval(() => { setTime(); buildTL(); }, 60000);
 
+/* ── decay refresh: يعيد حساب predict60 كل 20 ثانية بدون snapshot جديد ── */
+setInterval(() => {
+  if (!cacheEntry.length && !cacheExit.length) return;
+  const de = calcStatus(cacheEntry);
+  const dx = calcStatus(cacheExit);
+  const p60E = Predictor.predict60('entry', de.density);
+  const p60X = Predictor.predict60('exit',  dx.density);
+  const pE   = Predictor.predict('entry', de.density);
+  const pX   = Predictor.predict('exit',  dx.density);
+  console.log('[Q] decay-refresh tick — entry:', p60E?.status, '| exit:', p60X?.status);
+  buildAI(de.status, dx.status, de.rel, pE, pX, de.density, dx.density, p60E, p60X);
+}, 20000);
+
 /* ════ INTRO ════ */
 function runIntro() {
-  const cv=$('introCanvas'), c=cv.getContext('2d');
-  const W=window.innerWidth, H=window.innerHeight;
-  cv.width=W; cv.height=H;
-  const RY=H/2, RH=Math.min(H*.22,120);
-  let frame=0, done=false;
-  const T_MEET=40, T_HOLD=65, T_FADE=78, T_END=90, CX=W/2;
-  const carA={x:-60,y:RY-RH*.22,w:54,h:26,color:'#00c96a',dir:1};
-  const carB={x:W+60,y:RY+RH*.22,w:54,h:26,color:'#ff8f00',dir:-1};
+  const cv = $('introCanvas'), ctx = cv.getContext('2d');
+  const W = window.innerWidth, H = window.innerHeight;
+  cv.width = W; cv.height = H;
 
-  function drawCar({x,y,w,h,color,dir}) {
-    c.save();
-    c.shadowColor=color; c.shadowBlur=18;
-    c.fillStyle=color; c.beginPath(); c.roundRect(x-w/2,y-h/2,w,h,h*.28); c.fill();
-    c.fillStyle=color==='#00c96a'?'#009a52':'#c87000';
-    c.beginPath(); c.roundRect(x-w*.25,y-h/2-h*.3,w*.5,h*.3,h*.12); c.fill();
-    c.fillStyle='rgba(190,235,255,.45)';
-    c.beginPath(); c.roundRect(dir>0?x+w*.06:x-w*.48,y-h*.35,w*.42,h*.28,h*.07); c.fill();
-    const ltCol=dir>0?'#ffffc0':'#ff2244', lx=dir>0?x+w/2-5:x-w/2+5;
-    c.fillStyle=ltCol; c.shadowColor=ltCol; c.shadowBlur=14;
-    [y-h*.18,y+h*.18].forEach(ly=>{c.beginPath();c.arc(lx,ly,3,0,Math.PI*2);c.fill();});
-    c.shadowBlur=0;
-    [x-w*.3,x+w*.3].forEach(wx=>{
-      c.fillStyle='#111'; c.beginPath(); c.ellipse(wx,y+h*.5,h*.22,h*.22,0,0,Math.PI*2); c.fill();
-      c.fillStyle='#333'; c.beginPath(); c.ellipse(wx,y+h*.5,h*.11,h*.11,0,0,Math.PI*2); c.fill();
+  const T_MEET = 48, T_TALK = 62, T_HOLD = 85, T_FADE = 100, T_END = 112;
+  const CX = W/2, CY = H/2;
+  let frame = 0, done = false;
+
+  /* الطريق أفقي في المنتصف */
+  const RY  = CY;
+  const RH  = Math.min(H * 0.13, 68);
+  const LW  = RH * 0.07;
+
+  /* السيارتان */
+  const carA = { x: -70, y: RY - RH*0.20, w: 58, h: 27, col: '#00d46e', dir: 1  }; // 🇲🇦 من اليسار
+  const carB = { x: W+70, y: RY + RH*0.20, w: 58, h: 27, col: '#c60b1e', dir: -1 }; // 🇪🇸 من اليمين
+
+  /* ── رسم سيارة ── */
+  function drawCar(car) {
+    const {x, y, w, h, col, dir} = car;
+    ctx.save();
+    ctx.shadowColor = col; ctx.shadowBlur = 16;
+    /* جسم */
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.roundRect(x-w/2, y-h/2, w, h, h*0.28); ctx.fill();
+    /* سقف */
+    ctx.fillStyle = col === '#00d46e' ? '#009a52' : '#8a0010';
+    ctx.beginPath(); ctx.roundRect(x-w*0.26, y-h/2-h*0.30, w*0.52, h*0.30, h*0.10); ctx.fill();
+    /* زجاج */
+    ctx.fillStyle = 'rgba(190,235,255,0.45)';
+    ctx.beginPath(); ctx.roundRect(
+      dir>0 ? x+w*0.06 : x-w*0.46, y-h*0.36, w*0.40, h*0.27, h*0.07
+    ); ctx.fill();
+    /* أضواء */
+    const lx = dir>0 ? x+w/2-5 : x-w/2+5;
+    const lc = dir>0 ? '#ffffa0' : '#ff2244';
+    ctx.fillStyle = lc; ctx.shadowColor = lc; ctx.shadowBlur = 12;
+    [y-h*0.17, y+h*0.17].forEach(ly => {
+      ctx.beginPath(); ctx.arc(lx, ly, 2.8, 0, Math.PI*2); ctx.fill();
     });
-    c.restore();
+    /* عجلات */
+    ctx.shadowBlur = 0;
+    [x-w*0.28, x+w*0.28].forEach(wx => {
+      ctx.fillStyle = '#0a0e1a';
+      ctx.beginPath(); ctx.ellipse(wx, y+h*0.50, h*0.22, h*0.22, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#1e2a44';
+      ctx.beginPath(); ctx.ellipse(wx, y+h*0.50, h*0.10, h*0.10, 0, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.restore();
   }
 
+  /* ── فقاعة كلام ── */
+  function drawBubble(x, y, text, flag, dir, alpha) {
+    if (alpha <= 0) return;
+    const fs   = W < 380 ? 13 : 15;
+    const pad  = 10, gap = 8;
+    ctx.font = '700 '+fs+'px Sora,sans-serif';
+    const tw = ctx.measureText(text).width;
+    const fw = fs * 1.3;  // عرض الإيموجي تقريباً
+    const bw = tw + fw + pad*2 + gap;
+    const bh = fs + pad * 1.6;
+    const bx = dir > 0 ? x + 18 : x - 18 - bw;
+    const by = y - bh - 14;
+    const tr = 8;  // border radius
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    /* ظل الفقاعة */
+    ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 12;
+
+    /* خلفية الفقاعة */
+    ctx.fillStyle = 'rgba(255,255,255,0.96)';
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, tr); ctx.fill();
+
+    /* ذيل الفقاعة */
+    ctx.beginPath();
+    if (dir > 0) {
+      ctx.moveTo(bx+12, by+bh);
+      ctx.lineTo(bx+6,  by+bh+10);
+      ctx.lineTo(bx+22, by+bh);
+    } else {
+      ctx.moveTo(bx+bw-12, by+bh);
+      ctx.lineTo(bx+bw-6,  by+bh+10);
+      ctx.lineTo(bx+bw-22, by+bh);
+    }
+    ctx.closePath(); ctx.fill();
+
+    ctx.shadowBlur = 0;
+
+    /* الإيموجي */
+    ctx.font = fs+'px serif';
+    ctx.textBaseline = 'middle';
+    const ey = by + bh/2;
+    if (dir > 0) {
+      /* 🇲🇦 ثم النص */
+      ctx.fillText(flag, bx+pad, ey);
+      ctx.font = '700 '+fs+'px Sora,sans-serif';
+      ctx.fillStyle = '#111';
+      ctx.textAlign = 'left';
+      ctx.fillText(text, bx+pad+fw+gap, ey);
+    } else {
+      /* النص ثم 🇪🇸 */
+      ctx.font = '700 '+fs+'px Sora,sans-serif';
+      ctx.fillStyle = '#111';
+      ctx.textAlign = 'left';
+      ctx.fillText(text, bx+pad, ey);
+      ctx.font = fs+'px serif';
+      ctx.fillText(flag, bx+pad+tw+gap, ey);
+    }
+
+    ctx.restore();
+  }
+
+  /* ── شعار صغير شفاف في الأسفل ── */
+  function drawLogo(alpha, scale) {
+    if (alpha <= 0) return;
+    const R  = Math.min(W, H) * 0.055;
+    const lx = CX, ly = H * 0.87;
+    const lw = R * 0.30;
+    const sc = scale || 1;
+    ctx.save();
+    ctx.globalAlpha = alpha * 0.72;
+    /* scale حول مركز اللوجو */
+    ctx.translate(lx, ly);
+    ctx.scale(sc, sc);
+    ctx.translate(-lx, -ly);
+
+    /* Q حلقة */
+    ctx.beginPath(); ctx.arc(lx - R*1.5, ly, R, 0, Math.PI*2);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = lw;
+    ctx.shadowColor = 'rgba(255,255,255,0.2)'; ctx.shadowBlur = 10;
+    ctx.stroke();
+
+    /* ذيل Q */
+    const ang = Math.PI*0.72;
+    ctx.beginPath();
+    ctx.moveTo(lx-R*1.5+Math.cos(ang)*(R-lw*0.1), ly+Math.sin(ang)*(R-lw*0.1));
+    ctx.lineTo(lx-R*1.5+Math.cos(ang)*R*1.5, ly+Math.sin(ang)*R*1.5);
+    ctx.lineWidth = lw*0.70; ctx.lineCap = 'round'; ctx.stroke();
+
+    /* نقطة داخل Q */
+    ctx.beginPath(); ctx.arc(lx-R*1.5, ly, R*0.24, 0, Math.PI*2);
+    ctx.fillStyle = '#fff'; ctx.shadowBlur = 8; ctx.fill();
+
+    /* QANTARA */
+    ctx.shadowBlur = 0;
+    ctx.font = '700 '+(R*1.12|0)+'px Sora,sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.82)';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText('QANTARA', lx - R*0.28, ly);
+
+    /* قنطرة */
+    ctx.font = '400 '+(R*0.62|0)+'px Sora,sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.40)';
+    ctx.fillText('قنطرة · Border Traffic Monitor', lx - R*0.28, ly + R*1.15);
+
+    ctx.restore();
+  }
+
+  /* ════ tick ════ */
   function tick() {
     if (done) return;
     frame++;
-    c.clearRect(0,0,W,H);
-    c.fillStyle='#0a0d14'; c.fillRect(0,0,W,H);
-    const gg=c.createRadialGradient(CX,H*.44,0,CX,H*.44,H*.7);
-    gg.addColorStop(0,'rgba(16,28,62,.55)'); gg.addColorStop(1,'transparent');
-    c.fillStyle=gg; c.fillRect(0,0,W,H);
-    const rg=c.createLinearGradient(0,RY-RH/2,0,RY+RH/2);
-    rg.addColorStop(0,'#181e2c'); rg.addColorStop(.5,'#1e2540'); rg.addColorStop(1,'#181e2c');
-    c.fillStyle=rg; c.fillRect(0,RY-RH/2,W,RH);
 
-    const prog=Math.min(frame/T_MEET,1), ease=1-Math.pow(1-prog,3);
-    carA.x = -60+ease*(CX-14+60);
-    carB.x = W+60-ease*(W+60-(CX+14));
-    drawCar(carA); drawCar(carB);
+    /* خلفية */
+    ctx.fillStyle = '#04122b'; ctx.fillRect(0,0,W,H);
+    const glow = ctx.createRadialGradient(CX, CY*0.9, 0, CX, CY*0.9, H*0.6);
+    glow.addColorStop(0,'rgba(8,50,140,0.18)'); glow.addColorStop(1,'transparent');
+    ctx.fillStyle = glow; ctx.fillRect(0,0,W,H);
 
-    if (frame>=T_MEET) {
-      const a=frame<T_HOLD?1:Math.max(0,1-(frame-T_HOLD)/(T_FADE-T_HOLD));
-      if (a>0) {
-        c.save(); c.globalAlpha=a;
-        c.font='700 '+(W<380?'15':'18')+'px Sora,sans-serif';
-        c.textAlign='center'; c.textBaseline='middle';
-        c.fillStyle='#fff'; c.shadowColor='rgba(0,0,0,.5)'; c.shadowBlur=10;
-        c.fillText(lang==='es'?'Fnideq ⟷ Ceuta':'الفنيدق ⟷ سبتة', CX, RY-RH*.65);
-        c.font='600 12px Sora,sans-serif';
-        c.fillStyle='rgba(255,255,255,.7)';
-        c.fillText('Qantara · قنطرة', CX, RY-RH*.65+24);
-        c.restore();
-      }
+    /* الطريق */
+    const rg = ctx.createLinearGradient(0, RY-RH/2, 0, RY+RH/2);
+    rg.addColorStop(0,'#141a2e'); rg.addColorStop(0.5,'#1a2240'); rg.addColorStop(1,'#141a2e');
+    ctx.fillStyle = rg; ctx.fillRect(0, RY-RH/2, W, RH);
+    /* حواف الطريق */
+    ctx.fillStyle='rgba(255,255,255,0.10)';
+    ctx.fillRect(0, RY-RH/2, W, LW);
+    ctx.fillRect(0, RY+RH/2-LW, W, LW);
+    /* خطوط الوسط المتحركة */
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+    ctx.lineWidth   = LW * 0.9;
+    ctx.setLineDash([W*0.055, W*0.045]);
+    ctx.lineDashOffset = -(frame * 1.6);
+    ctx.beginPath(); ctx.moveTo(0, RY); ctx.lineTo(W, RY); ctx.stroke();
+    ctx.restore();
+
+    /* حركة السيارتين */
+    const prog = Math.min(frame/T_MEET, 1);
+    const ease = 1 - Math.pow(1-prog, 3);
+    carA.x = -70 + ease*(CX - 38 + 70);
+    carB.x = W+70 - ease*(W+70 - (CX + 38));
+
+    drawCar(carA);
+    drawCar(carB);
+
+    /* فقاعات الكلام بعد اللقاء */
+    /* صوت زمور مرة واحدة عند اللقاء */
+    if (frame === T_TALK) {
+      try {
+        const AC = new (window.AudioContext || window.webkitAudioContext)();
+        const beep = (freq, start, dur) => {
+          const o = AC.createOscillator();
+          const g = AC.createGain();
+          o.connect(g); g.connect(AC.destination);
+          o.type = 'sine';
+          o.frequency.setValueAtTime(freq, AC.currentTime + start);
+          g.gain.setValueAtTime(0, AC.currentTime + start);
+          g.gain.linearRampToValueAtTime(0.12, AC.currentTime + start + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + start + dur);
+          o.start(AC.currentTime + start);
+          o.stop(AC.currentTime + start + dur + 0.05);
+        };
+        beep(520, 0.00, 0.13);   // pip أول
+        beep(520, 0.17, 0.13);   // pip ثاني
+      } catch(e) { /* صامت إذا فشل */ }
     }
+
+    if (frame >= T_TALK) {
+      const raw  = (frame - T_TALK) / 8;
+      const tIn  = Math.min(raw, 1);
+      const tOut = frame < T_HOLD ? 1 : Math.max(0, 1-(frame-T_HOLD)/(T_FADE-T_HOLD));
+      const ba   = tIn * tOut;
+
+      /* 🇲🇦 مرحبا — من سيارة اليسار، فقاعة فوق اليمين */
+      drawBubble(carA.x + carA.w/2, carA.y - carA.h/2, 'مرحبا', '🇲🇦', 1, ba);
+      /* 🇪🇸 Hola — من سيارة اليمين، فقاعة فوق اليسار */
+      drawBubble(carB.x - carB.w/2, carB.y - carB.h/2, 'Hola', '🇪🇸', -1, ba);
+    }
+
+    /* شعار شفاف في الأسفل — fade + scale */
+    const logoRaw = frame < T_TALK ? 0 : Math.min((frame-T_TALK)/14, 1);
+    const logoOut = frame < T_HOLD ? 1 : Math.max(0, 1-(frame-T_HOLD)/(T_FADE-T_HOLD));
+    const logoA   = logoRaw * logoOut;
+    const logoScale = 0.95 + 0.05 * Math.min(logoRaw, 1); // 0.95 → 1.0
+    drawLogo(logoA, logoScale);
+
+    /* نهاية */
     if (frame >= T_END) {
       done = true;
       $('intro').classList.add('out');
       setTimeout(() => {
-        /* إزالة كاملة من DOM — لا يبقى أي عنصر فوق الخريطة */
         const el = $('intro');
         if (el) el.remove();
-        /* إعادة تطبيق آخر بيانات بعد ظهور الـ app */
         if (cacheEntry.length||cacheExit.length) {
           applyLane('entry', calcStatus(cacheEntry));
           applyLane('exit',  calcStatus(cacheExit));
-          buildAI(calcStatus(cacheEntry).status, calcStatus(cacheExit).status, calcStatus(cacheEntry).rel, null, null);
+          buildAI(calcStatus(cacheEntry).status, calcStatus(cacheExit).status,
+                  calcStatus(cacheEntry).rel, null, null);
         }
       }, 680);
       return;
@@ -1420,7 +1857,15 @@ function runIntro() {
   requestAnimationFrame(tick);
 }
 
+
 /* ════ BOOT ════ */
+function toggleDetails() {
+  const panel = $('detailsPanel');
+  const arrow = $('dtlArrow');
+  const open  = panel.classList.toggle('open');
+  arrow.classList.toggle('open', open);
+}
+
 window.setLang   = setLang;
 window.setZone   = setZone;
 window.openSheet = openSheet;
@@ -1428,6 +1873,7 @@ window.onBD      = onBD;
 window.pickLane  = pickLane;
 window.pickSt    = pickSt;
 window.submit    = submit;
+window.toggleDetails = toggleDetails;
 window.locateMe  = () => {
   setGpsUI('searching');
   showToast(lang==='es' ? '📍 Localizando…' : '📍 جاري التحديد…');
