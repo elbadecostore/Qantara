@@ -291,6 +291,8 @@ const COOL_KEY  = 'qnt_v11_cool';
 const COOLDOWN  = 5 * 1000;
 const WIN_MS    = 2 * 60 * 60 * 1000;
 const RECENT_MS = 20 * 60 * 1000;
+const TEST_MODE = false;
+const DECAY_HALF_LIFE = Infinity;
 
 /* ══════════════════════════════════════════════════════════════
    TRUST ENGINE — نظام ثقة التقارير (خفيف، بدون قواعد بيانات)
@@ -410,6 +412,9 @@ const Predictor = (() => {
   /* تاريخ قصير: آخر 12 حالة لكل lane */
   const hist = { entry: [], exit: [] };
   const MAX_HIST = 12;
+  /* آخر توقيت تغيّرت فيه البيانات فعلياً — مستقل عن snapshot */
+  const lastRealChangeTs = { entry: 0, exit: 0 };
+  let   prevDocsCount    = { entry: -1, exit: -1 };
 
   /* cooldown منفصل لكل lane */
   const lastNotif = {
@@ -430,9 +435,22 @@ const Predictor = (() => {
   const STATUS_VAL = { green: 0, orange: 1, red: 2 };
   const VAL_STATUS = ['green','orange','red'];
 
-  function record(lane, status) {
-    hist[lane].unshift({ status, val: STATUS_VAL[status], ts: Date.now() });
-    if (hist[lane].length > MAX_HIST) hist[lane].pop();
+  function record(lane, status, docsCount) {
+    const prev    = hist[lane][0];
+    const changed = !prev || prev.status !== status;
+    const countChanged = docsCount !== undefined && docsCount !== prevDocsCount[lane];
+
+    /* حدّث lastRealChangeTs فقط عند تغير فعلي */
+    if (changed || countChanged) {
+      lastRealChangeTs[lane] = Date.now();
+      if (docsCount !== undefined) prevDocsCount[lane] = docsCount;
+    }
+
+    /* سجّل في hist فقط إذا تغيرت الحالة */
+    if (changed) {
+      hist[lane].unshift({ status, val: STATUS_VAL[status], ts: Date.now() });
+      if (hist[lane].length > MAX_HIST) hist[lane].pop();
+    }
   }
 
   function predict(lane, density) {
@@ -538,9 +556,9 @@ const Predictor = (() => {
       + (inPeak60       ?  0.3 : 0);
 
     /* ── Temporal Decay ──
-       إذا توقفت التقارير يتراجع التأثير تدريجياً نحو النمط الساعي (HOURLY)
-       لا تأثير < 10 دقائق، smoothstep حتى 40 دقيقة، بعدها HOURLY كامل     */
-    const lastRepTs  = recent.length ? recent[0].ts : 0;
+       يعتمد على lastRealChangeTs — لا يتجدد مع كل snapshot
+       فقط عند تغيير الحالة الفعلي أو تغيير عدد الوثائق               */
+    const lastRepTs  = lastRealChangeTs[lane] || (recent.length ? recent[0].ts : 0);
     const ageMs      = lastRepTs ? (Date.now() - lastRepTs) : Infinity;
     const ageMin     = ageMs / 60000;
     let   decayFactor;
@@ -650,7 +668,7 @@ const Predictor = (() => {
     }
   }
 
-  return { record, predict, predict60, notify, getHist: lane => hist[lane] };
+  return { record, predict, predict60, notify, getHist: lane => hist[lane], getLastChange: lane => lastRealChangeTs[lane] };
 })();
 const ST = {
   green:  {ar:'عادي',        es:'Fluido',   war:'أقل من 10 دقائق', wes:'< 10 min',  color:'#00d46e', bg:'rgba(0,212,110,.10)',  fill:15},
@@ -947,14 +965,26 @@ function calcStatus(reps) {
   const density     = Math.min(1, recentCount / 5); // 0..1 (5 تقارير = كثافة عالية)
 
   reps.forEach(r => {
-    /* وزن التقرير: حديث×2، قديم×1، مضروب في trust weight */
-    const timeW  = (now - r.ts) < RECENT_MS ? 2 : 1;
+    /* وزن التقرير:
+       - عادي:      حديث×2، قديم×1
+       - TEST_MODE: exponential decay = 2^(-age/halfLife) → يتناقص مع الزمن */
+    let timeW;
+    if (TEST_MODE && isFinite(DECAY_HALF_LIFE)) {
+      const ageMs = now - r.ts;
+      const raw   = Math.pow(2, -ageMs / DECAY_HALF_LIFE);
+      timeW = Math.max(raw, 0.25);
+      console.log('[Q]DECAY|',r.status,'| age:'+Math.round(ageMs/1000)+'s | raw:'+raw.toFixed(3)+' | w:'+timeW.toFixed(3));
+    } else {
+      timeW = (now - r.ts) < RECENT_MS ? 2 : 1;
+    }
     const trustW = r.w || 1.0;
     sc[r.status] = (sc[r.status]||0) + timeW * trustW;
   });
 
+  const finalStatus = Object.keys(sc).sort((a,b) => sc[b]-sc[a])[0];
+  console.log('[Q]RESULT| sc:', JSON.stringify(sc), '→', finalStatus);
   return {
-    status:  Object.keys(sc).sort((a,b) => sc[b]-sc[a])[0],
+    status: finalStatus,
     count:   reps.length,
     rel:     Math.min(1, reps.length / 8),
     density  // كثافة التقارير الحديثة — يستخدمها Predictor
@@ -1273,10 +1303,12 @@ function applyDocs(docs) {
   cacheEntry = entry;  cacheExit = exit_;
   const de = calcStatus(entry), dx = calcStatus(exit_);
   applyLane('entry', de);  applyLane('exit', dx);
+  if (entry.length)  AutoDecay.touch('entry');
+  if (exit_.length)  AutoDecay.touch('exit');
 
   /* تسجيل الحالة الحالية في Predictor */
-  Predictor.record('entry', de.status);
-  Predictor.record('exit',  dx.status);
+  Predictor.record('entry', de.status, entry.length);
+  Predictor.record('exit',  dx.status, exit_.length);
 
   /* تنبؤ + إشعارات (بعد 300ms لإعطاء الـ UI أولوية) */
   setTimeout(() => {
@@ -1553,6 +1585,7 @@ function submit() {
     cacheExit = [nr,...cacheExit].slice(0,50);
     applyLane('exit', calcStatus(cacheExit));
   }
+  AutoDecay.touch(_lane);  // سجّل وقت التقرير الجديد
   setTime(); setBtn(Cool.get());
   showToast(lang==='es'?'✅ ¡Actualizado!':'✅ تم التحديث!');
 
@@ -1602,18 +1635,67 @@ function startListeners() {
 setInterval(() => setBtn(Cool.get()), 500);
 setInterval(() => { setTime(); buildTL(); }, 60000);
 
-/* ── decay refresh: يعيد حساب predict60 كل 20 ثانية بدون snapshot جديد ── */
-setInterval(() => {
-  if (!cacheEntry.length && !cacheExit.length) return;
-  const de = calcStatus(cacheEntry);
-  const dx = calcStatus(cacheExit);
-  const p60E = Predictor.predict60('entry', de.density);
-  const p60X = Predictor.predict60('exit',  dx.density);
-  const pE   = Predictor.predict('entry', de.density);
-  const pX   = Predictor.predict('exit',  dx.density);
-  console.log('[Q] decay-refresh tick — entry:', p60E?.status, '| exit:', p60X?.status);
-  buildAI(de.status, dx.status, de.rel, pE, pX, de.density, dx.density, p60E, p60X);
-}, 20000);
+/* ══════════════════════════════════════════════════════
+   AUTO DECAY — نظام مستقل لتغيير اللون تلقائياً
+   بعد 60 ثانية بدون تقرير جديد: أحمر → برتقالي
+   بعد 30 ثانية إضافية (90s total): برتقالي → أخضر
+   يعمل على entry و exit بشكل مستقل
+   ══════════════════════════════════════════════════════ */
+const AutoDecay = {
+  lastReport: { entry: 0, exit: 0 },   // وقت آخر تقرير فعلي
+
+  /* يُستدعى من submit() و applyDocs() عند وصول تقرير جديد */
+  touch(lane) {
+    this.lastReport[lane] = Date.now();
+    console.log('[Q] AutoDecay.touch', lane, '@ ', new Date().toLocaleTimeString());
+  },
+
+  /* يُحسب اللون المناسب حسب الزمن المنقضي */
+  decayStatus(lane, currentStatus) {
+    const age = (Date.now() - this.lastReport[lane]) / 1000; // بالثواني
+    if (this.lastReport[lane] === 0) return currentStatus;   // لا تقرير بعد
+
+    if (currentStatus === 'red') {
+      if (age >= 90) return 'green';
+      if (age >= 60) return 'orange';
+    }
+    if (currentStatus === 'orange') {
+      if (age >= 90) return 'green';
+    }
+    return currentStatus;
+  },
+
+  /* يعمل كل 5 ثواني — خفيف جداً */
+  tick() {
+    const eStatus = this.decayStatus('entry', Map.eS);
+    const xStatus = this.decayStatus('exit',  Map.xS);
+
+    const ageE = this.lastReport.entry ? ((Date.now()-this.lastReport.entry)/1000).toFixed(0) : '–';
+    const ageX = this.lastReport.exit  ? ((Date.now()-this.lastReport.exit)/1000).toFixed(0)  : '–';
+    console.log('[Q] AutoDecay tick | entry:', Map.eS, '→', eStatus, '('+ageE+'s)',
+                '| exit:', Map.xS, '→', xStatus, '('+ageX+'s)');
+
+    if (eStatus !== Map.eS) {
+      const de = { status: eStatus, count: 0, rel: 0.3, density: 0.2 };
+      applyLane('entry', de);
+    }
+    if (xStatus !== Map.xS) {
+      const dx = { status: xStatus, count: 0, rel: 0.3, density: 0.2 };
+      applyLane('exit', dx);
+    }
+    if (eStatus !== Map.eS || xStatus !== Map.xS) {
+      const p60E = Predictor.predict60('entry', 0.2);
+      const p60X = Predictor.predict60('exit',  0.2);
+      const pE   = Predictor.predict('entry', 0.2);
+      const pX   = Predictor.predict('exit',  0.2);
+      buildAI(eStatus, xStatus, 0.3, pE, pX, 0.2, 0.2, p60E, p60X);
+    }
+  }
+};
+
+setInterval(() => AutoDecay.tick(), 5000);
+
+/* startTimer replaced by AutoDecay — see below */
 
 /* ════ INTRO ════ */
 function runIntro() {
