@@ -1281,56 +1281,45 @@ function applyLane(lane, {status, count, rel}) {
   }
 }
 
+/* آخر حالة وصلت من Firestore لكل جهة — منفصلة تماماً */
+const _fbStatus = { entry: null, exit: null };
+
 function applyDocs(docs) {
   const entry=[], exit_=[];
   docs.forEach(r => { if(r.lane==='entry') entry.push(r); else if(r.lane==='exit') exit_.push(r); });
   entry.sort((a,b)=>b.ts-a.ts);  exit_.sort((a,b)=>b.ts-a.ts);
   cacheEntry = entry;  cacheExit = exit_;
   const de = calcStatus(entry), dx = calcStatus(exit_);
-  /* AutoDecay هو المخوّل الوحيد بتحديث الألوان */
-  if (entry.length) AutoDecay.report('entry', de.status);
-  else              applyLane('entry', de);   // بيانات فارغة — عرض فقط
-  if (exit_.length) AutoDecay.report('exit',  dx.status);
-  else              applyLane('exit',  dx);
 
-  /* تسجيل الحالة الحالية في Predictor */
+  /* AutoDecay.report فقط إذا تغيّرت حالة Firestore — لا علاقة بـ decay */
+  if (entry.length && de.status !== _fbStatus.entry) {
+    _fbStatus.entry = de.status;
+    AutoDecay.report('entry', de.status);
+  } else if (!entry.length) applyLane('entry', de);
+
+  if (exit_.length && dx.status !== _fbStatus.exit) {
+    _fbStatus.exit = dx.status;
+    AutoDecay.report('exit', dx.status);
+  } else if (!exit_.length) applyLane('exit', dx);
+
   Predictor.record('entry', de.status, entry.length);
   Predictor.record('exit',  dx.status, exit_.length);
 
-  /* تنبؤ + إشعارات (بعد 300ms لإعطاء الـ UI أولوية) */
   setTimeout(() => {
-    /* density من calcStatus — يضبط أوزان predict ديناميكياً */
-    const pEntry  = Predictor.predict('entry', de.density);
-    const pExit   = Predictor.predict('exit',  dx.density);
-    const p60E    = Predictor.predict60('entry', de.density);
-    const p60X    = Predictor.predict60('exit',  dx.density);
+    const pEntry = Predictor.predict('entry', de.density);
+    const pExit  = Predictor.predict('exit',  dx.density);
+    const p60E   = Predictor.predict60('entry', de.density);
+    const p60X   = Predictor.predict60('exit',  dx.density);
     Predictor.notify('entry', pEntry, de.status);
     Predictor.notify('exit',  pExit,  dx.status);
-    buildAI(de.status, dx.status, de.rel, pEntry, pExit, de.density, dx.density, p60E, p60X);
-    /* ── console.log شامل: trust + density + weights + prediction ── */
-    const trustScore = (typeof TrustEngine !== 'undefined') ? TrustEngine.getWeight() : 1.0;
-    if (pEntry) console.log(
-      '[Q] predict entry →',
-      'status:', pEntry.status,
-      '| trust:', trustScore,
-      '| density:', de.density !== undefined ? de.density.toFixed(2) : 'n/a',
-      '| wHourly:', pEntry.wHourly,
-      '| wTrend:', pEntry.wTrend,
-      '| trend:', pEntry.trend
-    );
-    if (pExit) console.log(
-      '[Q] predict exit  →',
-      'status:', pExit.status,
-      '| trust:', trustScore,
-      '| density:', dx.density !== undefined ? dx.density.toFixed(2) : 'n/a',
-      '| wHourly:', pExit.wHourly,
-      '| wTrend:', pExit.wTrend,
-      '| trend:', pExit.trend
-    );
+    /* buildAI يقرأ من AutoDecay — لا يتجاوز state المستقل */
+    buildAI(AutoDecay._status('entry'), AutoDecay._status('exit'),
+      de.rel, pEntry, pExit, de.density, dx.density, p60E, p60X);
   }, 300);
 
   setTime();  setBtn(Cool.get());
 }
+
 
 function buildTL() {
   const h = new Date().getHours(), bars = $('tlBars');
@@ -1622,56 +1611,197 @@ setInterval(() => { setTime(); buildTL(); }, 60000);
    AUTO DECAY — نظام مركزي للحالة المعروضة
    كل جهة مستقلة تماماً — applyLane يُستدعى من هنا فقط
    ══════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   DENSITY ENGINE — حساب ديناميكي مبني على الكثافة الفعلية
+   لكل جهة حالة مستقلة تماماً — لا تداخل بين entry و exit
+   ══════════════════════════════════════════════════════════════ */
 const AutoDecay = (() => {
 
+  /* ── ثوابت المعبر الفعلية ── */
+  const QUEUE_MAX_M = { entry: 600, exit: 350 };  // طول منطقة الطابور الكاملة (م)
+  const CAR_SPACE   = 6.0;                         // طول سيارة + مسافة أمان (م)
+  const PROC_RATE   = { entry: 1.8, exit: 2.1  };  // معدل معالجة الجمارك (سيارة/دقيقة)
+
+  /* ── حالة منفصلة لكل جهة ── */
+  const DENSITY_MAP = { green: 0.20, orange: 0.55, red: 0.85 };
+
   const state = {
-    entry: { lastTs: 0, status: 'green' },
-    exit:  { lastTs: 0, status: 'green' }
+    entry: { density: 0, status: 'green', lastTs: 0, prevStatus: 'green',
+             lockMin: 0, buf: [] },   // buf: سجل آخر 5 تقارير
+    exit:  { density: 0, status: 'green', lastTs: 0, prevStatus: 'green',
+             lockMin: 0, buf: [] }
   };
 
-  /* الوحيد المخوّل باستدعاء applyLane */
+  /* ── حساب السعة القصوى ── */
+  function maxCars(lane) {
+    return QUEUE_MAX_M[lane] / CAR_SPACE;
+  }
+
+  /* ── هل الوقت ذروة؟ ── */
+  function isPeak() {
+    const h = new Date().getHours();
+    return (h >= 7 && h < 10) || (h >= 17 && h < 21);
+  }
+
+  /* ── تصنيف الحالة من الكثافة وزمن الانتظار ── */
+  function classify(lane, density) {
+    const cars    = density * maxCars(lane);
+    const wait    = cars / (PROC_RATE[lane] * (isPeak() ? 0.75 : 1.0));
+    const redThr  = isPeak() ? 0.60 : 0.70;
+
+    if (density >= redThr || wait > 25) return 'red';
+    if (density >= 0.40   || wait > 10) return 'orange';
+    return 'green';
+  }
+
+  /* ── منع الانتقال المباشر أحمر↔أخضر ── */
+  function safeTransition(lane, newStatus) {
+    const cur = state[lane].status;
+    if (cur === 'red'   && newStatus === 'green') return 'orange'; // مرحلة وسيطة
+    if (cur === 'green' && newStatus === 'red')   return 'orange';
+    return newStatus;
+  }
+
+  /* ── تطبيق لون جهة واحدة فقط ── */
   function _apply(lane, status) {
-    const prev = state[lane].status;
-    if (status === prev) return;   // لا تغيير — لا تفعل شيئاً
-    state[lane].status = status;
-    const rel = state[lane].lastTs ? 0.5 : 0.1;
-    applyLane(lane, { status, count: 0, rel, density: 0.2 });
-    /* AI بالحالتين الحاليتين */
-    const eS = state.entry.status, xS = state.exit.status;
-    buildAI(eS, xS, 0.3,
-      Predictor.predict('entry',0.2), Predictor.predict('exit',0.2), 0.2, 0.2,
-      Predictor.predict60('entry',0.2), Predictor.predict60('exit',0.2));
-    console.log('[Q] AutoDecay._apply ['+lane+'] '+prev+' → '+status);
-  }
-
-  /* يُستدعى عند وصول حالة جديدة من Firestore أو submit */
-  function report(lane, status) {
     if (lane !== 'entry' && lane !== 'exit') return;
-    state[lane].lastTs = Date.now();
-    _apply(lane, status);
+    const safe = safeTransition(lane, status);
+    const prev = state[lane].status;
+    if (safe === prev) return;
+    state[lane].prevStatus = prev;
+    state[lane].status     = safe;
+    console.log('APPLY:', lane, prev, '→', safe,
+      '| density:', (state[lane].density * 100).toFixed(0) + '%');
+    const rel = state[lane].lastTs ? 0.6 : 0.1;
+    applyLane(lane, { status: safe, count: 0, rel, density: state[lane].density });
+    buildAI(state.entry.status, state.exit.status, 0.4,
+      Predictor.predict('entry', state.entry.density),
+      Predictor.predict('exit',  state.exit.density),
+      state.entry.density, state.exit.density,
+      Predictor.predict60('entry', state.entry.density),
+      Predictor.predict60('exit',  state.exit.density));
   }
 
-  /* decay كل 5 ثواني — يعمل على جهة واحدة فقط */
+  /* ── waitMinutes: زمن الانتظار المحسوب من الكثافة ── */
+  function waitMinutes(lane, density) {
+    const cars = density * maxCars(lane);
+    return cars / (PROC_RATE[lane] * (isPeak() ? 0.75 : 1.0));
+  }
+
+  /* ── weightedDensity: متوسط مرجّح لآخر 5 تقارير ── */
+  function weightedDensity(buf) {
+    if (!buf.length) return 0.20;
+    let sumD = 0, sumW = 0;
+    const slice = buf.slice(-5);
+    slice.forEach((r, i) => {
+      const w = i + 1;   // الأحدث وزنه أعلى
+      sumD += (DENSITY_MAP[r] ?? 0.20) * w;
+      sumW += w;
+    });
+    return sumD / sumW;
+  }
+
+  /* ── conflictRatio: مدى التضارب بين التقارير ── */
+  function conflictRatio(buf) {
+    if (buf.length < 2) return 0;
+    const vals = buf.slice(-5).map(r => DENSITY_MAP[r] ?? 0.20);
+    return Math.max(...vals) - Math.min(...vals);
+  }
+
+  /* ── trendCount: عدد التقارير المتجهة نفس الاتجاه في آخر 3 ── */
+  function trendCount(buf, targetStatus) {
+    return buf.slice(-3).filter(r => r === targetStatus).length;
+  }
+
+  /* ── report: نظام هجين — متوسط مرجّح + آلية استقرار عند التضارب ── */
+  function report(lane, fbStatus) {
+    if (lane !== 'entry' && lane !== 'exit') return;
+    const s = state[lane];
+
+    /* 1. أضف التقرير للبافر */
+    s.buf.push(fbStatus);
+    if (s.buf.length > 5) s.buf.shift();
+
+    /* 2. احسب المتوسط المرجّح والتضارب */
+    const avgD     = weightedDensity(s.buf);
+    const conflict = conflictRatio(s.buf);
+    const proposed = classify(lane, avgD);
+
+    let finalStatus;
+
+    if (conflict < 0.40) {
+      /* تضارب منخفض → اعتمد المتوسط مباشرة */
+      finalStatus = proposed;
+    } else {
+      /* تضارب عالٍ → وضع الاستقرار */
+      const consistent = trendCount(s.buf, proposed);
+      if (consistent >= 2 || s.buf.length >= 5) {
+        /* 2+ تقارير متقاربة أو 5 تقارير كافية → اتخذ القرار */
+        finalStatus = proposed;
+      } else {
+        /* انتظر المزيد — احتفظ بالحالة الحالية */
+        console.log('[Q] hybrid ['+lane+'] CONTESTED conflict='+
+          (conflict*100).toFixed(0)+'% consistent='+consistent+'/2 → hold '+s.status);
+        /* أعد ضبط timer فقط */
+        s.lastTs  = Date.now();
+        s.lockMin = waitMinutes(lane, avgD);
+        return;
+      }
+    }
+
+    /* 3. أعد الضبط الكامل */
+    s.density = avgD;
+    s.lastTs  = Date.now();
+    s.lockMin = waitMinutes(lane, avgD);
+
+    console.log('[Q] hybrid ['+lane+']',
+      'buf:', s.buf.join(','),
+      '| avg:', (avgD*100).toFixed(0)+'%',
+      '| conflict:', (conflict*100).toFixed(0)+'%',
+      '| → ', finalStatus);
+
+    _apply(lane, finalStatus);
+  }
+
+  /* ── tick: Decay يبدأ فقط بعد انتهاء lockMin ── */
   function tick(lane) {
     if (lane !== 'entry' && lane !== 'exit') return;
     const s = state[lane];
     if (!s.lastTs) return;
-    const age = (Date.now() - s.lastTs) / 1000;
-    let next = s.status;
-    if      (s.status === 'red'    && age >= 90) next = 'green';
-    else if (s.status === 'red'    && age >= 60) next = 'orange';
-    else if (s.status === 'orange' && age >= 90) next = 'green';
-    console.log('[Q] tick ['+lane+'] age='+age.toFixed(0)+'s status='+s.status+' → '+next);
+
+    const elapsedMin = (Date.now() - s.lastTs) / 60000;
+    const lockMin    = s.lockMin ?? waitMinutes(lane, s.density);
+
+    if (elapsedMin < lockMin) {
+      console.log('[Q] tick ['+lane+'] locked',
+        elapsedMin.toFixed(1)+'/'+lockMin.toFixed(1)+'min');
+      return;
+    }
+
+    /* بعد lockMin: -5% كل 5 دقائق */
+    const decayMin = elapsedMin - lockMin;
+    const steps    = Math.floor(decayMin / 5);
+    const decayed  = Math.max(0, s.density - steps * 0.05);
+    const next     = classify(lane, decayed);
+
+    console.log('[Q] tick ['+lane+']',
+      'elapsed:', elapsedMin.toFixed(1)+'min',
+      '| lock:', lockMin.toFixed(1)+'min',
+      '| density:', (s.density*100).toFixed(0)+'%→'+(decayed*100).toFixed(0)+'%',
+      '| '+s.status+'→'+next);
     _apply(lane, next);
   }
 
-  return { report, tick };
+  return {
+    report,
+    tick,
+    _status:  lane => state[lane]?.status  ?? 'green',
+    _density: lane => state[lane]?.density ?? 0
+  };
 })();
 
-setInterval(() => AutoDecay.tick('entry'), 5000);
-setInterval(() => AutoDecay.tick('exit'),  5000);
-
-/* startTimer replaced by AutoDecay — see below */
+setInterval(() => AutoDecay.tick('entry'), 30000);  // كل 30 ثانية
+setInterval(() => AutoDecay.tick('exit'),  30000);/* startTimer replaced by AutoDecay — see below */
 
 /* ════ INTRO ════ */
 function runIntro() {
