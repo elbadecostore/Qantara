@@ -92,6 +92,7 @@ body{font-family:'Sora','Noto Naskh Arabic',system-ui,sans-serif;background:var(
 .ai-body{display:flex;flex-direction:column;gap:8px}
 .ai-txt{font-size:13px;font-weight:600;color:var(--text);line-height:1.6}
 .ai-60{font-size:11.5px;font-weight:500;color:var(--muted);opacity:0.88;display:block;margin-top:4px;border-top:1px solid var(--border);padding-top:5px}
+.ai-dbg{font-size:9px;font-weight:400;color:rgba(255,200,0,.55);display:block;margin-top:5px;font-family:monospace;letter-spacing:.02em}
 .ai-tags{display:flex;gap:5px;flex-wrap:wrap}
 .ai-tag{background:var(--faint);border:1px solid var(--border);border-radius:99px;padding:3px 10px;font-size:10px;color:var(--muted)}
 
@@ -101,6 +102,7 @@ body{font-family:'Sora','Noto Naskh Arabic',system-ui,sans-serif;background:var(
 .ai-txt{font-size:12px;line-height:1.5}
 .ai-tags{display:flex;gap:5px;flex-wrap:wrap}
 .ai-60{font-size:11.5px;font-weight:500;color:var(--muted);opacity:0.88;display:block;margin-top:4px;border-top:1px solid var(--border);padding-top:5px}
+.ai-dbg{font-size:9px;font-weight:400;color:rgba(255,200,0,.55);display:block;margin-top:5px;font-family:monospace;letter-spacing:.02em}
 .ai-tag{background:var(--faint);border:1px solid var(--border);border-radius:99px;padding:3px 10px;font-size:10px;color:var(--muted)}
 .ai-tag.hot{background:rgba(255,51,85,.08);border-color:rgba(255,51,85,.2);color:#ff7090}
 /* Stats */
@@ -582,9 +584,14 @@ const Predictor = (() => {
     return {
       status:     VAL_STATUS[predicted60],
       val:        predicted60,
-      confidence,           // نسبة الثقة 30–82%
+      confidence,
       inPeak60,
-      horizon:    60
+      horizon:    60,
+      _debug: {
+        ageMin:      Math.round(ageMin * 100) / 100,
+        decayFactor: Math.round(decayFactor * 1000) / 1000,
+        lastRepTs:   lastRepTs ? new Date(lastRepTs).toLocaleTimeString() : 'NONE'
+      }
     };
   }
 
@@ -1365,6 +1372,14 @@ function buildAI(eS, xS, rel, pEntry, pExit, densityE, densityX, p60E, p60X) {
     es.push(`🔮 Salida/60min: ${STA60[p60X.status].es} (${conf}%)`);
   }
 
+  /* ── DEBUG مؤقت — احذف بعد الاختبار ── */
+  if (p60E && p60E._debug) {
+    const db = p60E._debug;
+    const dbLine = `DEBUG: ageMin=${db.ageMin} | decay=${db.decayFactor} | lastRep=${db.lastRepTs}`;
+    ar.push(dbLine);
+    es.push(dbLine);
+  }
+
   /* ── السياق الزمني ── */
   if(h>=7&&h<=9)  { tags.push({ar:'ذروة AM',es:'Punta AM',hot:true}); }
   if(h>=16&&h<=19){ tags.push({ar:'ذروة PM',es:'Punta PM',hot:true}); }
@@ -1375,8 +1390,12 @@ function buildAI(eS, xS, rel, pEntry, pExit, densityE, densityX, p60E, p60X) {
   /* ── العرض: ETA في الأول دائماً ── */
   /* ETA السطر 1+2، تنبؤ 60د السطر 3+4 — نعرض أول 4 مع فاصل سطر */
   const lines = (isAR?ar:es);
-  $('aiTxt').innerHTML = lines.slice(0,2).join('<br>') +
-    (lines[2] ? '<br><span class="ai-60">'+lines.slice(2,4).join('<br>')+'</span>' : '');
+  const debugLine = lines.find(l => l.startsWith('DEBUG:'));
+  const mainLines = lines.filter(l => !l.startsWith('DEBUG:'));
+  $('aiTxt').innerHTML =
+    mainLines.slice(0,2).join('<br>') +
+    (mainLines[2] ? '<br><span class="ai-60">'+mainLines.slice(2,4).join('<br>')+'</span>' : '') +
+    (debugLine    ? '<br><span class="ai-dbg">'+debugLine+'</span>' : '');
   $('aiTags').innerHTML  = tags.slice(0,3).map(t =>
     '<span class="ai-tag '+(t.hot?'hot':'')+'">'+(isAR?t.ar:t.es)+'</span>'
   ).join('');
