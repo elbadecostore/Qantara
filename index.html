@@ -92,7 +92,6 @@ body{font-family:'Sora','Noto Naskh Arabic',system-ui,sans-serif;background:var(
 .ai-body{display:flex;flex-direction:column;gap:8px}
 .ai-txt{font-size:13px;font-weight:600;color:var(--text);line-height:1.6}
 .ai-60{font-size:11.5px;font-weight:500;color:var(--muted);opacity:0.88;display:block;margin-top:4px;border-top:1px solid var(--border);padding-top:5px}
-.ai-dbg{font-size:9px;font-weight:400;color:rgba(255,200,0,.55);display:block;margin-top:5px;font-family:monospace;letter-spacing:.02em}
 .ai-tags{display:flex;gap:5px;flex-wrap:wrap}
 .ai-tag{background:var(--faint);border:1px solid var(--border);border-radius:99px;padding:3px 10px;font-size:10px;color:var(--muted)}
 
@@ -102,7 +101,6 @@ body{font-family:'Sora','Noto Naskh Arabic',system-ui,sans-serif;background:var(
 .ai-txt{font-size:12px;line-height:1.5}
 .ai-tags{display:flex;gap:5px;flex-wrap:wrap}
 .ai-60{font-size:11.5px;font-weight:500;color:var(--muted);opacity:0.88;display:block;margin-top:4px;border-top:1px solid var(--border);padding-top:5px}
-.ai-dbg{font-size:9px;font-weight:400;color:rgba(255,200,0,.55);display:block;margin-top:5px;font-family:monospace;letter-spacing:.02em}
 .ai-tag{background:var(--faint);border:1px solid var(--border);border-radius:99px;padding:3px 10px;font-size:10px;color:var(--muted)}
 .ai-tag.hot{background:rgba(255,51,85,.08);border-color:rgba(255,51,85,.2);color:#ff7090}
 /* Stats */
@@ -575,15 +573,7 @@ const Predictor = (() => {
     const blended60 = predicted60 * decayFactor + farPattern * (1 - decayFactor);
     predicted60 = Math.max(0, Math.min(2, Math.round(blended60)));
 
-    /* 🔍 DEBUG — احذف بعد الاختبار */
-    console.log('[Q] predict60 DEBUG ['+lane+']',
-      '| ageMin:', ageMin.toFixed(2),
-      '| decay:', decayFactor.toFixed(3),
-      '| predicted_raw:', VAL_STATUS[Math.max(0,Math.min(2,Math.round(predicted60)))],
-      '| blended:', blended60.toFixed(2),
-      '| final:', VAL_STATUS[predicted60],
-      '| lastRepTs:', lastRepTs ? new Date(lastRepTs).toLocaleTimeString() : 'NONE'
-    );
+
 
     /* ── نسبة الثقة ──
        مصادر: density (كثافة التقارير) + consistency (اتساق التاريخ) + بُعد الأفق
@@ -604,12 +594,7 @@ const Predictor = (() => {
       val:        predicted60,
       confidence,
       inPeak60,
-      horizon:    60,
-      _debug: {
-        ageMin:      Math.round(ageMin * 100) / 100,
-        decayFactor: Math.round(decayFactor * 1000) / 1000,
-        lastRepTs:   lastRepTs ? new Date(lastRepTs).toLocaleTimeString() : 'NONE'
-      }
+      horizon:    60
     };
   }
 
@@ -1286,7 +1271,7 @@ function applyLane(lane, {status, count, rel}) {
     $('stRep').textContent = count;
     $('stRel').textContent = Math.round(rel*100) + '%';
     Map.setEntryStatus(status);
-    setZone(status);
+    /* setZone تُستدعى فقط عند فتح sheet — لا عند decay */
   } else {
     $('xSt').textContent = lbl;  $('xSt').style.color = cfg.color;
     $('xWt').textContent = wait;
@@ -1302,9 +1287,11 @@ function applyDocs(docs) {
   entry.sort((a,b)=>b.ts-a.ts);  exit_.sort((a,b)=>b.ts-a.ts);
   cacheEntry = entry;  cacheExit = exit_;
   const de = calcStatus(entry), dx = calcStatus(exit_);
-  applyLane('entry', de);  applyLane('exit', dx);
-  if (entry.length)  AutoDecay.touch('entry', de.status);
-  if (exit_.length)  AutoDecay.touch('exit',  dx.status);
+  /* AutoDecay هو المخوّل الوحيد بتحديث الألوان */
+  if (entry.length) AutoDecay.report('entry', de.status);
+  else              applyLane('entry', de);   // بيانات فارغة — عرض فقط
+  if (exit_.length) AutoDecay.report('exit',  dx.status);
+  else              applyLane('exit',  dx);
 
   /* تسجيل الحالة الحالية في Predictor */
   Predictor.record('entry', de.status, entry.length);
@@ -1404,13 +1391,7 @@ function buildAI(eS, xS, rel, pEntry, pExit, densityE, densityX, p60E, p60X) {
     es.push(`🔮 Salida/60min: ${STA60[p60X.status].es} (${conf}%)`);
   }
 
-  /* ── DEBUG مؤقت — احذف بعد الاختبار ── */
-  if (p60E && p60E._debug) {
-    const db = p60E._debug;
-    const dbLine = `DEBUG: ageMin=${db.ageMin} | decay=${db.decayFactor} | lastRep=${db.lastRepTs}`;
-    ar.push(dbLine);
-    es.push(dbLine);
-  }
+
 
   /* ── السياق الزمني ── */
   if(h>=7&&h<=9)  { tags.push({ar:'ذروة AM',es:'Punta AM',hot:true}); }
@@ -1422,12 +1403,9 @@ function buildAI(eS, xS, rel, pEntry, pExit, densityE, densityX, p60E, p60X) {
   /* ── العرض: ETA في الأول دائماً ── */
   /* ETA السطر 1+2، تنبؤ 60د السطر 3+4 — نعرض أول 4 مع فاصل سطر */
   const lines = (isAR?ar:es);
-  const debugLine = lines.find(l => l.startsWith('DEBUG:'));
-  const mainLines = lines.filter(l => !l.startsWith('DEBUG:'));
   $('aiTxt').innerHTML =
-    mainLines.slice(0,2).join('<br>') +
-    (mainLines[2] ? '<br><span class="ai-60">'+mainLines.slice(2,4).join('<br>')+'</span>' : '') +
-    (debugLine    ? '<br><span class="ai-dbg">'+debugLine+'</span>' : '');
+    lines.slice(0,2).join('<br>') +
+    (lines[2] ? '<br><span class="ai-60">'+lines.slice(2,4).join('<br>')+'</span>' : '');
   $('aiTags').innerHTML  = tags.slice(0,3).map(t =>
     '<span class="ai-tag '+(t.hot?'hot':'')+'">'+(isAR?t.ar:t.es)+'</span>'
   ).join('');
@@ -1538,7 +1516,10 @@ function setGpsUI(s, laneLabel) {
 let _lane = 'entry', _st = null;
 function openSheet() {
   if (Cool.get()>0) return;
-  _st = null;
+  _st  = null;
+  _lane = 'entry';   // دائماً ابدأ بـ entry
+  $('lt-e').classList.add('on');
+  $('lt-x').classList.remove('on');
   ['g','o','r'].forEach(k => { $('opt-'+k).className='opt'; $('r-'+k).textContent=''; });
   $('btnCf').disabled = true;
   $('backdrop').classList.add('open');
@@ -1578,14 +1559,10 @@ function submit() {
 
   if (_lane==='entry') {
     cacheEntry = [nr,...cacheEntry].slice(0,50);
-    const d = calcStatus(cacheEntry);
-    applyLane('entry', d);
-    buildAI(d.status, Map.xS, d.rel, null, null, d.density, 0.5);
   } else {
     cacheExit = [nr,...cacheExit].slice(0,50);
-    applyLane('exit', calcStatus(cacheExit));
   }
-  AutoDecay.touch(_lane, _st);  // سجّل وقت ولون التقرير الجديد
+  AutoDecay.report(_lane, _st);  // AutoDecay هو الوحيد الذي يُطبق اللون
   setTime(); setBtn(Cool.get());
   showToast(lang==='es'?'✅ ¡Actualizado!':'✅ تم التحديث!');
 
@@ -1642,71 +1619,55 @@ setInterval(() => { setTime(); buildTL(); }, 60000);
    يعمل على entry و exit بشكل مستقل
    ══════════════════════════════════════════════════════ */
 /* ══════════════════════════════════════════════════════
-   AUTO DECAY — حالة مستقلة تماماً لكل جهة
-   entry و exit لا يشتركان في أي متغير
+   AUTO DECAY — نظام مركزي للحالة المعروضة
+   كل جهة مستقلة تماماً — applyLane يُستدعى من هنا فقط
    ══════════════════════════════════════════════════════ */
 const AutoDecay = (() => {
 
-  /* سجل منفصل لكل جهة — لا متغير مشترك */
   const state = {
-    entry: { lastTs: 0, currentStatus: 'green' },
-    exit:  { lastTs: 0, currentStatus: 'green' }
+    entry: { lastTs: 0, status: 'green' },
+    exit:  { lastTs: 0, status: 'green' }
   };
 
-  /* يُستدعى عند وصول تقرير جديد لهذه الجهة فقط */
-  function touch(lane, status) {
-    state[lane].lastTs        = Date.now();
-    state[lane].currentStatus = status;
-    console.log('[Q] AutoDecay.touch ['+lane+'] status='+status+' @ '+new Date().toLocaleTimeString());
+  /* الوحيد المخوّل باستدعاء applyLane */
+  function _apply(lane, status) {
+    const prev = state[lane].status;
+    if (status === prev) return;   // لا تغيير — لا تفعل شيئاً
+    state[lane].status = status;
+    const rel = state[lane].lastTs ? 0.5 : 0.1;
+    applyLane(lane, { status, count: 0, rel, density: 0.2 });
+    /* AI بالحالتين الحاليتين */
+    const eS = state.entry.status, xS = state.exit.status;
+    buildAI(eS, xS, 0.3,
+      Predictor.predict('entry',0.2), Predictor.predict('exit',0.2), 0.2, 0.2,
+      Predictor.predict60('entry',0.2), Predictor.predict60('exit',0.2));
+    console.log('[Q] AutoDecay._apply ['+lane+'] '+prev+' → '+status);
   }
 
-  /* يُحسب اللون المناسب لهذه الجهة فقط */
-  function decayStatus(lane) {
-    const s   = state[lane];
-    if (!s.lastTs) return s.currentStatus;       // لا تقرير بعد — لا تغيير
-    const age = (Date.now() - s.lastTs) / 1000; // بالثواني
-
-    if (s.currentStatus === 'red') {
-      if (age >= 90) return 'green';
-      if (age >= 60) return 'orange';
-    }
-    if (s.currentStatus === 'orange') {
-      if (age >= 90) return 'green';
-    }
-    return s.currentStatus;
+  /* يُستدعى عند وصول حالة جديدة من Firestore أو submit */
+  function report(lane, status) {
+    if (lane !== 'entry' && lane !== 'exit') return;
+    state[lane].lastTs = Date.now();
+    _apply(lane, status);
   }
 
-  /* tick(lane): يعمل على جهة واحدة فقط — لا يلمس الجهة الأخرى */
+  /* decay كل 5 ثواني — يعمل على جهة واحدة فقط */
   function tick(lane) {
     if (lane !== 'entry' && lane !== 'exit') return;
-    const newStatus = decayStatus(lane);
-    const s         = state[lane];
-    const age       = s.lastTs ? ((Date.now()-s.lastTs)/1000).toFixed(0)+'s' : '–';
-    const mapStatus = lane === 'entry' ? Map.eS : Map.xS;
-
-    console.log('[Q] AutoDecay.tick ['+lane+'] '+mapStatus+' → '+newStatus+' ('+age+')');
-
-    if (newStatus !== mapStatus) {
-      /* تحديث هذه الجهة فقط */
-      state[lane].currentStatus = newStatus;
-      const d = { status: newStatus, count: 0, rel: 0.3, density: 0.2 };
-      applyLane(lane, d);
-
-      /* تحديث بطاقة AI بالحالتين الحاليتين */
-      const eS   = lane === 'entry' ? newStatus : Map.eS;
-      const xS   = lane === 'exit'  ? newStatus : Map.xS;
-      const p60E = Predictor.predict60('entry', 0.2);
-      const p60X = Predictor.predict60('exit',  0.2);
-      const pE   = Predictor.predict('entry', 0.2);
-      const pX   = Predictor.predict('exit',  0.2);
-      buildAI(eS, xS, 0.3, pE, pX, 0.2, 0.2, p60E, p60X);
-    }
+    const s = state[lane];
+    if (!s.lastTs) return;
+    const age = (Date.now() - s.lastTs) / 1000;
+    let next = s.status;
+    if      (s.status === 'red'    && age >= 90) next = 'green';
+    else if (s.status === 'red'    && age >= 60) next = 'orange';
+    else if (s.status === 'orange' && age >= 90) next = 'green';
+    console.log('[Q] tick ['+lane+'] age='+age.toFixed(0)+'s status='+s.status+' → '+next);
+    _apply(lane, next);
   }
 
-  return { touch, tick };
+  return { report, tick };
 })();
 
-/* جهتان مستقلتان — كل واحدة لها interval منفصل */
 setInterval(() => AutoDecay.tick('entry'), 5000);
 setInterval(() => AutoDecay.tick('exit'),  5000);
 
