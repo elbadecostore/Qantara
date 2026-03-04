@@ -1303,8 +1303,8 @@ function applyDocs(docs) {
   cacheEntry = entry;  cacheExit = exit_;
   const de = calcStatus(entry), dx = calcStatus(exit_);
   applyLane('entry', de);  applyLane('exit', dx);
-  if (entry.length)  AutoDecay.touch('entry');
-  if (exit_.length)  AutoDecay.touch('exit');
+  if (entry.length)  AutoDecay.touch('entry', de.status);
+  if (exit_.length)  AutoDecay.touch('exit',  dx.status);
 
   /* تسجيل الحالة الحالية في Predictor */
   Predictor.record('entry', de.status, entry.length);
@@ -1585,7 +1585,7 @@ function submit() {
     cacheExit = [nr,...cacheExit].slice(0,50);
     applyLane('exit', calcStatus(cacheExit));
   }
-  AutoDecay.touch(_lane);  // سجّل وقت التقرير الجديد
+  AutoDecay.touch(_lane, _st);  // سجّل وقت ولون التقرير الجديد
   setTime(); setBtn(Cool.get());
   showToast(lang==='es'?'✅ ¡Actualizado!':'✅ تم التحديث!');
 
@@ -1641,59 +1641,74 @@ setInterval(() => { setTime(); buildTL(); }, 60000);
    بعد 30 ثانية إضافية (90s total): برتقالي → أخضر
    يعمل على entry و exit بشكل مستقل
    ══════════════════════════════════════════════════════ */
-const AutoDecay = {
-  lastReport: { entry: 0, exit: 0 },   // وقت آخر تقرير فعلي
+/* ══════════════════════════════════════════════════════
+   AUTO DECAY — حالة مستقلة تماماً لكل جهة
+   entry و exit لا يشتركان في أي متغير
+   ══════════════════════════════════════════════════════ */
+const AutoDecay = (() => {
 
-  /* يُستدعى من submit() و applyDocs() عند وصول تقرير جديد */
-  touch(lane) {
-    this.lastReport[lane] = Date.now();
-    console.log('[Q] AutoDecay.touch', lane, '@ ', new Date().toLocaleTimeString());
-  },
+  /* سجل منفصل لكل جهة — لا متغير مشترك */
+  const state = {
+    entry: { lastTs: 0, currentStatus: 'green' },
+    exit:  { lastTs: 0, currentStatus: 'green' }
+  };
 
-  /* يُحسب اللون المناسب حسب الزمن المنقضي */
-  decayStatus(lane, currentStatus) {
-    const age = (Date.now() - this.lastReport[lane]) / 1000; // بالثواني
-    if (this.lastReport[lane] === 0) return currentStatus;   // لا تقرير بعد
+  /* يُستدعى عند وصول تقرير جديد لهذه الجهة فقط */
+  function touch(lane, status) {
+    state[lane].lastTs        = Date.now();
+    state[lane].currentStatus = status;
+    console.log('[Q] AutoDecay.touch ['+lane+'] status='+status+' @ '+new Date().toLocaleTimeString());
+  }
 
-    if (currentStatus === 'red') {
+  /* يُحسب اللون المناسب لهذه الجهة فقط */
+  function decayStatus(lane) {
+    const s   = state[lane];
+    if (!s.lastTs) return s.currentStatus;       // لا تقرير بعد — لا تغيير
+    const age = (Date.now() - s.lastTs) / 1000; // بالثواني
+
+    if (s.currentStatus === 'red') {
       if (age >= 90) return 'green';
       if (age >= 60) return 'orange';
     }
-    if (currentStatus === 'orange') {
+    if (s.currentStatus === 'orange') {
       if (age >= 90) return 'green';
     }
-    return currentStatus;
-  },
+    return s.currentStatus;
+  }
 
-  /* يعمل كل 5 ثواني — خفيف جداً */
-  tick() {
-    const eStatus = this.decayStatus('entry', Map.eS);
-    const xStatus = this.decayStatus('exit',  Map.xS);
+  /* tick(lane): يعمل على جهة واحدة فقط — لا يلمس الجهة الأخرى */
+  function tick(lane) {
+    if (lane !== 'entry' && lane !== 'exit') return;
+    const newStatus = decayStatus(lane);
+    const s         = state[lane];
+    const age       = s.lastTs ? ((Date.now()-s.lastTs)/1000).toFixed(0)+'s' : '–';
+    const mapStatus = lane === 'entry' ? Map.eS : Map.xS;
 
-    const ageE = this.lastReport.entry ? ((Date.now()-this.lastReport.entry)/1000).toFixed(0) : '–';
-    const ageX = this.lastReport.exit  ? ((Date.now()-this.lastReport.exit)/1000).toFixed(0)  : '–';
-    console.log('[Q] AutoDecay tick | entry:', Map.eS, '→', eStatus, '('+ageE+'s)',
-                '| exit:', Map.xS, '→', xStatus, '('+ageX+'s)');
+    console.log('[Q] AutoDecay.tick ['+lane+'] '+mapStatus+' → '+newStatus+' ('+age+')');
 
-    if (eStatus !== Map.eS) {
-      const de = { status: eStatus, count: 0, rel: 0.3, density: 0.2 };
-      applyLane('entry', de);
-    }
-    if (xStatus !== Map.xS) {
-      const dx = { status: xStatus, count: 0, rel: 0.3, density: 0.2 };
-      applyLane('exit', dx);
-    }
-    if (eStatus !== Map.eS || xStatus !== Map.xS) {
+    if (newStatus !== mapStatus) {
+      /* تحديث هذه الجهة فقط */
+      state[lane].currentStatus = newStatus;
+      const d = { status: newStatus, count: 0, rel: 0.3, density: 0.2 };
+      applyLane(lane, d);
+
+      /* تحديث بطاقة AI بالحالتين الحاليتين */
+      const eS   = lane === 'entry' ? newStatus : Map.eS;
+      const xS   = lane === 'exit'  ? newStatus : Map.xS;
       const p60E = Predictor.predict60('entry', 0.2);
       const p60X = Predictor.predict60('exit',  0.2);
       const pE   = Predictor.predict('entry', 0.2);
       const pX   = Predictor.predict('exit',  0.2);
-      buildAI(eStatus, xStatus, 0.3, pE, pX, 0.2, 0.2, p60E, p60X);
+      buildAI(eS, xS, 0.3, pE, pX, 0.2, 0.2, p60E, p60X);
     }
   }
-};
 
-setInterval(() => AutoDecay.tick(), 5000);
+  return { touch, tick };
+})();
+
+/* جهتان مستقلتان — كل واحدة لها interval منفصل */
+setInterval(() => AutoDecay.tick('entry'), 5000);
+setInterval(() => AutoDecay.tick('exit'),  5000);
 
 /* startTimer replaced by AutoDecay — see below */
 
