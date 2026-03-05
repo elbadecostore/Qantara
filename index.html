@@ -332,27 +332,22 @@ const _app = initializeApp({
   messagingSenderId:'402727898752',
   appId:'1:402727898752:web:e7be8a336d344ad9566065'
 });
-const _db = getFirestore(_app);
+const _db        = getFirestore(_app);
 const reportsCol = collection(_db, 'reports');
-/* مجموعة لحالة الجهتين — Single Source of Truth */
-const lanesRef = {
+const lanesRef   = {
   entry: doc(_db, 'lanes_state', 'entry'),
   exit:  doc(_db, 'lanes_state', 'exit')
 };
 const $ = id => document.getElementById(id);
 
 /* ══ Config ══ */
-const COOL_KEY  = 'qnt_v11_cool';
-const COOLDOWN  = 5 * 1000;
-const WIN_MS    = 2 * 60 * 60 * 1000;
-const RECENT_MS = 20 * 60 * 1000;
-const TEST_MODE = false;
+const COOL_KEY        = 'qnt_v11_cool';
+const COOLDOWN        = 5 * 1000;
+const WIN_MS          = 2 * 60 * 60 * 1000;
+const RECENT_MS       = 20 * 60 * 1000;
+const TEST_MODE       = false;
 const DECAY_HALF_LIFE = Infinity;
 
-/* ══════════════════════════════════════════════════════════════
-   TRUST ENGINE — نظام ثقة التقارير (خفيف، بدون قواعد بيانات)
-   يعتمد على localStorage فقط، ذاكرة محدودة بـ 20 تقرير
-   ══════════════════════════════════════════════════════════════ */
 const TrustEngine = (() => {
   const LS_KEY    = 'qnt_trust_v1';
   const MAX_REPS  = 20;           // حد أقصى للذاكرة
@@ -723,6 +718,7 @@ const ST = {
 /* ══ حدود الخريطة — تعتمد على أبعد نقطة RED لكل جانب ══
    entry RED = [35.8656304, -5.3449871]  (جنوب — الفنيدق)
    exit  RED = [35.8737875, -5.3427031]  (شمال — داخل سبتة) */
+
 const MAP_BOUNDS = {
   south: 35.862,   // جنوب — RN-16A / Loma el Auyal
   north: 35.879,   // شمال — Frontera de Ceuta / Arcos Quebrados
@@ -997,43 +993,6 @@ function fbAddReport(lane, status, weight) {
     .catch(err => { console.error('[Q] write:', err); setFbUI(false); return false; });
 }
 
-let cacheEntry = [], cacheExit = [], lang = 'ar';
-
-function calcStatus(reps) {
-  if (!reps.length) return {status:'green', count:0, rel:0, density:0};
-  const now = Date.now();
-  const sc  = {green:0, orange:0, red:0};
-
-  /* عدد التقارير في آخر 20 دقيقة — لحساب الكثافة */
-  const recentCount = reps.filter(r => (now - r.ts) < RECENT_MS).length;
-  const density     = Math.min(1, recentCount / 5); // 0..1 (5 تقارير = كثافة عالية)
-
-  reps.forEach(r => {
-    /* وزن التقرير:
-       - عادي:      حديث×2، قديم×1
-       - TEST_MODE: exponential decay = 2^(-age/halfLife) → يتناقص مع الزمن */
-    let timeW;
-    if (TEST_MODE && isFinite(DECAY_HALF_LIFE)) {
-      const ageMs = now - r.ts;
-      const raw   = Math.pow(2, -ageMs / DECAY_HALF_LIFE);
-      timeW = Math.max(raw, 0.25);
-      console.log('[Q]DECAY|',r.status,'| age:'+Math.round(ageMs/1000)+'s | raw:'+raw.toFixed(3)+' | w:'+timeW.toFixed(3));
-    } else {
-      timeW = (now - r.ts) < RECENT_MS ? 2 : 1;
-    }
-    const trustW = r.w || 1.0;
-    sc[r.status] = (sc[r.status]||0) + timeW * trustW;
-  });
-
-  const finalStatus = Object.keys(sc).sort((a,b) => sc[b]-sc[a])[0];
-  console.log('[Q]RESULT| sc:', JSON.stringify(sc), '→', finalStatus);
-  return {
-    status: finalStatus,
-    count:   reps.length,
-    rel:     Math.min(1, reps.length / 8),
-    density  // كثافة التقارير الحديثة — يستخدمها Predictor
-  };
-}
 
 /* ════════════════════════════════════════════════════
    MAP ENGINE
@@ -1279,68 +1238,66 @@ const Map = {
   start() {}
 };
 
-/* ════ UI Functions ════ */
-/* ── حالة المؤشر ── */
-let _listenerActive = false;  // هل onSnapshot متصل؟
-let _lastDataTs     = 0;      // آخر بيانات فعلية وصلت
-const LIVE_WINDOW   = 2 * 60 * 1000;  // 120 ثانية
+
+/* ════════════════════════════════════════════════════════════════
+   UI HELPERS
+   ════════════════════════════════════════════════════════════════ */
+let _listenerActive = false, _lastDataTs = 0;
+const LIVE_WINDOW = 2 * 60 * 1000;
 
 function setFbUI(on, n) {
   if (on !== undefined) _listenerActive = on;
-
-  /* الشرط المزدوج: اتصال نشط + بيانات حديثة < 120 ثانية */
-  const hasRecentData = (Date.now() - _lastDataTs) < LIVE_WINDOW;
-  const isLive        = _listenerActive && hasRecentData;
-
-  $('fbBadge').className = 'fb-badge ' + (isLive ? 'on' : 'off');
-  $('fbTxt').textContent = isLive
+  const live = _listenerActive && (Date.now() - _lastDataTs) < LIVE_WINDOW;
+  $('fbBadge').className = 'fb-badge ' + (live ? 'on' : 'off');
+  $('fbTxt').textContent = live
     ? '🔥 Live' + (n !== undefined ? ' · ' + n + ' doc' : '')
     : '⚠️ Reconnecting…';
 }
-
-/* فحص دوري كل 30 ثانية — يُحوّل إلى Reconnecting إذا انقطعت البيانات */
 setInterval(() => setFbUI(), 30000);
 
 function setLang(l) {
   lang = l;
-  document.body.classList.toggle('es', l==='es');
-  $('lb-ar').classList.toggle('on', l==='ar');
-  $('lb-es').classList.toggle('on', l==='es');
+  document.body.classList.toggle('es', l === 'es');
+  $('lb-ar').classList.toggle('on', l === 'ar');
+  $('lb-es').classList.toggle('on', l === 'es');
   Map._updateTooltips();
 }
 
 function setZone(s) {
   ['green','orange','red'].forEach(z => {
-    $('z-'+z).className = 'zone z'+z[0] + (z===s?' on':'');
+    $('z-' + z).className = 'zone z' + z[0] + (z === s ? ' on' : '');
   });
 }
 
+/* ════════════════════════════════════════════════════════════════
+   applyLane — النقطة الوحيدة لتحديث واجهة المستخدم
+   يُستدعى فقط من TrafficState.render()
+   ════════════════════════════════════════════════════════════════ */
 function applyLane(lane, {status, count, rel}) {
-  const cfg  = ST[status];
-  const lbl  = lang==='es' ? cfg.es  : cfg.ar;
-  const wait = lang==='es' ? cfg.wes : cfg.war;
+  const cfg  = ST[status] ?? ST.green;
+  const lbl  = lang === 'es' ? cfg.es  : cfg.ar;
+  const wait = lang === 'es' ? cfg.wes : cfg.war;
   if (lane === 'entry') {
     $('eSt').textContent = lbl;  $('eSt').style.color = cfg.color;
     $('eWt').textContent = wait;
-    $('eBar').style.cssText = 'width:'+cfg.fill+'%;background:'+cfg.color;
+    $('eBar').style.cssText = 'width:' + cfg.fill + '%;background:' + cfg.color;
     $('lc-e').style.borderColor = cfg.color;
     document.documentElement.style.setProperty('--si', cfg.color);
     document.documentElement.style.setProperty('--sb', cfg.bg);
-    $('pillTxt').textContent = (lang==='es'?'Entrada: ':'دخول: ') + lbl;
-    $('stRep').textContent = count;
-    $('stRel').textContent = Math.round(rel*100) + '%';
+    $('pillTxt').textContent = (lang === 'es' ? 'Entrada: ' : 'دخول: ') + lbl;
+    $('stRep').textContent = (count > 0) ? count : '—';
+    $('stRel').textContent = (count > 0) ? Math.round((rel ?? 0) * 100) + '%' : '—';
     Map.setEntryStatus(status);
-    /* setZone تُستدعى فقط عند فتح sheet — لا عند decay */
   } else {
     $('xSt').textContent = lbl;  $('xSt').style.color = cfg.color;
     $('xWt').textContent = wait;
-    $('xBar').style.cssText = 'width:'+cfg.fill+'%;background:'+cfg.color;
+    $('xBar').style.cssText = 'width:' + cfg.fill + '%;background:' + cfg.color;
     $('lc-x').style.borderColor = cfg.color;
     Map.setExitStatus(status);
   }
 }
 
-/* ── إخفاء loading overlay بعد أول snapshot ── */
+/* hideLoader */
 let _loaderHidden = false;
 function hideLoader() {
   if (_loaderHidden) return;
@@ -1348,174 +1305,435 @@ function hideLoader() {
   const el = document.getElementById('appLoader');
   if (!el) return;
   el.style.opacity = '0';
-  setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 450);
+  setTimeout(() => el.parentNode && el.parentNode.removeChild(el), 450);
 }
 
-/* ══════════════════════════════════════════════════════
-   LANE STATE — Firestore كمصدر وحيد للحالة
-   saveLaneState(): يكتب عند كل تغيير في AutoDecay
-   loadLaneState(): يقرأ عند البدء قبل أي حسابات
-   ══════════════════════════════════════════════════════ */
-async function saveLaneState(lane, data) {
-  /* data: { status, cars, density, waitMin, lastTs } */
-  try {
-    await setDoc(lanesRef[lane], {
-      status:  data.status,
-      cars:    Math.round(data.cars),
-      density: Math.round(data.density * 1000) / 1000,
-      waitMin: Math.round(data.waitMin * 10) / 10,
-      lastTs:  data.lastTs || Date.now(),
-      savedAt: Date.now()
-    }, { merge: true });
-  } catch(e) {
-    console.warn('[Q] saveLaneState ['+lane+']:', e.message);
+/* ════════════════════════════════════════════════════════════════
+   TRAFFIC STATE — مصدر الحقيقة الوحيد
+   ════════════════════════════════════════════════════════════════
+   القواعد الصارمة:
+     1. Firestore lanes_state = الحقيقة الدائمة
+     2. mem[lane]  = مرآة محلية لـ Firestore (قراءة سريعة)
+     3. render()   = النقطة الوحيدة لتحديث الواجهة
+     4. write()    = النقطة الوحيدة للكتابة على Firestore
+     5. boot()     = يقرأ Firestore ويعرض — لا يحسب
+     6. _watch()   = يقرأ فقط — لا يكتب أبداً
+     7. ingest()   = تقارير المجتمع — يحسب ويكتب
+     8. userReport() = تقرير المستخدم — يُطبق فوراً ويكتب
+     9. tick()     = decay تلقائي — يكتب فقط بعد _booted=true
+    10. _seen      = يمنع معالجة نفس التقرير مرتين
+   ════════════════════════════════════════════════════════════════ */
+const TrafficState = (() => {
+
+  const MAX_CARS  = 100;
+  const PROC_MIN  = 3.0;
+  const CARS_INIT = { green: 20, orange: 55, red: 85 };
+
+  /* حالة محلية — مرآة لـ Firestore */
+  const mem = {
+    entry: { status:'green', cars:20, density:0.2, waitMin:6.7, count:0, rel:0, lastTs:0, savedAt:0 },
+    exit:  { status:'green', cars:20, density:0.2, waitMin:6.7, count:0, rel:0, lastTs:0, savedAt:0 }
+  };
+
+  let _booted = false;                          // حارس race conditions
+  const _wlock = { entry:false, exit:false };   // منع كتابات متزامنة
+  const _seen  = { entry:new Set(), exit:new Set() }; // منع تكرار التقارير
+
+  /* ── فيزياء ── */
+  function physics(cars) {
+    return { density: cars / MAX_CARS, waitMin: cars / PROC_MIN };
   }
-}
-
-async function loadLaneState(lane) {
-  try {
-    const snap = await getDoc(lanesRef[lane]);
-    if (snap.exists()) {
-      const d = snap.data();
-      console.log('[Q] loadLaneState ['+lane+']:', d);
-      return d;
-    }
-  } catch(e) {
-    console.warn('[Q] loadLaneState ['+lane+']:', e.message);
+  function isPeak() {
+    const h = new Date().getHours();
+    return (h >= 7 && h < 10) || (h >= 17 && h < 21);
   }
-  return null;
-}
+  function classify(cars) {
+    const { density, waitMin } = physics(cars);
+    const thr = isPeak() ? 0.60 : 0.70;
+    if (density >= thr  || waitMin > 25) return 'red';
+    if (density >= 0.40 || waitMin > 10) return 'orange';
+    return 'green';
+  }
+  function safeStep(cur, next) {
+    if (cur === 'red'   && next === 'green') return 'orange';
+    if (cur === 'green' && next === 'red')   return 'orange';
+    return next;
+  }
 
-/* مراقبة تغييرات lanes_state في الوقت الفعلي */
-function watchLaneState() {
-  /* يراقب lanes_state — يُزامن بين الأجهزة فقط
-     لا يستدعي report() لمنع الحلقات اللانهائية */
-  ['entry','exit'].forEach(lane => {
-    onSnap(lanesRef[lane], snap => {
-      if (!snap.exists()) return;
-      const d = snap.data();
-
-      /* تجاهل إذا البيانات أقدم من ما في الذاكرة */
-      const curTs = AutoDecay._status(lane) ? (d.lastTs ?? 0) : 0;
-
-      /* حدّث _lastReal من Firestore */
-      _lastReal[lane] = {
-        count:   d.count   ?? _lastReal[lane]?.count   ?? 0,
-        rel:     d.rel     ?? _lastReal[lane]?.rel     ?? 0.5,
-        density: d.density ?? _lastReal[lane]?.density ?? 0.2,
-        status:  d.status
-      };
-
-      /* استعِد state AutoDecay من Firestore */
-      AutoDecay._restore(lane, d);
-
-      /* حدّث الواجهة مباشرة بالبيانات الكاملة */
-      applyLane(lane, {
-        status:  d.status,
-        count:   d.count   ?? 0,
-        rel:     d.rel     ?? 0.5,
-        density: d.density ?? 0.2
-      });
-
-      /* حدّث buildAI */
-      const eS = AutoDecay._status('entry');
-      const xS = AutoDecay._status('exit');
-      const dE = AutoDecay._density('entry');
-      const dX = AutoDecay._density('exit');
-      buildAI(eS, xS, d.rel ?? 0.5,
+  /* ════════════════════════════
+     render() — الواجهة فقط
+     لا تكتب Firestore أبداً
+     ════════════════════════════ */
+  function render(lane, d) {
+    /* حدّث mem بالكامل — بما في ذلك savedAt لمنع echo في _watch */
+    Object.assign(mem[lane], d);
+    if (!mem[lane].savedAt && d.savedAt) mem[lane].savedAt = d.savedAt;
+    applyLane(lane, { status: d.status, count: d.count ?? 0, rel: d.rel ?? 0 });
+    const eS = mem.entry.status, xS = mem.exit.status;
+    const dE = mem.entry.density, dX = mem.exit.density;
+    if (typeof buildAI === 'function')
+      buildAI(eS, xS, mem[lane].rel ?? 0,
         Predictor.predict('entry', dE), Predictor.predict('exit', dX),
         dE, dX,
         Predictor.predict60('entry', dE), Predictor.predict60('exit', dX));
+  }
 
-      console.log('[Q] watchLaneState ['+lane+'] ←', d.status, '| cars:', d.cars);
-    }, e => console.warn('[Q] watchLaneState ['+lane+']:', e.message));
+  /* ════════════════════════════
+     write() — Firestore فقط
+     لا تُحدّث الواجهة
+     ════════════════════════════ */
+  async function write(lane, patch) {
+    if (_wlock[lane]) return;
+    _wlock[lane] = true;
+    try {
+      await setDoc(lanesRef[lane], {
+        status:  patch.status,
+        cars:    Math.round(patch.cars   ?? mem[lane].cars),
+        density: +((patch.density ?? mem[lane].density).toFixed(3)),
+        waitMin: +((patch.waitMin ?? mem[lane].waitMin).toFixed(1)),
+        count:   patch.count  ?? mem[lane].count,
+        rel:     patch.rel    ?? mem[lane].rel,
+        lastTs:  patch.lastTs ?? mem[lane].lastTs,
+        savedAt: Date.now()
+      }, { merge: true });
+    } catch(e) {
+      console.warn('[Q] write [' + lane + ']:', e.message);
+    } finally {
+      _wlock[lane] = false;
+    }
+  }
+
+  /* ════════════════════════════════════════
+     boot() — يُستدعى مرة واحدة عند الفتح
+       1. اقرأ lanes_state من Firestore
+       2. اعرض فوراً بدون أي حساب
+       3. أطلق _watch() و startListeners()
+     ════════════════════════════════════════ */
+  async function boot() {
+    console.log('[Q] boot: reading Firestore...');
+    const [sE, sX] = await Promise.all([
+      getDoc(lanesRef.entry).catch(() => null),
+      getDoc(lanesRef.exit).catch(()  => null)
+    ]);
+    if (sE && sE.exists()) {
+      const d = sE.data();
+      console.log('[Q] boot entry:', d.status, '| cars:', d.cars,
+        '| saved:', new Date(d.savedAt || 0).toLocaleTimeString());
+      /* render مباشر — بدون أي حساب */
+      render('entry', d);
+      /* سجّل lastTs حتى يرفض ingest التقارير الأقدم */
+      if (d.lastTs) mem.entry.lastTs = d.lastTs;
+      if (d.savedAt) mem.entry.savedAt = d.savedAt;
+    }
+    if (sX && sX.exists()) {
+      const d = sX.data();
+      console.log('[Q] boot exit:', d.status, '| cars:', d.cars);
+      render('exit', d);
+      if (d.lastTs) mem.exit.lastTs = d.lastTs;
+      if (d.savedAt) mem.exit.savedAt = d.savedAt;
+    }
+    hideLoader();
+    _booted = true;
+    console.log('[Q] boot complete — _booted=true, starting listeners');
+    /* ابدأ المستمعين بعد _booted=true — ingest محمي بـ lastTs */
+    _watch();
+    startListeners();
+  }
+
+  /* ════════════════════════════════════════
+     _watch() — مزامنة فورية بين الأجهزة
+     يقرأ lanes_state — لا يكتب أبداً
+     يتجاهل التحديثات الأقدم من mem.savedAt
+     ════════════════════════════════════════ */
+  function _watch() {
+    ['entry', 'exit'].forEach(lane => {
+      /* أول snapshot بعد onSnap يكون البيانات الحالية — نتجاهله إذا طابق boot */
+      let _firstSnap = true;
+      onSnap(lanesRef[lane], snap => {
+        if (!snap.exists()) return;
+        const d = snap.data();
+
+        /* أول snapshot: هو نفس ما قرأه boot — تجاهل لمنع double-render */
+        if (_firstSnap) {
+          _firstSnap = false;
+          /* حدّث mem فقط بدون render إذا savedAt مطابق */
+          if (d.savedAt && mem[lane].savedAt && d.savedAt === mem[lane].savedAt) {
+            console.log('[Q] watch ['+lane+'] first snap = boot data, skip render');
+            return;
+          }
+        }
+
+        /* تجاهل إذا هذا التحديث أقدم أو نفس savedAt (كتبناه نحن) */
+        if (d.savedAt && mem[lane].savedAt && d.savedAt <= mem[lane].savedAt) {
+          console.log('[Q] watch ['+lane+'] skipped (savedAt not newer)');
+          return;
+        }
+
+        console.log('[Q] watch ['+lane+'] ← REMOTE', d.status, '| cars:', d.cars,
+          '| savedAt:', new Date(d.savedAt||0).toLocaleTimeString());
+        render(lane, d);
+      }, e => console.warn('[Q] watch ['+lane+']:', e.message));
+    });
+  }
+
+  /* ════════════════════════════════════════
+     ingest() — تقارير المجتمع من onSnapshot
+     يمنع معالجة نفس التقرير مرتين
+     يحسب متوسط مرجّح ويكتب Firestore
+     ════════════════════════════════════════ */
+  function ingest(lane, reports, meta) {
+    if (!_booted || !reports.length) return;
+
+    /* تجاهل التقارير الأقدم من آخر حالة مخزنة في lanes_state */
+    const laneLastTs = mem[lane].lastTs || 0;
+    const freshReports = reports.filter(r => r.ts > laneLastTs);
+    if (!freshReports.length) {
+      console.log('[Q] ingest ['+lane+'] skipped — no reports newer than lastTs');
+      return;
+    }
+
+    /* تجاهل إذا رأيناها من قبل */
+    const unseen = freshReports.filter(r => !_seen[lane].has(r.ts));
+    if (!unseen.length) return;
+    unseen.forEach(r => _seen[lane].add(r.ts));
+    if (_seen[lane].size > 300)
+      _seen[lane] = new Set([..._seen[lane]].slice(-150));
+
+    /* متوسط مرجّح فقط من التقارير الجديدة */
+    const top5 = freshReports.slice(0, 5);
+    let sumC = 0, sumW = 0;
+    top5.forEach((r, idx) => {
+      const w = top5.length - idx;
+      sumC += (CARS_INIT[r.status] ?? 20) * w;
+      sumW += w;
+    });
+    const avgCars = Math.round(sumC / sumW);
+    const { density, waitMin } = physics(avgCars);
+    const safe    = safeStep(mem[lane].status, classify(avgCars));
+    const now     = Date.now();
+    const patch   = { status: safe, cars: avgCars, density, waitMin,
+                      count:  meta?.count ?? freshReports.length,
+                      rel:    meta?.rel   ?? Math.min(1, freshReports.length / 8),
+                      lastTs: now, savedAt: now };
+    console.log('[Q] ingest ['+lane+']', top5.map(r=>r.status).join(','),
+      '→', safe, '| cars:', avgCars, '| freshReports:', freshReports.length);
+    render(lane, patch);
+    write(lane, patch);
+  }
+
+  /* ════════════════════════════════════════
+     userReport() — تقرير المستخدم (submit)
+     يُطبق فوراً محلياً ثم يكتب Firestore
+     ════════════════════════════════════════ */
+  function userReport(lane, status, meta) {
+    if (!_booted) return;
+    const cars = CARS_INIT[status] ?? 20;
+    const { density, waitMin } = physics(cars);
+    const safe  = safeStep(mem[lane].status, status);
+    const now   = Date.now();
+    const patch = { status: safe, cars, density, waitMin,
+                    count: meta?.count ?? mem[lane].count ?? 0,
+                    rel:   meta?.rel   ?? mem[lane].rel   ?? 0,
+                    lastTs: now, savedAt: now };
+    console.log('[Q] userReport [' + lane + '] →', safe, '| cars:', cars);
+    _seen[lane].add(now); /* منع re-ingest من onSnapshot */
+    render(lane, patch);
+    write(lane, patch);
+  }
+
+  /* ════════════════════════════════════════
+     tick() — decay -10% كل 5 دقائق
+     يكتب Firestore → _watch يُزامن الأجهزة
+     لا يعمل قبل boot (_booted guard)
+     ════════════════════════════════════════ */
+  function tick(lane) {
+    if (!_booted) return;
+    const m = mem[lane];
+    /* لا decay إذا لم يُضبَط lastTs من Firestore */
+    if (!m.lastTs || m.cars <= 0) return;
+    /* لا decay إذا lastTs أحدث من 5 دقائق */
+    const elapsed = (Date.now() - m.lastTs) / 60000;
+    if (elapsed < 5) return;   /* حارس مضاعف */
+    const steps   = Math.floor(elapsed / 5);
+    if (steps < 1) return;
+    const decayed = Math.max(0, m.cars * Math.pow(0.90, steps));
+    const next    = classify(decayed);
+    const safe    = safeStep(m.status, next);
+    if (safe === m.status && Math.abs(decayed - m.cars) < 2) return;
+    const { density, waitMin } = physics(decayed);
+    const patch = { status: safe, cars: decayed, density, waitMin,
+                    count: m.count, rel: m.rel,
+                    lastTs: m.lastTs, /* نحتفظ بـ lastTs الأصلي */
+                    savedAt: Date.now() };
+    console.log('[Q] tick [' + lane + ']', m.status, '→', safe,
+      '| cars:', Math.round(m.cars), '→', Math.round(decayed));
+    render(lane, patch);
+    write(lane, patch);
+  }
+
+  return {
+    boot, ingest, userReport, tick,
+    status:  lane => mem[lane]?.status  ?? 'green',
+    density: lane => mem[lane]?.density ?? 0.2,
+    debug: lane => {
+      const m = mem[lane]; if (!m) return null;
+      const { density, waitMin } = physics(m.cars);
+      return { cars: Math.round(m.cars), density: (density*100).toFixed(1)+'%',
+               wait: waitMin.toFixed(1)+' min', status: m.status, buf: '—' };
+    }
+  };
+})();
+
+/* tick كل 5 دقائق — يعمل فقط بعد boot (_booted guard) */
+setInterval(() => TrafficState.tick('entry'), 5 * 60 * 1000);
+setInterval(() => TrafficState.tick('exit'),  5 * 60 * 1000);
+
+/* ════════════════════════════════════════════════════════════════
+   calcStatus — لـ Predictor وحساب count/rel فقط
+   لا يتحكم في الألوان — TrafficState هو المتحكم الوحيد
+   ════════════════════════════════════════════════════════════════ */
+let cacheEntry = [], cacheExit = [], lang = 'ar';
+
+function calcStatus(reps) {
+  if (!reps.length) return { status:'green', count:0, rel:0, density:0 };
+  const now = Date.now(), sc = { green:0, orange:0, red:0 };
+  const recentCount = reps.filter(r => (now - r.ts) < RECENT_MS).length;
+  const density = Math.min(1, recentCount / 5);
+  reps.forEach(r => {
+    const timeW  = (now - r.ts) < RECENT_MS ? 2 : 1;
+    const trustW = r.w || 1.0;
+    sc[r.status] = (sc[r.status] || 0) + timeW * trustW;
   });
+  const finalStatus = Object.keys(sc).sort((a,b) => sc[b] - sc[a])[0];
+  return { status: finalStatus, count: reps.length,
+           rel: Math.min(1, reps.length / 8), density };
 }
 
-/* _processedTs مُعرَّف في applyDocs */
-
-/* آخر بيانات حقيقية من Firestore — تبقى حتى بعد decay */
-const _lastReal = {
-  entry: { count: 0, rel: 0, density: 0.2, status: 'green' },
-  exit:  { count: 0, rel: 0, density: 0.2, status: 'green' }
-};
-
-/* مجموعة IDs التقارير المعالجة — لمنع التكرار */
-const _processedTs = { entry: new Set(), exit: new Set() };
-
+/* ════════════════════════════════════════════════════════════════
+   applyDocs — يُحوّل تقارير Firestore إلى TrafficState.ingest()
+   ════════════════════════════════════════════════════════════════ */
 function applyDocs(docs) {
   const entry = [], exit_ = [];
   docs.forEach(r => {
-    if (r.lane === 'entry') entry.push(r);
-    else if (r.lane === 'exit') exit_.push(r);
+    if      (r.lane === 'entry') entry.push(r);
+    else if (r.lane === 'exit')  exit_.push(r);
   });
   entry.sort((a,b) => b.ts - a.ts);
   exit_.sort((a,b) => b.ts - a.ts);
   cacheEntry = entry;
   cacheExit  = exit_;
-
-  /* حساب حقيقي من كل التقارير — لـ Predictor و _lastReal */
-  const de = calcStatus(entry);
-  const dx = calcStatus(exit_);
-
-  /* حدّث _lastReal دائماً */
-  if (entry.length) {
-    _lastReal.entry = { count: de.count, rel: de.rel, density: de.density, status: de.status };
-  }
-  if (exit_.length) {
-    _lastReal.exit  = { count: dx.count, rel: dx.rel, density: dx.density, status: dx.status };
-  }
-
-  /* مرر قائمة حالات التقارير الحديثة لـ AutoDecay */
-  if (entry.length) {
-    /* تحقق إذا وجد تقرير جديد لم يُعالج بعد */
-    const newEntry = entry.filter(r => !_processedTs.entry.has(r.ts));
-    if (newEntry.length) {
-      newEntry.forEach(r => _processedTs.entry.add(r.ts));
-      /* احتفظ بـ Set بحجم معقول */
-      if (_processedTs.entry.size > 100) {
-        const arr = [..._processedTs.entry].slice(-50);
-        _processedTs.entry = new Set(arr);
-      }
-      const statusList = entry.slice(0, 5).map(r => r.status);
-      AutoDecay.report('entry', statusList);
-    }
-  } else {
-    /* لا تقارير → عرض حالة افتراضية */
-    applyLane('entry', { status: 'green', count: 0, rel: 0, density: 0.2 });
-  }
-
-  if (exit_.length) {
-    const newExit = exit_.filter(r => !_processedTs.exit.has(r.ts));
-    if (newExit.length) {
-      newExit.forEach(r => _processedTs.exit.add(r.ts));
-      if (_processedTs.exit.size > 100) {
-        const arr = [..._processedTs.exit].slice(-50);
-        _processedTs.exit = new Set(arr);
-      }
-      const statusList = exit_.slice(0, 5).map(r => r.status);
-      AutoDecay.report('exit', statusList);
-    }
-  } else {
-    applyLane('exit', { status: 'green', count: 0, rel: 0, density: 0.2 });
-  }
-
-  /* Predictor */
+  const de = calcStatus(entry), dx = calcStatus(exit_);
+  if (entry.length) TrafficState.ingest('entry', entry, { count:de.count, rel:de.rel });
+  if (exit_.length) TrafficState.ingest('exit',  exit_, { count:dx.count, rel:dx.rel });
   Predictor.record('entry', de.status, entry.length);
   Predictor.record('exit',  dx.status, exit_.length);
-  setTimeout(() => {
-    const pE  = Predictor.predict('entry', de.density);
-    const pX  = Predictor.predict('exit',  dx.density);
-    const p60E = Predictor.predict60('entry', de.density);
-    const p60X = Predictor.predict60('exit',  dx.density);
-    Predictor.notify('entry', pE, de.status);
-    Predictor.notify('exit',  pX, dx.status);
-    buildAI(AutoDecay._status('entry'), AutoDecay._status('exit'),
-      de.rel, pE, pX, de.density, dx.density, p60E, p60X);
-  }, 200);
-
   setTime(); setBtn(Cool.get());
 }
+
+/* ════════════════════════════════════════════════════════════════
+   submit — تقرير المستخدم
+   ════════════════════════════════════════════════════════════════ */
+function submit() {
+  if (!_st) return;
+  $('backdrop').classList.remove('open');
+  const trust = TrustEngine.record(_st);
+  if (trust.ignored) {
+    showToast(lang === 'es'
+      ? '⚠️ Reporte inconsistente, ignorado'
+      : '⚠️ تقرير متناقض، تم تجاهله');
+    setBtn(Cool.get());
+    return;
+  }
+  const nr = { lane:_lane, status:_st, ts:Date.now(), w:trust.weight };
+  if (_lane === 'entry') cacheEntry = [nr, ...cacheEntry].slice(0, 50);
+  else                   cacheExit  = [nr, ...cacheExit].slice(0, 50);
+  const cs = calcStatus(_lane === 'entry' ? cacheEntry : cacheExit);
+  TrafficState.userReport(_lane, _st, { count: cs.count, rel: cs.rel });
+  setTime(); setBtn(Cool.get());
+  showToast(lang === 'es' ? '✅ ¡Actualizado!' : '✅ تم التحديث!');
+  fbAddReport(_lane, _st, trust.weight).catch(() =>
+    showToast(lang === 'es' ? '⚠️ Sin conexión' : '⚠️ خطأ في الاتصال'));
+}
+
+/* ════════════════════════════════════════════════════════════════
+   DEBUG
+   ════════════════════════════════════════════════════════════════ */
+function toggleDebug() {
+  const bar = document.getElementById('dbgBar');
+  const btn = document.getElementById('dbgToggle');
+  if (!bar) return;
+  const show = bar.classList.toggle('show');
+  btn.textContent = show ? '🔬 DEBUG ▲' : '🔬 DEBUG';
+  if (show) updateDebug();
+}
+function updateDebug() {
+  const bar = document.getElementById('dbgBar');
+  if (!bar || !bar.classList.contains('show')) return;
+  ['entry', 'exit'].forEach(lane => {
+    const p = lane === 'entry' ? 'E' : 'X';
+    const d = TrafficState.debug(lane);
+    if (!d) return;
+    const set = (id, val) => { const el = $(id); if (el) el.textContent = val; };
+    set('dbg'+p+'Cars', d.cars);
+    set('dbg'+p+'Dens', d.density);
+    set('dbg'+p+'Wait', d.wait);
+    set('dbg'+p+'St',   d.status);
+    set('dbg'+p+'Buf',  d.buf);
+  });
+}
+setInterval(updateDebug, 1000);
+
+/* ════════════════════════════════════════════════════════════════
+   startListeners — onSnapshot + REST polling
+   يُستدعى من boot() بعد اكتمال القراءة الأولى
+   ════════════════════════════════════════════════════════════════ */
+function startListeners() {
+  /* Layer 1: onSnapshot — real-time */
+  try {
+    onSnapshot(reportsCol, snap => {
+      const now = Date.now(), docs = [];
+      snap.forEach(d => {
+        const f = d.data();
+        if (f.lane && f.status && f.tsMs && (now - f.tsMs) <= WIN_MS)
+          docs.push({ lane:f.lane, status:f.status, ts:f.tsMs, w:f.w });
+      });
+      if (docs.length) _lastDataTs = now;
+      setFbUI(true, snap.size);
+      applyDocs(docs);
+      hideLoader();
+    }, err => { console.warn('[Q] onSnapshot:', err.code); setFbUI(false); });
+  } catch(e) { console.warn('[Q] onSnapshot threw:', e.message); }
+
+  /* Layer 2: REST polling كل 10 ثوانٍ */
+  async function poll() {
+    try {
+      const res = await fetch(
+        'https://firestore.googleapis.com/v1/projects/qantara-app-cb1c4' +
+        '/databases/(default)/documents/reports' +
+        '?key=AIzaSyAhefwgwnF2hoipXjEc_rjOW4sSaR1bQCY&pageSize=300'
+      );
+      if (!res.ok) { setFbUI(false); return; }
+      const json = await res.json(), now = Date.now();
+      const docs = (json.documents || []).map(d => {
+        const f = d.fields || {};
+        return {
+          lane:   (f.lane   && f.lane.stringValue)   || '',
+          status: (f.status && f.status.stringValue) || '',
+          ts:     parseInt((f.tsMs && f.tsMs.integerValue) || '0'),
+          w:      parseFloat((f.w && (f.w.doubleValue || f.w.integerValue)) || '1')
+        };
+      }).filter(r => r.lane && r.status && r.ts && (now - r.ts) <= WIN_MS);
+      if (docs.length) _lastDataTs = now;
+      setFbUI(true, docs.length);
+      applyDocs(docs);
+      hideLoader();
+    } catch(e) { setFbUI(false); }
+  }
+  poll();
+  setInterval(poll, 10000);
+}
+
+
 
 
 function buildTL() {
@@ -1724,314 +1942,6 @@ function pickSt(k) {
   $('r-'+m[k]).textContent = '✓';
   $('btnCf').disabled = false;
 }
-function submit() {
-  if (!_st) return;
-  $('backdrop').classList.remove('open');
-
-  const trust = TrustEngine.record(_st);
-  if (trust.ignored) {
-    showToast(lang==='es'
-      ? '⚠️ Reporte inconsistente, ignorado'
-      : '⚠️ تقرير متناقض، تم تجاهله');
-    setBtn(Cool.get());
-    return;
-  }
-
-  /* 1. تطبيق فوري على الواجهة — بدون انتظار Firebase */
-  const now = Date.now();
-  const nr = { lane: _lane, status: _st, ts: now, w: trust.weight };
-
-  /* أضف للـ cache المحلي */
-  if (_lane === 'entry') {
-    cacheEntry = [nr, ...cacheEntry].slice(0, 50);
-    _processedTs.entry.add(now);  // منع معالجته مرة ثانية من onSnapshot
-  } else {
-    cacheExit = [nr, ...cacheExit].slice(0, 50);
-    _processedTs.exit.add(now);
-  }
-
-  /* 2. حدّث _lastReal فوراً */
-  const cache = _lane === 'entry' ? cacheEntry : cacheExit;
-  const de    = calcStatus(cache);
-  _lastReal[_lane] = { count: de.count, rel: de.rel, density: de.density, status: _st };
-
-  /* 3. تطبيق فوري مباشر على الحالة والواجهة */
-  AutoDecay.reportDirect(_lane, _st);
-
-  setTime(); setBtn(Cool.get());
-  showToast(lang==='es' ? '✅ ¡Actualizado!' : '✅ تم التحديث!');
-
-  /* 4. إرسال Firebase في الخلفية */
-  fbAddReport(_lane, _st, trust.weight).catch(() =>
-    showToast(lang==='es' ? '⚠️ Sin conexión' : '⚠️ خطأ في الاتصال')
-  );
-}
-
-/* ════ Listeners — onSnapshot + REST polling ════ */
-function startListeners() {
-
-  /* Layer 1: onSnapshot — real-time */
-  try {
-    onSnapshot(reportsCol,
-      snap => {
-        const now=Date.now(), docs=[];
-        snap.forEach(d => {
-          const f=d.data();
-          if (f.lane && f.status && f.tsMs && (now-f.tsMs)<=WIN_MS)
-            docs.push({lane:f.lane, status:f.status, ts:f.tsMs});
-        });
-        /* تحديث timestamp البيانات الفعلية — شرط LIVE_WINDOW */
-        if (docs.length > 0) _lastDataTs = now;
-        setFbUI(true, snap.size);
-        applyDocs(docs);
-        hideLoader();   // أخفِ loading بعد أول snapshot
-        console.log('[Q] onSnapshot:', snap.size, 'docs | lastDataTs updated:', docs.length>0);
-      },
-      err => { console.warn('[Q] onSnapshot:', err.code); setFbUI(false); }
-    );
-  } catch(e) { console.warn('[Q] onSnapshot threw:', e.message); }
-
-  /* Layer 2: REST polling كل 10 ثوانٍ */
-  async function poll() {
-    const docs = await fetchReports();
-    if (docs===null) { setFbUI(false); return; }
-    /* حدّث _lastDataTs إذا وجدت بيانات حديثة */
-    if (docs.length > 0) _lastDataTs = Date.now();
-    setFbUI(true, docs.length);
-    applyDocs(docs);
-    hideLoader();   // أخفِ loading بعد أول poll ناجح
-    console.log('[Q] REST poll:', docs.length, 'docs | fresh:', docs.length>0);
-  }
-  poll();
-  setInterval(poll, 10000);
-}
-
-setInterval(() => setBtn(Cool.get()), 500);
-setInterval(() => { setTime(); buildTL(); }, 60000);
-
-/* ══════════════════════════════════════════════════════════════
-   TRAFFIC ENGINE — فيزياء مرورية حقيقية
-   ─────────────────────────────────────────────────────────────
-   السيناريو:
-     طول الطابور = 600م | مساحة سيارة = 6م | معدل معالجة = 3 سيارة/دقيقة
-     كثافة = سيارات ÷ سعة قصوى
-     انتظار = سيارات ÷ معدل معالجة
-   Decay تلقائي: -10% من عدد السيارات كل 5 دقائق بدون تحديث
-   اللون لا يتغير إلا من report() أو tick() — entry و exit مستقلتان
-   ══════════════════════════════════════════════════════════════ */
-const AutoDecay = (() => {
-  /* ═══════════════════════════════════════════════════════════
-     TRAFFIC ENGINE — نظام نقي بدون race conditions
-     ─────────────────────────────────────────────────────────
-     • حالة كل جهة مستقلة تماماً
-     • report() = النقطة الوحيدة لتغيير الحالة
-     • _apply() = النقطة الوحيدة لتحديث الواجهة
-     • tick() = decay -10% كل 5 دقائق بدون تحديث
-     ═══════════════════════════════════════════════════════════ */
-
-  const QUEUE_M  = 600;
-  const CAR_SPACE = 6.0;
-  const MAX_CARS  = QUEUE_M / CAR_SPACE;   // 100 سيارة
-  const PROC_MIN  = 3.0;                   // سيارة/دقيقة
-
-  const CARS_MAP = { green: 20, orange: 55, red: 85 };  // ثابت لكل حالة
-
-  /* حالة منفصلة لكل جهة */
-  const state = {
-    entry: { cars: 20, status: 'green', lastTs: 0, lastReportId: '' },
-    exit:  { cars: 20, status: 'green', lastTs: 0, lastReportId: '' }
-  };
-
-  function isPeak() {
-    const h = new Date().getHours();
-    return (h >= 7 && h < 10) || (h >= 17 && h < 21);
-  }
-
-  function calcFromCars(cars) {
-    return {
-      density: cars / MAX_CARS,
-      waitMin: cars / PROC_MIN
-    };
-  }
-
-  function classify(cars) {
-    const { density, waitMin } = calcFromCars(cars);
-    const redThr = isPeak() ? 0.60 : 0.70;
-    if (density >= redThr || waitMin > 25) return 'red';
-    if (density >= 0.40   || waitMin > 10) return 'orange';
-    return 'green';
-  }
-
-  function safeTransition(cur, next) {
-    if (cur === 'red'   && next === 'green') return 'orange';
-    if (cur === 'green' && next === 'red')   return 'orange';
-    return next;
-  }
-
-  /* النقطة الوحيدة لتحديث الواجهة */
-  function _apply(lane, targetStatus) {
-    if (lane !== 'entry' && lane !== 'exit') return;
-    const s    = state[lane];
-    const safe = safeTransition(s.status, targetStatus);
-    const prev = s.status;
-
-    s.status = safe;  // حدّث دائماً حتى لو نفس اللون (لضمان الواجهة)
-
-    const { density, waitMin } = calcFromCars(s.cars);
-
-    /* استخدم _lastReal إذا متوفر — لمنع فراغ اللوحة */
-    const rl = (typeof _lastReal !== 'undefined') ? _lastReal[lane] : null;
-    applyLane(lane, {
-      status:  safe,
-      count:   rl ? rl.count   : 0,
-      rel:     rl ? rl.rel     : 0.5,
-      density: density
-    });
-
-    /* حدّث buildAI */
-    const eS = state.entry.status;
-    const xS = state.exit.status;
-    const dE = calcFromCars(state.entry.cars).density;
-    const dX = calcFromCars(state.exit.cars).density;
-    if (typeof buildAI === 'function') {
-      buildAI(eS, xS, rl?.rel ?? 0.5,
-        Predictor.predict('entry', dE), Predictor.predict('exit', dX),
-        dE, dX,
-        Predictor.predict60('entry', dE), Predictor.predict60('exit', dX));
-    }
-
-    /* احفظ في Firestore */
-    if (safe !== prev || s.cars > 0) {
-      if (typeof saveLaneState === 'function') {
-        saveLaneState(lane, {
-          status:  safe,
-          cars:    s.cars,
-          density: density,
-          waitMin: waitMin,
-          lastTs:  s.lastTs || Date.now(),
-          count:   rl ? rl.count : 0,
-          rel:     rl ? rl.rel   : 0.5
-        });
-      }
-    }
-
-    if (prev !== safe) {
-      console.log('[Q] APPLY ['+lane+']', prev, '→', safe,
-        '| cars:', Math.round(s.cars),
-        '| D:', (density*100).toFixed(0)+'%',
-        '| W:', waitMin.toFixed(1)+'min');
-    }
-  }
-
-  /* ═══════════════════════════════════════════════════════════
-     report() — يُستدعى من:
-       1. submit() مباشرة بعد ضغط المستخدم
-       2. applyDocs() عند وصول snapshot جديد
-     لا يُستدعى من watchLaneState (لمنع الحلقات)
-     ═══════════════════════════════════════════════════════════ */
-  function report(lane, statusList) {
-    /* statusList: مصفوفة من آخر التقارير (['red','orange',...]) */
-    if (lane !== 'entry' && lane !== 'exit') return;
-    if (!statusList || !statusList.length) return;
-
-    const s   = state[lane];
-    const now = Date.now();
-
-    /* متوسط مرجّح — الأحدث وزنه أعلى */
-    const slice = statusList.slice(0, 5);
-    let sumC = 0, sumW = 0;
-    slice.forEach((st, idx) => {
-      const w = slice.length - idx;  // الأحدث (idx=0) وزنه أعلى
-      sumC += (CARS_MAP[st] ?? 20) * w;
-      sumW += w;
-    });
-    const avgCars = sumC / sumW;
-
-    /* تحديث state */
-    s.cars   = avgCars;
-    s.lastTs = now;
-
-    const proposed = classify(avgCars);
-    const { density, waitMin } = calcFromCars(avgCars);
-    console.log('[Q] report ['+lane+']', slice.join(','),
-      '| cars:', Math.round(avgCars),
-      '| D:', (density*100).toFixed(0)+'%',
-      '| W:', waitMin.toFixed(1)+'min',
-      '→', proposed);
-
-    _apply(lane, proposed);
-  }
-
-  /* تطبيق فوري للحالة — بدون حساب متوسط */
-  function reportDirect(lane, status) {
-    if (lane !== 'entry' && lane !== 'exit') return;
-    const s = state[lane];
-    s.cars   = CARS_MAP[status] ?? 20;
-    s.lastTs = Date.now();
-    console.log('[Q] reportDirect ['+lane+'] →', status, '| cars:', s.cars);
-    _apply(lane, status);
-  }
-
-  /* Decay: -10% كل 5 دقائق بدون تحديث خارجي */
-  function tick(lane) {
-    if (lane !== 'entry' && lane !== 'exit') return;
-    const s = state[lane];
-    if (!s.lastTs || s.cars <= 0) return;
-
-    const elapsedMin = (Date.now() - s.lastTs) / 60000;
-    const steps = Math.floor(elapsedMin / 5);
-    if (steps < 1) return;
-
-    const decayed = Math.max(0, s.cars * Math.pow(0.90, steps));
-    const next    = classify(decayed);
-
-    if (next !== s.status || Math.abs(decayed - s.cars) > 1) {
-      console.log('[Q] tick ['+lane+']',
-        'elapsed:', elapsedMin.toFixed(0)+'min | steps:', steps,
-        '| cars:', Math.round(s.cars), '→', Math.round(decayed),
-        '| '+s.status+'→'+next);
-      s.cars = decayed;
-      _apply(lane, next);
-    }
-  }
-
-  /* استعادة الحالة من Firestore — بدون كتابة */
-  function _restore(lane, d) {
-    if (lane !== 'entry' && lane !== 'exit') return;
-    if (!d || !d.status) return;
-    const s = state[lane];
-    if (d.lastTs && s.lastTs && d.lastTs < s.lastTs) return;
-    s.status = d.status;
-    s.cars   = d.cars ?? (CARS_MAP[d.status] ?? 20);
-    s.lastTs = d.lastTs ?? Date.now();
-    console.log('[Q] _restore ['+lane+'] ←', d.status, '| cars:', Math.round(s.cars));
-  }
-
-  return {
-    report,
-    reportDirect,
-    tick,
-    _restore,
-    _apply: (lane, st) => _apply(lane, st),
-    _status:  lane => state[lane]?.status  ?? 'green',
-    _density: lane => calcFromCars(state[lane]?.cars ?? 20).density,
-    _debug: lane => {
-      const s = state[lane];
-      if (!s) return null;
-      const { density, waitMin } = calcFromCars(s.cars);
-      return {
-        cars:    Math.round(s.cars),
-        density: (density*100).toFixed(1)+'%',
-        wait:    waitMin.toFixed(1)+' min',
-        status:  s.status,
-        buf:     '—'
-      };
-    }
-  };
-})();
-
-setInterval(() => AutoDecay.tick('entry'), 5 * 60 * 1000);
-setInterval(() => AutoDecay.tick('exit'),  5 * 60 * 1000);
 function runIntro() {
   const cv = $('introCanvas'), ctx = cv.getContext('2d');
   const W = window.innerWidth, H = window.innerHeight;
@@ -2292,170 +2202,67 @@ function runIntro() {
   requestAnimationFrame(tick);
 }
 
-
-/* ════ BOOT ════ */
+/* ════════════════════════════════════════════════════════════════
+   BOOT — ترتيب التهيئة
+   ════════════════════════════════════════════════════════════════ */
 function toggleDetails() {
-  const panel = $('detailsPanel');
-  const arrow = $('dtlArrow');
+  const panel = $('detailsPanel'), arrow = $('dtlArrow');
   const open  = panel.classList.toggle('open');
   arrow.classList.toggle('open', open);
 }
 
-/* ── DEBUG toggle — لا يؤثر على المنطق ── */
-function toggleDebug() {
-  const bar = document.getElementById('dbgBar');
-  const btn = document.getElementById('dbgToggle');
-  const show = bar.classList.toggle('show');
-  btn.textContent = show ? '🔬 DEBUG ▲' : '🔬 DEBUG';
-  if (show) updateDebug();
-}
+buildTL(); setTime(); setBtn(0);
 
-function updateDebug() {
-  const bar = document.getElementById('dbgBar');
-  if (!bar || !bar.classList.contains('show')) return;
-  const e = AutoDecay._debug('entry');
-  const x = AutoDecay._debug('exit');
-  if (e) {
-    document.getElementById('dbgECars').textContent = e.cars;
-    document.getElementById('dbgEDens').textContent = e.density;
-    document.getElementById('dbgEWait').textContent = e.wait;
-    document.getElementById('dbgESt').textContent   = e.status;
-    document.getElementById('dbgEBuf').textContent  = e.buf;
-  }
-  if (x) {
-    document.getElementById('dbgXCars').textContent = x.cars;
-    document.getElementById('dbgXDens').textContent = x.density;
-    document.getElementById('dbgXWait').textContent = x.wait;
-    document.getElementById('dbgXSt').textContent   = x.status;
-    document.getElementById('dbgXBuf').textContent  = x.buf;
-  }
-}
-
-/* حدّث debug تلقائياً كل ثانية إذا مفتوح */
-setInterval(updateDebug, 1000);
-
-window.setLang   = setLang;
-window.setZone   = setZone;
-window.openSheet = openSheet;
-window.onBD      = onBD;
-window.pickLane  = pickLane;
-window.pickSt    = pickSt;
-window.submit    = submit;
+window.setLang       = setLang;
+window.setZone       = setZone;
+window.openSheet     = openSheet;
+window.onBD          = onBD;
+window.pickLane      = pickLane;
+window.pickSt        = pickSt;
+window.submit        = submit;
 window.toggleDetails = toggleDetails;
 window.toggleDebug   = toggleDebug;
-window.locateMe  = () => {
+window.locateMe      = () => {
   setGpsUI('searching');
-  showToast(lang==='es' ? '📍 Localizando…' : '📍 جاري التحديد…');
+  showToast(lang === 'es' ? '📍 Localizando…' : '📍 جاري التحديد…');
   if (!navigator.geolocation) { setGpsUI('unavailable'); return; }
-  /* طلب موقع فوري عند الضغط */
   navigator.geolocation.getCurrentPosition(
     pos => {
       const lat = pos.coords.latitude, lon = pos.coords.longitude;
       gpsPos = pos.coords;
       if (!inBounds(lat, lon)) {
         setGpsUI('out');
-        showToast(lang==='es'
+        showToast(lang === 'es'
           ? '❌ Estás fuera del paso fronterizo'
           : '❌ أنت خارج نطاق المعبر');
         return;
       }
       setGpsUI('active');
       Map.updateGPS(lat, lon);
-      const lane = detectLane(lat, lon);
-      const laneMsg = lang==='es'
-        ? (lane==='entry' ? '📍 Estás en la cola de entrada' : '📍 Estás en la cola de salida')
-        : (lane==='entry' ? '📍 أنت في طابور الدخول'         : '📍 أنت في طابور الخروج');
+      const lane    = detectLane(lat, lon);
+      const laneMsg = lang === 'es'
+        ? (lane === 'entry' ? '📍 Estás en la cola de entrada' : '📍 Estás en la cola de salida')
+        : (lane === 'entry' ? '📍 أنت في طابور الدخول' : '📍 أنت في طابور الخروج');
       setGpsUI('active', laneMsg);
       showToast(laneMsg);
     },
-    () => { setGpsUI('unavailable'); showToast(lang==='es'?'GPS no disponible':'GPS غير متاح'); },
-    {enableHighAccuracy:true, timeout:8000}
+    () => { setGpsUI('unavailable'); showToast(lang === 'es' ? 'GPS no disponible' : 'GPS غير متاح'); },
+    { enableHighAccuracy:true, timeout:8000 }
   );
 };
 
-buildTL(); setTime(); setBtn(0);
-
-/* ══════════════════════════════════════════════════════
-   BOOT SEQUENCE — ترتيب التهيئة:
-   1. حمّل lanes_state من Firestore (حالة آخر refresh)
-   2. طبّق الحالة المحفوظة على الواجهة فوراً
-   3. ابدأ المستمعين (onSnapshot + polling)
-   4. شاهد lanes_state في الوقت الفعلي (watchLaneState)
-   ══════════════════════════════════════════════════════ */
-async function boot() {
-  /* 1. حمّل حالة entry و exit من Firestore */
-  const [dE, dX] = await Promise.all([
-    loadLaneState('entry'),
-    loadLaneState('exit')
-  ]);
-
-  /* 2. استعِد الحالة المحفوظة — طبّق على الواجهة قبل أي snapshot */
-  if (dE) {
-    AutoDecay._restore('entry', dE);
-    applyLane('entry', {
-      status:  dE.status,
-      count:   dE.count   ?? 0,
-      rel:     dE.rel     ?? 0.5,
-      density: dE.density ?? 0.2
-    });
-    /* حدّث _lastReal من Firestore مباشرة */
-    _lastReal.entry = {
-      count: dE.count ?? 0, rel: dE.rel ?? 0.5,
-      density: dE.density ?? 0.2, status: dE.status
-    };
-    console.log('[Q] boot entry:', dE.status,
-      '| cars:', dE.cars, '| wait:', dE.waitMin + 'min');
-  }
-  if (dX) {
-    AutoDecay._restore('exit', dX);
-    applyLane('exit', {
-      status:  dX.status,
-      count:   dX.count   ?? 0,
-      rel:     dX.rel     ?? 0.5,
-      density: dX.density ?? 0.2
-    });
-    _lastReal.exit = {
-      count: dX.count ?? 0, rel: dX.rel ?? 0.5,
-      density: dX.density ?? 0.2, status: dX.status
-    };
-    console.log('[Q] boot exit:', dX.status,
-      '| cars:', dX.cars, '| wait:', dX.waitMin + 'min');
-  }
-
-  /* بعد restore: حدّث AI panel بالحالة المستعادة */
-  if (dE || dX) {
-    const eS = AutoDecay._status('entry');
-    const xS = AutoDecay._status('exit');
-    const dEn = AutoDecay._density('entry');
-    const dXn = AutoDecay._density('exit');
-    buildAI(eS, xS, 0.5,
-      Predictor.predict('entry', dEn),
-      Predictor.predict('exit',  dXn),
-      dEn, dXn,
-      Predictor.predict60('entry', dEn),
-      Predictor.predict60('exit',  dXn));
-  }
-
-  /* 3. أخفِ loader إذا وُجدت بيانات محفوظة */
-  if (dE || dX) hideLoader();
-
-  /* 4. ابدأ المستمعين الرئيسيين */
-  startListeners();
-
-  /* 5. راقب lanes_state لمزامنة فورية بين الأجهزة */
-  watchLaneState();
-}
-
-boot();
-Map.init();   /* ← يُطلق loadRoutes() بعد تهيئة الخريطة */
+/* تهيئة الخريطة + GPS بالتوازي مع boot */
+Map.init();
 initGPS();
+
+/* boot: اقرأ Firestore → اعرض → شغّل المستمعين */
+TrafficState.boot();
 
 /* الانترو مرة واحدة فقط في الجلسة */
 if (!sessionStorage.getItem('qnt_intro_done')) {
   sessionStorage.setItem('qnt_intro_done', '1');
   runIntro();
 } else {
-  /* الجلسة نفسها — أخفِ الانترو فوراً وأزله */
   const el = $('intro');
   if (el) el.remove();
 }
