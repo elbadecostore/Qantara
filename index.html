@@ -21,8 +21,8 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
 body{font-family:'Sora','Noto Naskh Arabic',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden}
-#intro{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .65s ease,transform .65s ease;animation:loaderFadeOut .6s ease 6s forwards}
-#intro.out{opacity:0;transform:scale(1.05);pointer-events:none;transition:opacity .65s ease,transform .65s ease}
+#intro{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .65s ease,transform .65s ease}
+#intro.out{opacity:0;transform:scale(1.05);pointer-events:none}
 #introCanvas{position:absolute;inset:0;width:100%;height:100%}
 #app{display:flex;flex-direction:column;align-items:center;padding:14px 12px 44px}
 .shell{width:100%;max-width:420px;display:flex;flex-direction:column;gap:10px}
@@ -169,81 +169,24 @@ body:not(.es) [data-es]{display:none!important}
 #dbgToggle{display:block;margin:6px auto 0;background:rgba(255,200,0,.1);
   border:1px solid rgba(255,200,0,.25);color:rgba(255,200,0,.7);
   font-size:10px;font-family:monospace;padding:3px 12px;border-radius:20px;cursor:pointer}
-
-  /* ══════════════════════════════
-     NOTIFICATION SYSTEM CSS
-     ══════════════════════════════ */
-  .notif-fab{position:fixed;top:calc(12px + env(safe-area-inset-top));right:14px;z-index:1050;
-    width:38px;height:38px;border-radius:50%;background:var(--card2);border:1px solid var(--border2);
-    display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;
-    box-shadow:0 2px 10px rgba(0,0,0,.4);transition:transform .15s}
-  .notif-fab:active{transform:scale(.91)}
-  .notif-fab .nbadge{position:absolute;top:-3px;right:-3px;width:14px;height:14px;
-    border-radius:50%;background:var(--red);font-size:8px;font-weight:800;color:#fff;
-    display:flex;align-items:center;justify-content:center;border:1.5px solid var(--bg);display:none}
-  .notif-fab .nbadge.show{display:flex}
-
-  /* لوحة الإعدادات */
-  .notif-panel{position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.72);
-    backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .3s;
-    display:flex;align-items:flex-end}
-  .notif-panel.open{opacity:1;pointer-events:all}
-  .notif-sheet{width:100%;background:#141926;border-radius:22px 22px 0 0;
-    border-top:1px solid var(--border2);padding:20px 18px calc(32px + env(safe-area-inset-bottom));
-    transform:translateY(100%);transition:transform .35s cubic-bezier(.32,0,.15,1)}
-  .notif-panel.open .notif-sheet{transform:translateY(0)}
-  .notif-sheet-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-  .notif-sheet-title{font-size:15px;font-weight:700;color:var(--text)}
-  .notif-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;
-    width:32px;height:32px;display:flex;align-items:center;justify-content:center;
-    border-radius:50%;background:var(--faint)}
-
-  /* أزرار التردد */
-  .notif-freq{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
-  .nfreq-btn{padding:11px 8px;border-radius:12px;border:1.5px solid var(--border);
-    background:var(--card);color:var(--muted);font-family:'Sora',sans-serif;
-    font-size:11px;font-weight:600;cursor:pointer;text-align:center;transition:all .2s;
-    display:flex;flex-direction:column;align-items:center;gap:3px}
-  .nfreq-btn .nf-icon{font-size:18px}
-  .nfreq-btn.on{border-color:var(--si);background:var(--sb);color:var(--si)}
-
-  /* قائمة أنواع الإشعارات */
-  .notif-types{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
-  .ntype-row{display:flex;align-items:center;justify-content:space-between;
-    padding:11px 13px;background:var(--card);border-radius:12px;border:1px solid var(--border)}
-  .ntype-info{display:flex;align-items:center;gap:10px}
-  .ntype-icon{font-size:20px;width:32px;text-align:center}
-  .ntype-label{font-size:13px;font-weight:600;color:var(--text)}
-  .ntype-sub{font-size:10px;color:var(--muted);margin-top:1px}
-
-  /* toggle switch */
-  .ntog{position:relative;width:42px;height:24px;cursor:pointer;flex-shrink:0}
-  .ntog input{opacity:0;width:0;height:0;position:absolute}
-  .nslider{position:absolute;inset:0;background:var(--faint);border-radius:99px;
-    transition:.25s;border:1px solid var(--border2)}
-  .nslider:before{content:'';position:absolute;width:18px;height:18px;
-    background:#888;border-radius:50%;top:2px;left:2px;transition:.25s}
-  .ntog input:checked ~ .nslider{background:rgba(0,212,110,.2);border-color:var(--green)}
-  .ntog input:checked ~ .nslider:before{background:var(--green);transform:translateX(18px)}
-
-  /* زر تفعيل الإذن */
-  .notif-perm-btn{width:100%;padding:13px;border-radius:13px;border:none;
-    background:linear-gradient(135deg,#1a5fff,#00aaff);color:#fff;
-    font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;
-    transition:opacity .2s;display:flex;align-items:center;justify-content:center;gap:8px}
-  .notif-perm-btn:disabled{opacity:.45;cursor:not-allowed}
-  .notif-perm-status{font-size:11px;color:var(--muted);text-align:center;margin-top:8px}
-
-  /* badge تنبيه في AI strip */
-  .ai-alert-badge{display:inline-flex;align-items:center;gap:4px;
-    background:rgba(255,51,85,.15);border:1px solid rgba(255,51,85,.35);
-    border-radius:8px;padding:4px 9px;font-size:11px;font-weight:700;
-    color:var(--red);margin-top:6px;width:100%;box-sizing:border-box}
-  .ai-alert-badge.medium{background:rgba(255,143,0,.13);border-color:rgba(255,143,0,.3);color:var(--orange)}
-  .ai-alert-badge.good{background:rgba(0,212,110,.1);border-color:rgba(0,212,110,.25);color:var(--green)}
 </style>
 </head>
 <body>
+
+<!-- Loading overlay — يختفي بعد أول snapshot -->
+<div id="appLoader" style="
+  position:fixed;inset:0;z-index:9999;
+  background:#0d1117;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:16px;
+  transition:opacity .4s ease;">
+  <div style="width:44px;height:44px;border:3px solid rgba(255,255,255,.1);
+    border-top-color:#f59e0b;border-radius:50%;animation:spin .8s linear infinite"></div>
+  <span style="color:rgba(255,255,255,.5);font-size:13px;font-family:system-ui" id="loaderTxt">جارٍ التحميل…</span>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+<div id="intro"><canvas id="introCanvas"></canvas></div>
 
 <div id="app"><div class="shell">
 
@@ -305,22 +248,11 @@ body:not(.es) [data-es]{display:none!important}
   <span class="dtl-arrow" id="dtlArrow">›</span>
 </div>
 <script>
-let currentLang = "ar";
-function setLang(l)    { if(window._real_setLang)    window._real_setLang(l);    else currentLang=l||"ar"; }
-function setZone(z)    { if(window._real_setZone)    window._real_setZone(z);    }
-function openSheet()   { if(window._real_openSheet)  window._real_openSheet();   }
-function onBD(e)       { if(window._real_onBD)       window._real_onBD(e);       }
-function pickLane(l)   { if(window._real_pickLane)   window._real_pickLane(l);   }
-function pickSt(k)     { if(window._real_pickSt)     window._real_pickSt(k);     }
-function submit()      { if(window._real_submit)     window._real_submit();      }
-function locateMe()    { if(window._real_locateMe)   window._real_locateMe();    }
-function toggleDebug() { if(window._real_toggleDebug)window._real_toggleDebug(); }
-function toggleDetails(){
-  var p=document.getElementById('detailsPanel');
-  var a=document.getElementById('dtlArrow');
-  if(!p) return;
-  var o=p.classList.toggle('open');
-  if(a) a.classList.toggle('open',o);
+function toggleDetails() {
+  var panel = document.getElementById('detailsPanel');
+  var arrow = document.getElementById('dtlArrow');
+  var open  = panel.classList.toggle('open');
+  arrow.classList.toggle('open', open);
 }
 </script>
 
@@ -383,11 +315,14 @@ function toggleDetails(){
     <button class="btn-cf" id="btnCf" disabled onclick="submit()"><span data-ar>إرسال التقرير</span><span data-es>Enviar informe</span></button>
   </div>
 </div>
+
+<div class="toast" id="toast"></div>
+
 <script type="module">
-import { initializeApp }  from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp,
          doc, setDoc, getDoc, onSnapshot as onSnap }
-  from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const _app = initializeApp({
   apiKey:'AIzaSyAhefwgwnF2hoipXjEc_rjOW4sSaR1bQCY',
@@ -399,7 +334,6 @@ const _app = initializeApp({
 });
 const _db        = getFirestore(_app);
 const reportsCol = collection(_db, 'reports');
-
 const lanesRef   = {
   entry: doc(_db, 'lanes_state', 'entry'),
   exit:  doc(_db, 'lanes_state', 'exit')
@@ -1460,8 +1394,6 @@ function setLang(l) {
   $('lb-ar').classList.toggle('on', l === 'ar');
   $('lb-es').classList.toggle('on', l === 'es');
   Map._updateTooltips();
-  /* تحديث لوحة الإشعارات إذا كانت مفتوحة */
-  /* notif panel removed */
 }
 
 function setZone(s) {
@@ -1498,7 +1430,16 @@ function applyLane(lane, {status, count, rel}) {
   }
 }
 
-
+/* hideLoader */
+let _loaderHidden = false;
+function hideLoader() {
+  if (_loaderHidden) return;
+  _loaderHidden = true;
+  const el = document.getElementById('appLoader');
+  if (!el) return;
+  el.style.opacity = '0';
+  setTimeout(() => el.parentNode && el.parentNode.removeChild(el), 450);
+}
 
 /* ════════════════════════════════════════════════════════════════
    TRAFFIC STATE — مصدر الحقيقة الوحيد
@@ -1574,8 +1515,6 @@ const TrafficState = (() => {
         Predictor.predict('entry', dE), Predictor.predict('exit', dX),
         dE, dX,
         Predictor.predict60('entry', dE), Predictor.predict60('exit', dX));
-
-    /* render() — مسؤول عن العرض فقط */
   }
 
   /* ════════════════════════════
@@ -1655,7 +1594,8 @@ const TrafficState = (() => {
     render('entry', mem.entry);
     render('exit',  mem.exit);
 
-    /* الخطوة 5: boot كاملة */
+    /* الخطوة 5: أخفِ loader */
+    hideLoader();
 
     /* الخطوة 6: _booted = true — الآن ingest/tick/userReport مسموحة */
     _booted = true;
@@ -1669,7 +1609,7 @@ const TrafficState = (() => {
     setBtn(Cool.get());
     setInterval(() => setFbUI(), 30000);
     setInterval(updateDebug, 1000);
-      }
+  }
 
   /* ════════════════════════════════════════
      _watch() — مزامنة فورية بين الأجهزة
@@ -1851,7 +1791,6 @@ const TrafficState = (() => {
 
   return {
     boot, ingest, userReport, tick,
-    getState: lane => ({ ...mem[lane] }),
     status:  lane => mem[lane]?.status  ?? 'green',
     density: lane => mem[lane]?.density ?? 0.2,
     debug: lane => {
@@ -1891,6 +1830,10 @@ function calcStatus(reps) {
 /* ════════════════════════════════════════════════════════════════
    applyDocs — يُحوّل تقارير Firestore إلى TrafficState.ingest()
    ════════════════════════════════════════════════════════════════ */
+/* cooldown لتنبيهات CongestionPredictor30 — لا تتكرر أكثر من مرة كل 8 دقائق */
+const _alertCool = { entry: { key: null, ts: 0 }, exit: { key: null, ts: 0 } };
+const ALERT_COOL_MS = 8 * 60 * 1000;
+
 function applyDocs(docs) {
   const entry = [], exit_ = [];
   docs.forEach(r => {
@@ -1907,8 +1850,28 @@ function applyDocs(docs) {
   Predictor.record('entry', de.status, entry.length);
   Predictor.record('exit',  dx.status, exit_.length);
 
+  /* ── تنبيهات تلقائية من CongestionPredictor30 ── */
+  _checkAlert('entry', de.status, de.count);
+  _checkAlert('exit',  dx.status, dx.count);
 
   setTime(); setBtn(Cool.get());
+}
+
+function _checkAlert(lane, liveStatus, reportCount) {
+  const pred = CongestionPredictor30.predict30(lane, liveStatus, reportCount);
+  if (!pred.alert || !pred.msg_ar) return;
+
+  const now = Date.now();
+  const ac  = _alertCool[lane];
+  const key = lane + ':' + pred.level + ':' + pred.minutesAway;
+
+  /* لا تكرر نفس التنبيه خلال 8 دقائق */
+  if (ac.key === key && (now - ac.ts) < ALERT_COOL_MS) return;
+
+  ac.key = key;
+  ac.ts  = now;
+  showToast(lang === 'es' ? pred.msg_es : pred.msg_ar);
+  console.log('[Q] Alert30 ['+lane+']:', pred.level, '| in', pred.minutesAway, 'min');
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -1971,36 +1934,6 @@ function updateDebug() {
    startListeners — onSnapshot + REST polling
    يُستدعى من boot() بعد اكتمال القراءة الأولى
    ════════════════════════════════════════════════════════════════ */
-/* ════════════════════════════════════════════════════════════════
-   SMART NOTIFICATION SYSTEM — نظام الإشعارات الذكي
-   مصدر الحقيقة: Firestore lanes_state (عبر TrafficState)
-   المنطق:
-     1. تفضيلات المستخدم تُحفظ في localStorage + Firestore
-     2. الإشعارات تُرسَل عبر Notification API (Web Push)
-     3. cooldown صارم لمنع التكرار
-     4. تتبع عدد الإشعارات اليومية
-   ════════════════════════════════════════════════════════════════ */
-
-/* ════════════════════════════════════════════════════════════════
-   NOTIFICATION ENGINE — طبقة مستقلة عن render()
-   المعمارية:
-     Firestore snapshot → TrafficState.updateState()
-   التسلسل:
-     1. evaluate() يُستدعى من _watch() و applyDocs()
-     2. يقرأ الحالة الجديدة من المعامل (لا يقرأ من render)
-     3. يقارن مع lastStatus (in-memory)
-     4. يتحقق من cooldown + حد يومي (in-memory)
-     5. يتحقق من تفضيلات المستخدم (localStorage — قراءة فقط)
-     6. debounce 500ms لمنع تكرار snapshots السريعة
-   ════════════════════════════════════════════════════════════════ */
-/* ── دوال UI المكشوفة للـ HTML ── */
-
-
-
-
-async 
-
-
 function startListeners() {
   /* Layer 1: onSnapshot — real-time */
   try {
@@ -2014,7 +1947,8 @@ function startListeners() {
       if (docs.length) _lastDataTs = now;
       setFbUI(true, snap.size);
       applyDocs(docs);
-          }, err => { console.warn('[Q] onSnapshot:', err.code); setFbUI(false); });
+      hideLoader();
+    }, err => { console.warn('[Q] onSnapshot:', err.code); setFbUI(false); });
   } catch(e) { console.warn('[Q] onSnapshot threw:', e.message); }
 
   /* Layer 2: REST polling كل 10 ثوانٍ */
@@ -2039,7 +1973,8 @@ function startListeners() {
       if (docs.length) _lastDataTs = now;
       setFbUI(true, docs.length);
       applyDocs(docs);
-          } catch(e) { setFbUI(false); }
+      hideLoader();
+    } catch(e) { setFbUI(false); }
   }
   poll();
   setInterval(poll, 10000);
@@ -2272,6 +2207,261 @@ function pickSt(k) {
   $('r-'+m[k]).textContent = '✓';
   $('btnCf').disabled = false;
 }
+function runIntro() {
+  const cv = $('introCanvas'), ctx = cv.getContext('2d');
+  const W = window.innerWidth, H = window.innerHeight;
+  cv.width = W; cv.height = H;
+
+  const T_MEET = 48, T_TALK = 62, T_HOLD = 85, T_FADE = 100, T_END = 112;
+  const CX = W/2, CY = H/2;
+  let frame = 0, done = false;
+
+  /* الطريق أفقي في المنتصف */
+  const RY  = CY;
+  const RH  = Math.min(H * 0.13, 68);
+  const LW  = RH * 0.07;
+
+  /* السيارتان */
+  const carA = { x: -70, y: RY - RH*0.20, w: 58, h: 27, col: '#00d46e', dir: 1  }; // 🇲🇦 من اليسار
+  const carB = { x: W+70, y: RY + RH*0.20, w: 58, h: 27, col: '#c60b1e', dir: -1 }; // 🇪🇸 من اليمين
+
+  /* ── رسم سيارة ── */
+  function drawCar(car) {
+    const {x, y, w, h, col, dir} = car;
+    ctx.save();
+    ctx.shadowColor = col; ctx.shadowBlur = 16;
+    /* جسم */
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.roundRect(x-w/2, y-h/2, w, h, h*0.28); ctx.fill();
+    /* سقف */
+    ctx.fillStyle = col === '#00d46e' ? '#009a52' : '#8a0010';
+    ctx.beginPath(); ctx.roundRect(x-w*0.26, y-h/2-h*0.30, w*0.52, h*0.30, h*0.10); ctx.fill();
+    /* زجاج */
+    ctx.fillStyle = 'rgba(190,235,255,0.45)';
+    ctx.beginPath(); ctx.roundRect(
+      dir>0 ? x+w*0.06 : x-w*0.46, y-h*0.36, w*0.40, h*0.27, h*0.07
+    ); ctx.fill();
+    /* أضواء */
+    const lx = dir>0 ? x+w/2-5 : x-w/2+5;
+    const lc = dir>0 ? '#ffffa0' : '#ff2244';
+    ctx.fillStyle = lc; ctx.shadowColor = lc; ctx.shadowBlur = 12;
+    [y-h*0.17, y+h*0.17].forEach(ly => {
+      ctx.beginPath(); ctx.arc(lx, ly, 2.8, 0, Math.PI*2); ctx.fill();
+    });
+    /* عجلات */
+    ctx.shadowBlur = 0;
+    [x-w*0.28, x+w*0.28].forEach(wx => {
+      ctx.fillStyle = '#0a0e1a';
+      ctx.beginPath(); ctx.ellipse(wx, y+h*0.50, h*0.22, h*0.22, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#1e2a44';
+      ctx.beginPath(); ctx.ellipse(wx, y+h*0.50, h*0.10, h*0.10, 0, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  /* ── فقاعة كلام ── */
+  function drawBubble(x, y, text, flag, dir, alpha) {
+    if (alpha <= 0) return;
+    const fs   = W < 380 ? 13 : 15;
+    const pad  = 10, gap = 8;
+    ctx.font = '700 '+fs+'px Sora,sans-serif';
+    const tw = ctx.measureText(text).width;
+    const fw = fs * 1.3;  // عرض الإيموجي تقريباً
+    const bw = tw + fw + pad*2 + gap;
+    const bh = fs + pad * 1.6;
+    const bx = dir > 0 ? x + 18 : x - 18 - bw;
+    const by = y - bh - 14;
+    const tr = 8;  // border radius
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    /* ظل الفقاعة */
+    ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 12;
+
+    /* خلفية الفقاعة */
+    ctx.fillStyle = 'rgba(255,255,255,0.96)';
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, tr); ctx.fill();
+
+    /* ذيل الفقاعة */
+    ctx.beginPath();
+    if (dir > 0) {
+      ctx.moveTo(bx+12, by+bh);
+      ctx.lineTo(bx+6,  by+bh+10);
+      ctx.lineTo(bx+22, by+bh);
+    } else {
+      ctx.moveTo(bx+bw-12, by+bh);
+      ctx.lineTo(bx+bw-6,  by+bh+10);
+      ctx.lineTo(bx+bw-22, by+bh);
+    }
+    ctx.closePath(); ctx.fill();
+
+    ctx.shadowBlur = 0;
+
+    /* الإيموجي */
+    ctx.font = fs+'px serif';
+    ctx.textBaseline = 'middle';
+    const ey = by + bh/2;
+    if (dir > 0) {
+      /* 🇲🇦 ثم النص */
+      ctx.fillText(flag, bx+pad, ey);
+      ctx.font = '700 '+fs+'px Sora,sans-serif';
+      ctx.fillStyle = '#111';
+      ctx.textAlign = 'left';
+      ctx.fillText(text, bx+pad+fw+gap, ey);
+    } else {
+      /* النص ثم 🇪🇸 */
+      ctx.font = '700 '+fs+'px Sora,sans-serif';
+      ctx.fillStyle = '#111';
+      ctx.textAlign = 'left';
+      ctx.fillText(text, bx+pad, ey);
+      ctx.font = fs+'px serif';
+      ctx.fillText(flag, bx+pad+tw+gap, ey);
+    }
+
+    ctx.restore();
+  }
+
+  /* ── شعار صغير شفاف في الأسفل ── */
+  function drawLogo(alpha, scale) {
+    if (alpha <= 0) return;
+    const R  = Math.min(W, H) * 0.055;
+    const lx = CX, ly = H * 0.87;
+    const lw = R * 0.30;
+    const sc = scale || 1;
+    ctx.save();
+    ctx.globalAlpha = alpha * 0.72;
+    /* scale حول مركز اللوجو */
+    ctx.translate(lx, ly);
+    ctx.scale(sc, sc);
+    ctx.translate(-lx, -ly);
+
+    /* Q حلقة */
+    ctx.beginPath(); ctx.arc(lx - R*1.5, ly, R, 0, Math.PI*2);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = lw;
+    ctx.shadowColor = 'rgba(255,255,255,0.2)'; ctx.shadowBlur = 10;
+    ctx.stroke();
+
+    /* ذيل Q */
+    const ang = Math.PI*0.72;
+    ctx.beginPath();
+    ctx.moveTo(lx-R*1.5+Math.cos(ang)*(R-lw*0.1), ly+Math.sin(ang)*(R-lw*0.1));
+    ctx.lineTo(lx-R*1.5+Math.cos(ang)*R*1.5, ly+Math.sin(ang)*R*1.5);
+    ctx.lineWidth = lw*0.70; ctx.lineCap = 'round'; ctx.stroke();
+
+    /* نقطة داخل Q */
+    ctx.beginPath(); ctx.arc(lx-R*1.5, ly, R*0.24, 0, Math.PI*2);
+    ctx.fillStyle = '#fff'; ctx.shadowBlur = 8; ctx.fill();
+
+    /* QANTARA */
+    ctx.shadowBlur = 0;
+    ctx.font = '700 '+(R*1.12|0)+'px Sora,sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.82)';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText('QANTARA', lx - R*0.28, ly);
+
+    /* قنطرة */
+    ctx.font = '400 '+(R*0.62|0)+'px Sora,sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.40)';
+    ctx.fillText('قنطرة · Border Traffic Monitor', lx - R*0.28, ly + R*1.15);
+
+    ctx.restore();
+  }
+
+  /* ════ tick ════ */
+  function tick() {
+    if (done) return;
+    frame++;
+
+    /* خلفية */
+    ctx.fillStyle = '#04122b'; ctx.fillRect(0,0,W,H);
+    const glow = ctx.createRadialGradient(CX, CY*0.9, 0, CX, CY*0.9, H*0.6);
+    glow.addColorStop(0,'rgba(8,50,140,0.18)'); glow.addColorStop(1,'transparent');
+    ctx.fillStyle = glow; ctx.fillRect(0,0,W,H);
+
+    /* الطريق */
+    const rg = ctx.createLinearGradient(0, RY-RH/2, 0, RY+RH/2);
+    rg.addColorStop(0,'#141a2e'); rg.addColorStop(0.5,'#1a2240'); rg.addColorStop(1,'#141a2e');
+    ctx.fillStyle = rg; ctx.fillRect(0, RY-RH/2, W, RH);
+    /* حواف الطريق */
+    ctx.fillStyle='rgba(255,255,255,0.10)';
+    ctx.fillRect(0, RY-RH/2, W, LW);
+    ctx.fillRect(0, RY+RH/2-LW, W, LW);
+    /* خطوط الوسط المتحركة */
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+    ctx.lineWidth   = LW * 0.9;
+    ctx.setLineDash([W*0.055, W*0.045]);
+    ctx.lineDashOffset = -(frame * 1.6);
+    ctx.beginPath(); ctx.moveTo(0, RY); ctx.lineTo(W, RY); ctx.stroke();
+    ctx.restore();
+
+    /* حركة السيارتين */
+    const prog = Math.min(frame/T_MEET, 1);
+    const ease = 1 - Math.pow(1-prog, 3);
+    carA.x = -70 + ease*(CX - 38 + 70);
+    carB.x = W+70 - ease*(W+70 - (CX + 38));
+
+    drawCar(carA);
+    drawCar(carB);
+
+    /* فقاعات الكلام بعد اللقاء */
+    /* صوت زمور مرة واحدة عند اللقاء */
+    if (frame === T_TALK) {
+      try {
+        const AC = new (window.AudioContext || window.webkitAudioContext)();
+        const beep = (freq, start, dur) => {
+          const o = AC.createOscillator();
+          const g = AC.createGain();
+          o.connect(g); g.connect(AC.destination);
+          o.type = 'sine';
+          o.frequency.setValueAtTime(freq, AC.currentTime + start);
+          g.gain.setValueAtTime(0, AC.currentTime + start);
+          g.gain.linearRampToValueAtTime(0.12, AC.currentTime + start + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + start + dur);
+          o.start(AC.currentTime + start);
+          o.stop(AC.currentTime + start + dur + 0.05);
+        };
+        beep(520, 0.00, 0.13);   // pip أول
+        beep(520, 0.17, 0.13);   // pip ثاني
+      } catch(e) { /* صامت إذا فشل */ }
+    }
+
+    if (frame >= T_TALK) {
+      const raw  = (frame - T_TALK) / 8;
+      const tIn  = Math.min(raw, 1);
+      const tOut = frame < T_HOLD ? 1 : Math.max(0, 1-(frame-T_HOLD)/(T_FADE-T_HOLD));
+      const ba   = tIn * tOut;
+
+      /* 🇲🇦 مرحبا — من سيارة اليسار، فقاعة فوق اليمين */
+      drawBubble(carA.x + carA.w/2, carA.y - carA.h/2, 'مرحبا', '🇲🇦', 1, ba);
+      /* 🇪🇸 Hola — من سيارة اليمين، فقاعة فوق اليسار */
+      drawBubble(carB.x - carB.w/2, carB.y - carB.h/2, 'Hola', '🇪🇸', -1, ba);
+    }
+
+    /* شعار شفاف في الأسفل — fade + scale */
+    const logoRaw = frame < T_TALK ? 0 : Math.min((frame-T_TALK)/14, 1);
+    const logoOut = frame < T_HOLD ? 1 : Math.max(0, 1-(frame-T_HOLD)/(T_FADE-T_HOLD));
+    const logoA   = logoRaw * logoOut;
+    const logoScale = 0.95 + 0.05 * Math.min(logoRaw, 1); // 0.95 → 1.0
+    drawLogo(logoA, logoScale);
+
+    /* نهاية */
+    if (frame >= T_END) {
+      done = true;
+      $('intro').classList.add('out');
+      setTimeout(() => {
+        const el = $('intro');
+        if (el) el.remove();
+        /* لا حساب محلي هنا — الحالة تأتي من Firestore عبر TrafficState.render() */
+      }, 680);
+      return;
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
 /* ════════════════════════════════════════════════════════════════
    BOOT — ترتيب التهيئة
    ════════════════════════════════════════════════════════════════ */
@@ -2283,16 +2473,16 @@ function toggleDetails() {
 
 buildTL(); setTime(); /* setBtn يُستدعى بعد boot */
 
-window._real_setLang    = setLang;
-window._real_setZone    = setZone;
-window._real_openSheet  = openSheet;
-window._real_onBD       = onBD;
-window._real_pickLane   = pickLane;
-window._real_pickSt     = pickSt;
-window._real_submit     = submit;
-window._real_toggleDetails = toggleDetails;
-window._real_toggleDebug = toggleDebug;
-window._real_locateMe = () => {
+window.setLang       = setLang;
+window.setZone       = setZone;
+window.openSheet     = openSheet;
+window.onBD          = onBD;
+window.pickLane      = pickLane;
+window.pickSt        = pickSt;
+window.submit        = submit;
+window.toggleDetails = toggleDetails;
+window.toggleDebug   = toggleDebug;
+window.locateMe      = () => {
   setGpsUI('searching');
   showToast(lang === 'es' ? '📍 Localizando…' : '📍 جاري التحديد…');
   if (!navigator.geolocation) { setGpsUI('unavailable'); return; }
@@ -2300,7 +2490,6 @@ window._real_locateMe = () => {
     pos => {
       const lat = pos.coords.latitude, lon = pos.coords.longitude;
       gpsPos = pos.coords;
-      /* حدّث GPS في FCM token */
       if (!inBounds(lat, lon)) {
         setGpsUI('out');
         showToast(lang === 'es'
@@ -2322,11 +2511,29 @@ window._real_locateMe = () => {
   );
 };
 
-async function initApp() {
-  try { await TrafficState.boot(); } catch(e) { console.error('[Q] boot:', e); }
-  try { Map.init(); }  catch(e) { console.warn('[Q] map:', e.message); }
-  try { initGPS(); }   catch(e) { console.warn('[Q] gps:', e.message); }
-}
-document.addEventListener('DOMContentLoaded', () => initApp());</script>
+/* تهيئة الخريطة + GPS بالتوازي مع boot */
+Map.init();
+initGPS();
+
+/* ════════════════════════════════════════════════════
+   تسلسل التهيئة الصحيح:
+   1. await boot()  ← ينتظر Firestore كاملاً
+   2. ثم فقط: runIntro أو إزالة intro
+   ════════════════════════════════════════════════════ */
+(async () => {
+  /* boot: يقرأ Firestore → يُحدّث mem → _bootReady=true → render */
+  await TrafficState.boot();
+
+  /* الانترو مرة واحدة فقط في الجلسة — بعد اكتمال boot */
+  if (!sessionStorage.getItem('qnt_intro_done')) {
+    sessionStorage.setItem('qnt_intro_done', '1');
+    runIntro();
+  } else {
+    const el = $('intro');
+    if (el) el.remove();
+  }
+})();
+
+</script>
 </body>
 </html>
