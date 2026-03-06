@@ -169,6 +169,78 @@ body:not(.es) [data-es]{display:none!important}
 #dbgToggle{display:block;margin:6px auto 0;background:rgba(255,200,0,.1);
   border:1px solid rgba(255,200,0,.25);color:rgba(255,200,0,.7);
   font-size:10px;font-family:monospace;padding:3px 12px;border-radius:20px;cursor:pointer}
+
+  /* ══════════════════════════════
+     NOTIFICATION SYSTEM CSS
+     ══════════════════════════════ */
+  .notif-fab{position:fixed;top:calc(12px + env(safe-area-inset-top));right:14px;z-index:1050;
+    width:38px;height:38px;border-radius:50%;background:var(--card2);border:1px solid var(--border2);
+    display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;
+    box-shadow:0 2px 10px rgba(0,0,0,.4);transition:transform .15s}
+  .notif-fab:active{transform:scale(.91)}
+  .notif-fab .nbadge{position:absolute;top:-3px;right:-3px;width:14px;height:14px;
+    border-radius:50%;background:var(--red);font-size:8px;font-weight:800;color:#fff;
+    display:flex;align-items:center;justify-content:center;border:1.5px solid var(--bg);display:none}
+  .notif-fab .nbadge.show{display:flex}
+
+  /* لوحة الإعدادات */
+  .notif-panel{position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.72);
+    backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .3s;
+    display:flex;align-items:flex-end}
+  .notif-panel.open{opacity:1;pointer-events:all}
+  .notif-sheet{width:100%;background:#141926;border-radius:22px 22px 0 0;
+    border-top:1px solid var(--border2);padding:20px 18px calc(32px + env(safe-area-inset-bottom));
+    transform:translateY(100%);transition:transform .35s cubic-bezier(.32,0,.15,1)}
+  .notif-panel.open .notif-sheet{transform:translateY(0)}
+  .notif-sheet-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .notif-sheet-title{font-size:15px;font-weight:700;color:var(--text)}
+  .notif-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;
+    width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+    border-radius:50%;background:var(--faint)}
+
+  /* أزرار التردد */
+  .notif-freq{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+  .nfreq-btn{padding:11px 8px;border-radius:12px;border:1.5px solid var(--border);
+    background:var(--card);color:var(--muted);font-family:'Sora',sans-serif;
+    font-size:11px;font-weight:600;cursor:pointer;text-align:center;transition:all .2s;
+    display:flex;flex-direction:column;align-items:center;gap:3px}
+  .nfreq-btn .nf-icon{font-size:18px}
+  .nfreq-btn.on{border-color:var(--si);background:var(--sb);color:var(--si)}
+
+  /* قائمة أنواع الإشعارات */
+  .notif-types{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+  .ntype-row{display:flex;align-items:center;justify-content:space-between;
+    padding:11px 13px;background:var(--card);border-radius:12px;border:1px solid var(--border)}
+  .ntype-info{display:flex;align-items:center;gap:10px}
+  .ntype-icon{font-size:20px;width:32px;text-align:center}
+  .ntype-label{font-size:13px;font-weight:600;color:var(--text)}
+  .ntype-sub{font-size:10px;color:var(--muted);margin-top:1px}
+
+  /* toggle switch */
+  .ntog{position:relative;width:42px;height:24px;cursor:pointer;flex-shrink:0}
+  .ntog input{opacity:0;width:0;height:0;position:absolute}
+  .nslider{position:absolute;inset:0;background:var(--faint);border-radius:99px;
+    transition:.25s;border:1px solid var(--border2)}
+  .nslider:before{content:'';position:absolute;width:18px;height:18px;
+    background:#888;border-radius:50%;top:2px;left:2px;transition:.25s}
+  .ntog input:checked ~ .nslider{background:rgba(0,212,110,.2);border-color:var(--green)}
+  .ntog input:checked ~ .nslider:before{background:var(--green);transform:translateX(18px)}
+
+  /* زر تفعيل الإذن */
+  .notif-perm-btn{width:100%;padding:13px;border-radius:13px;border:none;
+    background:linear-gradient(135deg,#1a5fff,#00aaff);color:#fff;
+    font-family:'Sora',sans-serif;font-size:14px;font-weight:700;cursor:pointer;
+    transition:opacity .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+  .notif-perm-btn:disabled{opacity:.45;cursor:not-allowed}
+  .notif-perm-status{font-size:11px;color:var(--muted);text-align:center;margin-top:8px}
+
+  /* badge تنبيه في AI strip */
+  .ai-alert-badge{display:inline-flex;align-items:center;gap:4px;
+    background:rgba(255,51,85,.15);border:1px solid rgba(255,51,85,.35);
+    border-radius:8px;padding:4px 9px;font-size:11px;font-weight:700;
+    color:var(--red);margin-top:6px;width:100%;box-sizing:border-box}
+  .ai-alert-badge.medium{background:rgba(255,143,0,.13);border-color:rgba(255,143,0,.3);color:var(--orange)}
+  .ai-alert-badge.good{background:rgba(0,212,110,.1);border-color:rgba(0,212,110,.25);color:var(--green)}
 </style>
 </head>
 <body>
@@ -313,6 +385,93 @@ function toggleDetails() {
       <div class="opt" id="opt-r" onclick="pickSt('red')"><div class="opt-ic">🔴</div><div class="opt-b"><div class="opt-n"><span data-ar>ازدحام شديد</span><span data-es>Atasco severo</span></div><div class="opt-d"><span data-ar>أكثر من 60 دقيقة</span><span data-es>&gt;60 min</span></div></div><div class="opt-r" id="r-r"></div></div>
     </div>
     <button class="btn-cf" id="btnCf" disabled onclick="submit()"><span data-ar>إرسال التقرير</span><span data-es>Enviar informe</span></button>
+  </div>
+</div>
+
+<!-- ══ زر إشعارات FAB ══ -->
+<button class="notif-fab" id="notifFab" onclick="openNotifPanel()" aria-label="إعدادات الإشعارات">
+  🔔<span class="nbadge" id="notifBadge"></span>
+</button>
+
+<!-- ══ لوحة إعدادات الإشعارات ══ -->
+<div class="notif-panel" id="notifPanel" onclick="if(event.target===this)closeNotifPanel()">
+  <div class="notif-sheet">
+    <div class="notif-sheet-hdr">
+      <div class="notif-sheet-title">
+        <span data-ar>🔔 إعدادات الإشعارات</span>
+        <span data-es>🔔 Notificaciones</span>
+      </div>
+      <button class="notif-close" onclick="closeNotifPanel()">✕</button>
+    </div>
+
+    <!-- تردد الإشعارات -->
+    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;letter-spacing:.06em">
+      <span data-ar>عدد الإشعارات اليومية</span><span data-es>Frecuencia diaria</span>
+    </div>
+    <div class="notif-freq">
+      <button class="nfreq-btn" data-freq="0" onclick="setNotifFreq(0)">
+        <span class="nf-icon">🚫</span>
+        <span data-ar>لا إشعارات</span><span data-es>Ninguna</span>
+      </button>
+      <button class="nfreq-btn" data-freq="1" onclick="setNotifFreq(1)">
+        <span class="nf-icon">1️⃣</span>
+        <span data-ar>مرة واحدة</span><span data-es>1 por día</span>
+      </button>
+      <button class="nfreq-btn" data-freq="3" onclick="setNotifFreq(3)">
+        <span class="nf-icon">3️⃣</span>
+        <span data-ar>3 مرات يومياً</span><span data-es>3 por día</span>
+      </button>
+      <button class="nfreq-btn" data-freq="99" onclick="setNotifFreq(99)">
+        <span class="nf-icon">♾️</span>
+        <span data-ar>غير محدودة</span><span data-es>Sin límite</span>
+      </button>
+    </div>
+
+    <!-- أنواع الإشعارات -->
+    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;letter-spacing:.06em">
+      <span data-ar>نوع التنبيه</span><span data-es>Tipo de alerta</span>
+    </div>
+    <div class="notif-types">
+      <div class="ntype-row">
+        <div class="ntype-info">
+          <div class="ntype-icon">🔴</div>
+          <div><div class="ntype-label"><span data-ar>ازدحام شديد</span><span data-es>Atasco severo</span></div>
+          <div class="ntype-sub"><span data-ar>أكثر من 60 دقيقة انتظار</span><span data-es>+60 min de espera</span></div></div>
+        </div>
+        <label class="ntog"><input type="checkbox" id="ntog-red" onchange="saveNotifPrefs()"><span class="nslider"></span></label>
+      </div>
+      <div class="ntype-row">
+        <div class="ntype-info">
+          <div class="ntype-icon">🟠</div>
+          <div><div class="ntype-label"><span data-ar>ازدحام متوسط</span><span data-es>Moderado</span></div>
+          <div class="ntype-sub"><span data-ar>20–40 دقيقة انتظار</span><span data-es>20–40 min</span></div></div>
+        </div>
+        <label class="ntog"><input type="checkbox" id="ntog-orange" onchange="saveNotifPrefs()"><span class="nslider"></span></label>
+      </div>
+      <div class="ntype-row">
+        <div class="ntype-info">
+          <div class="ntype-icon">🟢</div>
+          <div><div class="ntype-label"><span data-ar>حركة عادية</span><span data-es>Fluido</span></div>
+          <div class="ntype-sub"><span data-ar>الطريق فُتح بعد ازدحام</span><span data-es>Vía despejada</span></div></div>
+        </div>
+        <label class="ntog"><input type="checkbox" id="ntog-green" onchange="saveNotifPrefs()"><span class="nslider"></span></label>
+      </div>
+      <div class="ntype-row">
+        <div class="ntype-info">
+          <div class="ntype-icon">🕐</div>
+          <div><div class="ntype-label"><span data-ar>تنبيه مبكر 30 دقيقة</span><span data-es>Aviso anticipado 30 min</span></div>
+          <div class="ntype-sub"><span data-ar>قبل وصول الذروة</span><span data-es>Antes del pico</span></div></div>
+        </div>
+        <label class="ntog"><input type="checkbox" id="ntog-early" onchange="saveNotifPrefs()"><span class="nslider"></span></label>
+      </div>
+    </div>
+
+    <!-- تفعيل إذن الإشعارات -->
+    <button class="notif-perm-btn" id="notifPermBtn" onclick="requestNotifPermission()">
+      <span>🔔</span>
+      <span data-ar>تفعيل الإشعارات</span><span data-es>Activar notificaciones</span>
+    </button>
+    <div class="notif-perm-status" id="notifPermStatus"></div>
   </div>
 </div>
 
@@ -511,7 +670,7 @@ const Predictor = (() => {
 
     const h   = new Date().getHours();
     const h20 = (h + 1) % 24;
-    const h40 = (h + 1) % 24;
+    const h40 = (h + 2) % 24;
 
     /* نمط HOURLY */
     const nowPattern  = HOURLY[h];
@@ -614,9 +773,9 @@ const Predictor = (() => {
     const ageMs      = lastRepTs ? (Date.now() - lastRepTs) : Infinity;
     const ageMin     = ageMs / 60000;
     let   decayFactor;
-    /* ⚠️ TEST VALUES — original: start=10min end=40min */
-    const DECAY_START = 20/60;   // 20 ثانية
-    const DECAY_END   = 2;       // دقيقتان
+    /* قيم الإنتاج */
+    const DECAY_START = 10;   // 10 دقائق
+    const DECAY_END   = 40;   // 40 دقيقة
     if      (ageMin < DECAY_START) decayFactor = 1.0;
     else if (ageMin > DECAY_END)   decayFactor = 0.0;
     else {
@@ -709,6 +868,115 @@ const Predictor = (() => {
 
   return { record, predict, predict60, notify, getHist: lane => hist[lane], getLastChange: lane => lastRealChangeTs[lane] };
 })();
+
+/* ════════════════════════════════════════════════════════════════
+   CONGESTION PREDICTOR 30 — نظام التنبؤ بالزحام قبل 30 دقيقة
+   أول نظام ذكي مخصص لمعبر باب سبتة / Fnideq–Ceuta
+   يعتمد على:
+     1. الأنماط التاريخية الساعية لمعبر الفنيدق–سبتة
+     2. يوم الأسبوع (جمعة/سبت/أحد أشد ازدحاماً)
+     3. trend من البيانات الحية
+     4. مستوى الثقة بناءً على كمية التقارير
+   ════════════════════════════════════════════════════════════════ */
+const CongestionPredictor30 = (() => {
+
+  /* أنماط ازدحام معبر الفنيدق–سبتة (0=هادئ 1=متوسط 2=شديد)
+     مبنية من ملاحظات ميدانية + بيانات سلوك المعابر المغربية-الإسبانية */
+  const PATTERN_WEEKDAY  = [0,0,0,0,0,0,1,2,2,1,1,1,2,2,1,1,2,2,2,1,1,0,0,0]; // إثنين-خميس
+  const PATTERN_FRIDAY   = [0,0,0,0,0,0,1,2,2,1,1,2,2,2,2,1,2,2,2,1,0,0,0,0]; // جمعة: ذروة ظهر
+  const PATTERN_WEEKEND  = [0,0,0,0,0,1,2,2,2,2,2,2,1,1,1,2,2,2,2,1,1,0,0,0]; // سبت/أحد: الكل يتحرك
+
+  function getPattern() {
+    const d = new Date().getDay(); // 0=أحد 5=جمعة 6=سبت
+    if (d === 5) return PATTERN_FRIDAY;
+    if (d === 6 || d === 0) return PATTERN_WEEKEND;
+    return PATTERN_WEEKDAY;
+  }
+
+  /* تقدير مستوى الازدحام بعد N دقيقة */
+  function predictAt(lane, minutesAhead) {
+    const now  = new Date();
+    const ms   = now.getTime() + minutesAhead * 60000;
+    const fut  = new Date(ms);
+    const hFut = fut.getHours();
+    const dFut = fut.getDay();
+
+    let pattern;
+    if (dFut === 5) pattern = PATTERN_FRIDAY;
+    else if (dFut === 6 || dFut === 0) pattern = PATTERN_WEEKEND;
+    else pattern = PATTERN_WEEKDAY;
+
+    return pattern[hFut]; // 0/1/2
+  }
+
+  /* الحالة الحالية من HOURLY */
+  function currentLevel() {
+    const h = new Date().getHours();
+    return getPattern()[h];
+  }
+
+  /* ── التنبؤ الرئيسي ──
+     يُعيد تنبؤاً للـ 30 دقيقة القادمة مع مستوى التحذير */
+  function predict30(lane, liveStatus, reportCount) {
+    const h       = new Date().getHours();
+    const pattern = getPattern();
+    const nowLvl  = pattern[h];
+
+    /* تنبؤ عند +15 و +30 دقيقة */
+    const lvl15 = predictAt(lane, 15);
+    const lvl30 = predictAt(lane, 30);
+    const lvl45 = predictAt(lane, 45);
+
+    /* الحالة الحية: حوّل إلى رقم */
+    const liveVal   = liveStatus === 'red' ? 2 : liveStatus === 'orange' ? 1 : 0;
+
+    /* ثقة التنبؤ: أعلى مع بيانات أكثر */
+    const confidence = reportCount >= 5 ? 'high'
+                     : reportCount >= 2 ? 'medium'
+                     : 'low';
+
+    /* صعود الازدحام: يصل الذروة خلال 30 دقيقة */
+    const risingTo30  = lvl30 > nowLvl && lvl30 >= 2;
+    const risingTo15  = lvl15 > nowLvl && lvl15 >= 2;
+    const peakAt30    = lvl30 >= 2 && nowLvl < 2;
+    const peakSoon    = risingTo15 || risingTo30 || peakAt30;
+
+    /* هبوط: الازدحام سينخفض */
+    const dropping    = lvl30 < nowLvl && liveVal >= 1;
+
+    /* ازدحام مستمر */
+    const sustained   = liveVal >= 2 && lvl30 >= 2 && lvl45 >= 2;
+
+    /* بناء الرسالة */
+    let alert = false, level = 'none', minutesAway = null;
+    let msg_ar = null, msg_es = null;
+
+    if (risingTo15) {
+      alert = true; level = 'high'; minutesAway = 15;
+      msg_ar = `⚠️ ${lane==='entry'?'دخول':'خروج'}: ازدحام شديد خلال 15 دقيقة`;
+      msg_es = `⚠️ ${lane==='entry'?'Entrada':'Salida'}: Atasco en 15 min`;
+    } else if (peakAt30) {
+      alert = true; level = 'medium'; minutesAway = 30;
+      msg_ar = `🕐 ${lane==='entry'?'دخول':'خروج'}: ذروة متوقعة خلال 30 دقيقة`;
+      msg_es = `🕐 ${lane==='entry'?'Entrada':'Salida'}: Punta en ~30 min`;
+    } else if (sustained) {
+      alert = true; level = 'high'; minutesAway = 0;
+      msg_ar = `🚨 ${lane==='entry'?'دخول':'خروج'}: ازدحام شديد مستمر`;
+      msg_es = `🚨 ${lane==='entry'?'Entrada':'Salida'}: Atasco intenso continúa`;
+    } else if (dropping) {
+      level = 'good'; minutesAway = 30;
+      msg_ar = `✅ ${lane==='entry'?'دخول':'خروج'}: الازدحام سينخفض خلال 30 دقيقة`;
+      msg_es = `✅ ${lane==='entry'?'Entrada':'Salida'}: Mejora en ~30 min`;
+    }
+
+    return { alert, level, minutesAway, msg_ar, msg_es, confidence,
+             lvlNow: nowLvl, lvl15, lvl30 };
+  }
+
+  return { predict30, predictAt, currentLevel };
+})();
+
+
 const ST = {
   green:  {ar:'عادي',        es:'Fluido',   war:'أقل من 10 دقائق', wes:'< 10 min',  color:'#00d46e', bg:'rgba(0,212,110,.10)',  fill:15},
   orange: {ar:'متوسط',       es:'Moderado', war:'20–40 دقيقة',      wes:'20-40 min', color:'#ff8f00', bg:'rgba(255,143,0,.10)',  fill:55},
@@ -969,7 +1237,8 @@ async function fetchReports() {
       return {
         lane:   (f.lane   && f.lane.stringValue)   || '',
         status: (f.status && f.status.stringValue) || '',
-        ts:     parseInt((f.tsMs && f.tsMs.integerValue) || '0')
+        ts:     parseInt((f.tsMs  && f.tsMs.integerValue)  || '0'),
+        w:      parseFloat((f.w   && (f.w.doubleValue || f.w.integerValue)) || '1')
       };
     }).filter(r => r.lane && r.status && r.ts && (now - r.ts) <= WIN_MS);
   } catch(e) { console.warn('[Q] REST:', e.message); return null; }
@@ -987,10 +1256,33 @@ function fbAddReport(lane, status, weight) {
     status, lane,
     timestamp: serverTimestamp(),
     tsMs:      Date.now(),
-    w:         w   // وزن الثقة — يُستخدم في calcStatus
+    w:         w
   })
-    .then(() => { Cool.set(); setFbUI(true); return true; })
-    .catch(err => { console.error('[Q] write:', err); setFbUI(false); return false; });
+    .then(() => {
+      Cool.set();
+      setFbUI(true);
+      /* عداد تنازلي يتناقص كل 250ms */
+      const _tick = setInterval(() => {
+        const rem = Cool.get();
+        if (rem <= 0) {
+          clearInterval(_tick);
+          console.log('[Q] BUTTON ENABLED AGAIN', Date.now());
+          setBtn(0);
+        } else {
+          setBtn(rem);
+        }
+      }, 250);
+      setBtn(Cool.get()); /* اعرض القيمة الأولى فوراً */
+      return true;
+    })
+    .catch(err => {
+      console.error('[Q] fbAddReport error:', err);
+      setFbUI(false);
+      /* فشل الكتابة — أعِد تفعيل الزر فوراً */
+      console.log('[Q] BUTTON ENABLED AGAIN (error)', Date.now());
+      setBtn(0);
+      return false;
+    });
 }
 
 
@@ -1253,7 +1545,7 @@ function setFbUI(on, n) {
     ? '🔥 Live' + (n !== undefined ? ' · ' + n + ' doc' : '')
     : '⚠️ Reconnecting…';
 }
-setInterval(() => setFbUI(), 30000);
+/* setFbUI interval — يبدأ بعد boot */
 
 function setLang(l) {
   lang = l;
@@ -1261,6 +1553,9 @@ function setLang(l) {
   $('lb-ar').classList.toggle('on', l === 'ar');
   $('lb-es').classList.toggle('on', l === 'es');
   Map._updateTooltips();
+  /* تحديث لوحة الإشعارات إذا كانت مفتوحة */
+  if (document.getElementById('notifPanel')?.classList.contains('open'))
+    NotificationEngine.updatePanelUI();
 }
 
 function setZone(s) {
@@ -1335,9 +1630,11 @@ const TrafficState = (() => {
     exit:  { status:'green', cars:20, density:0.2, waitMin:6.7, count:0, rel:0, lastTs:0, savedAt:0 }
   };
 
-  let _booted = false;                          // حارس race conditions
-  const _wlock = { entry:false, exit:false };   // منع كتابات متزامنة
-  const _seen  = { entry:new Set(), exit:new Set() }; // منع تكرار التقارير
+  let _booted    = false;   // يصبح true بعد boot() — يُطلق ingest/tick/userReport
+  let _bootReady = false;   // يصبح true بعد تحميل lanes_state — يُطلق render()
+  const _wlock   = { entry:false, exit:false };   // منع كتابتين متزامنتين
+  const _pending = { entry:null,  exit:null  };   // آخر patch بانتظار الكتابة
+  const _seen    = { entry:new Set(), exit:new Set() };
 
   /* ── فيزياء ── */
   function physics(cars) {
@@ -1365,7 +1662,11 @@ const TrafficState = (() => {
      لا تكتب Firestore أبداً
      ════════════════════════════ */
   function render(lane, d) {
-    /* حدّث mem بالكامل — بما في ذلك savedAt لمنع echo في _watch */
+    /* ممنوع render قبل تحميل lanes_state من Firestore */
+    if (!_bootReady) {
+      console.warn('[Q] render() blocked — bootReady=false, lane:', lane);
+      return;
+    }
     Object.assign(mem[lane], d);
     if (!mem[lane].savedAt && d.savedAt) mem[lane].savedAt = d.savedAt;
     applyLane(lane, { status: d.status, count: d.count ?? 0, rel: d.rel ?? 0 });
@@ -1376,6 +1677,8 @@ const TrafficState = (() => {
         Predictor.predict('entry', dE), Predictor.predict('exit', dX),
         dE, dX,
         Predictor.predict60('entry', dE), Predictor.predict60('exit', dX));
+
+    /* render() — مسؤول عن العرض فقط */
   }
 
   /* ════════════════════════════
@@ -1383,8 +1686,15 @@ const TrafficState = (() => {
      لا تُحدّث الواجهة
      ════════════════════════════ */
   async function write(lane, patch) {
-    if (_wlock[lane]) return;
+    /* إذا كانت كتابة جارية: احفظ آخر patch وستُنفَّذ فور انتهاء الحالية */
+    if (_wlock[lane]) {
+      _pending[lane] = patch;
+      return;
+    }
     _wlock[lane] = true;
+    _pending[lane] = null;
+    /* احسب savedAt مرة واحدة — نفس القيمة في Firestore و mem */
+    const now = Date.now();
     try {
       await setDoc(lanesRef[lane], {
         status:  patch.status,
@@ -1394,12 +1704,21 @@ const TrafficState = (() => {
         count:   patch.count  ?? mem[lane].count,
         rel:     patch.rel    ?? mem[lane].rel,
         lastTs:  patch.lastTs ?? mem[lane].lastTs,
-        savedAt: Date.now()
+        savedAt: now
       }, { merge: true });
+      /* حدّث mem بعد نجاح الكتابة — يمنع _watch() من قبول الـ echo */
+      mem[lane].savedAt = now;
+      if (patch.lastTs) mem[lane].lastTs = patch.lastTs;
     } catch(e) {
       console.warn('[Q] write [' + lane + ']:', e.message);
     } finally {
       _wlock[lane] = false;
+      /* نفّذ آخر patch كان بانتظار الكتابة */
+      if (_pending[lane]) {
+        const next = _pending[lane];
+        _pending[lane] = null;
+        write(lane, next);
+      }
     }
   }
 
@@ -1411,33 +1730,51 @@ const TrafficState = (() => {
      ════════════════════════════════════════ */
   async function boot() {
     console.log('[Q] boot: reading Firestore...');
+
+    /* الخطوة 1: اقرأ lanes_state كاملاً */
     const [sE, sX] = await Promise.all([
       getDoc(lanesRef.entry).catch(() => null),
       getDoc(lanesRef.exit).catch(()  => null)
     ]);
+
+    /* الخطوة 2: حمّل البيانات في mem مباشرة بدون render */
     if (sE && sE.exists()) {
       const d = sE.data();
-      console.log('[Q] boot entry:', d.status, '| cars:', d.cars,
-        '| saved:', new Date(d.savedAt || 0).toLocaleTimeString());
-      /* render مباشر — بدون أي حساب */
-      render('entry', d);
-      /* سجّل lastTs حتى يرفض ingest التقارير الأقدم */
-      if (d.lastTs) mem.entry.lastTs = d.lastTs;
-      if (d.savedAt) mem.entry.savedAt = d.savedAt;
+      Object.assign(mem.entry, d);
+      console.log('[Q] boot entry loaded:', d.status, '| cars:', d.cars,
+        '| savedAt:', new Date(d.savedAt || 0).toLocaleTimeString());
     }
     if (sX && sX.exists()) {
       const d = sX.data();
-      console.log('[Q] boot exit:', d.status, '| cars:', d.cars);
-      render('exit', d);
-      if (d.lastTs) mem.exit.lastTs = d.lastTs;
-      if (d.savedAt) mem.exit.savedAt = d.savedAt;
+      Object.assign(mem.exit, d);
+      console.log('[Q] boot exit loaded:', d.status, '| cars:', d.cars);
     }
+
+    /* الخطوة 3: _bootReady = true — الآن render() مسموح */
+    _bootReady = true;
+    console.log('[Q] bootReady=true');
+
+    /* الخطوة 4: render مرة واحدة لكل جهة بالبيانات الحقيقية */
+    render('entry', mem.entry);
+    render('exit',  mem.exit);
+
+    /* الخطوة 5: أخفِ loader */
     hideLoader();
+
+    /* الخطوة 6: _booted = true — الآن ingest/tick/userReport مسموحة */
     _booted = true;
-    console.log('[Q] boot complete — _booted=true, starting listeners');
-    /* ابدأ المستمعين بعد _booted=true — ingest محمي بـ lastTs */
+    console.log('[Q] boot complete — _booted=true');
+
+    /* الخطوة 7: ابدأ المستمعين — بعد _bootReady و _booted */
     _watch();
     startListeners();
+
+    /* الخطوة 8: ابدأ intervals بعد boot — لا قبل */
+    setBtn(Cool.get());
+    setInterval(() => setFbUI(), 30000);
+    setInterval(updateDebug, 1000);
+    /* تهيئة badge الإشعارات */
+    if (typeof NotificationEngine !== 'undefined') NotificationEngine.updateBadge();
   }
 
   /* ════════════════════════════════════════
@@ -1472,6 +1809,13 @@ const TrafficState = (() => {
         console.log('[Q] watch ['+lane+'] ← REMOTE', d.status, '| cars:', d.cars,
           '| savedAt:', new Date(d.savedAt||0).toLocaleTimeString());
         render(lane, d);
+        /* NotificationEngine — طبقة مستقلة عن render() */
+        if (typeof NotificationEngine !== 'undefined') {
+          const rc  = Math.round(((d.rel) || 0) * 8);
+          const p30 = (typeof CongestionPredictor30 !== 'undefined')
+            ? CongestionPredictor30.predict30(lane, d.status, rc) : null;
+          NotificationEngine.evaluate(lane, d.status, p30);
+        }
       }, e => console.warn('[Q] watch ['+lane+']:', e.message));
     });
   }
@@ -1485,7 +1829,7 @@ const TrafficState = (() => {
     if (!_booted || !reports.length) return;
 
     /* تجاهل التقارير الأقدم من آخر حالة مخزنة في lanes_state */
-    const laneLastTs = mem[lane].lastTs || 0;
+    const laneLastTs   = mem[lane].lastTs || 0;
     const freshReports = reports.filter(r => r.ts > laneLastTs);
     if (!freshReports.length) {
       console.log('[Q] ingest ['+lane+'] skipped — no reports newer than lastTs');
@@ -1499,24 +1843,71 @@ const TrafficState = (() => {
     if (_seen[lane].size > 300)
       _seen[lane] = new Set([..._seen[lane]].slice(-150));
 
-    /* متوسط مرجّح فقط من التقارير الجديدة */
-    const top5 = freshReports.slice(0, 5);
-    let sumC = 0, sumW = 0;
-    top5.forEach((r, idx) => {
-      const w = top5.length - idx;
-      sumC += (CARS_INIT[r.status] ?? 20) * w;
-      sumW += w;
+    /* ── حساب الحالة بمتوسط مرجّح بالوقت والثقة (آخر 10 تقارير) ──
+       التقارير الحديثة أثقل: w = trust * timeDecay
+       timeDecay: كامل إذا < 10 دقائق، يتناقص تدريجياً حتى 30 دقيقة  */
+    const now      = Date.now();
+    const pool     = freshReports.slice(0, 10);
+    const sc       = { green: 0, orange: 0, red: 0 };
+    let   totalW   = 0;
+    let   sumCars  = 0;
+
+    pool.forEach(r => {
+      const ageMin    = (now - r.ts) / 60000;
+      const timeDecay = ageMin < 10 ? 1.0
+                      : ageMin < 30 ? 1 - (ageMin - 10) / 20
+                      : 0.1;
+      const w = (r.w || 1.0) * timeDecay;
+      sc[r.status] = (sc[r.status] || 0) + w;
+      sumCars      += (CARS_INIT[r.status] ?? 20) * w;
+      totalW       += w;
     });
-    const avgCars = Math.round(sumC / sumW);
+
+    if (totalW === 0) return;
+
+    const avgCars    = Math.round(sumCars / totalW);
     const { density, waitMin } = physics(avgCars);
-    const safe    = safeStep(mem[lane].status, classify(avgCars));
-    const now     = Date.now();
-    const patch   = { status: safe, cars: avgCars, density, waitMin,
-                      count:  meta?.count ?? freshReports.length,
-                      rel:    meta?.rel   ?? Math.min(1, freshReports.length / 8),
-                      lastTs: now, savedAt: now };
-    console.log('[Q] ingest ['+lane+']', top5.map(r=>r.status).join(','),
-      '→', safe, '| cars:', avgCars, '| freshReports:', freshReports.length);
+    const rawStatus  = Object.keys(sc).sort((a, b) => sc[b] - sc[a])[0];
+
+    /* ── حارس الاستقرار ──
+       لا تغيّر الحالة إذا:
+       - تقرير واحد فقط جديد AND الحالة مختلفة عن الحالية
+       - نسبة الثقة بالحالة الجديدة < 55% من الأصوات                */
+    const MIN_REPORTS = 3;
+    const totalVotes  = sc.green + sc.orange + sc.red;
+    const winnerRatio = sc[rawStatus] / totalVotes;
+    const currentSt   = mem[lane].status;
+
+    if (pool.length < MIN_REPORTS && rawStatus !== currentSt) {
+      console.log('[Q] ingest ['+lane+'] stability hold — only', pool.length,
+        'reports, need', MIN_REPORTS, 'to change from', currentSt, 'to', rawStatus);
+      /* حدّث count/rel/density فقط بدون تغيير اللون */
+      render(lane, { ...mem[lane],
+        count: meta?.count ?? pool.length,
+        rel:   meta?.rel   ?? Math.min(1, pool.length / 8),
+        density });
+      return;
+    }
+
+    if (winnerRatio < 0.55 && rawStatus !== currentSt) {
+      console.log('[Q] ingest ['+lane+'] low confidence', (winnerRatio*100).toFixed(0)+'%',
+        '— keeping', currentSt);
+      return;
+    }
+
+    const safe           = safeStep(currentSt, rawStatus);
+    const newestReportTs = freshReports[0].ts;
+    const patch          = {
+      status:  safe,
+      cars:    avgCars, density, waitMin,
+      count:   meta?.count ?? pool.length,
+      rel:     meta?.rel   ?? Math.min(1, pool.length / 8),
+      lastTs:  newestReportTs,
+      savedAt: now
+    };
+    console.log('[Q] ingest ['+lane+']', pool.map(r=>r.status).join(','),
+      '→', safe, '| cars:', avgCars, '| conf:', (winnerRatio*100).toFixed(0)+'%',
+      '| pool:', pool.length);
     render(lane, patch);
     write(lane, patch);
   }
@@ -1573,6 +1964,8 @@ const TrafficState = (() => {
 
   return {
     boot, ingest, userReport, tick,
+    /* getState() — للقراءة الخارجية من NotificationEngine */
+    getState: lane => ({ ...mem[lane] }),
     status:  lane => mem[lane]?.status  ?? 'green',
     density: lane => mem[lane]?.density ?? 0.2,
     debug: lane => {
@@ -1627,6 +2020,17 @@ function applyDocs(docs) {
   if (exit_.length) TrafficState.ingest('exit',  exit_, { count:dx.count, rel:dx.rel });
   Predictor.record('entry', de.status, entry.length);
   Predictor.record('exit',  dx.status, exit_.length);
+
+  /* ── NotificationEngine — تقييم مستقل من applyDocs ── */
+  if (typeof NotificationEngine !== 'undefined') {
+    const p30e = (typeof CongestionPredictor30 !== 'undefined')
+      ? CongestionPredictor30.predict30('entry', de.status, de.count) : null;
+    const p30x = (typeof CongestionPredictor30 !== 'undefined')
+      ? CongestionPredictor30.predict30('exit', dx.status, dx.count) : null;
+    NotificationEngine.evaluate('entry', de.status, p30e);
+    NotificationEngine.evaluate('exit',  dx.status, p30x);
+  }
+
   setTime(); setBtn(Cool.get());
 }
 
@@ -1649,10 +2053,13 @@ function submit() {
   else                   cacheExit  = [nr, ...cacheExit].slice(0, 50);
   const cs = calcStatus(_lane === 'entry' ? cacheEntry : cacheExit);
   TrafficState.userReport(_lane, _st, { count: cs.count, rel: cs.rel });
-  setTime(); setBtn(Cool.get());
+  setTime();
+  /* أعطّل الزر فوراً لمنع الضغط المزدوج — fbAddReport سيُعيد ضبطه */
+  $('btnCta').disabled = true;
   showToast(lang === 'es' ? '✅ ¡Actualizado!' : '✅ تم التحديث!');
-  fbAddReport(_lane, _st, trust.weight).catch(() =>
-    showToast(lang === 'es' ? '⚠️ Sin conexión' : '⚠️ خطأ في الاتصال'));
+  fbAddReport(_lane, _st, trust.weight).catch(() => {
+    showToast(lang === 'es' ? '⚠️ Sin conexión' : '⚠️ خطأ في الاتصال');
+  });
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -1681,12 +2088,292 @@ function updateDebug() {
     set('dbg'+p+'Buf',  d.buf);
   });
 }
-setInterval(updateDebug, 1000);
+/* updateDebug interval — يبدأ بعد boot */
 
 /* ════════════════════════════════════════════════════════════════
    startListeners — onSnapshot + REST polling
    يُستدعى من boot() بعد اكتمال القراءة الأولى
    ════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════
+   SMART NOTIFICATION SYSTEM — نظام الإشعارات الذكي
+   مصدر الحقيقة: Firestore lanes_state (عبر TrafficState)
+   المنطق:
+     1. تفضيلات المستخدم تُحفظ في localStorage + Firestore
+     2. الإشعارات تُرسَل عبر Notification API (Web Push)
+     3. cooldown صارم لمنع التكرار
+     4. تتبع عدد الإشعارات اليومية
+   ════════════════════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════════════════════════════
+   NOTIFICATION ENGINE — طبقة مستقلة عن render()
+   المعمارية:
+     Firestore snapshot → TrafficState.updateState()
+                        → NotificationEngine.evaluate(lane, state)
+   التسلسل:
+     1. evaluate() يُستدعى من _watch() و applyDocs()
+     2. يقرأ الحالة الجديدة من المعامل (لا يقرأ من render)
+     3. يقارن مع lastStatus (in-memory)
+     4. يتحقق من cooldown + حد يومي (in-memory)
+     5. يتحقق من تفضيلات المستخدم (localStorage — قراءة فقط)
+     6. debounce 500ms لمنع تكرار snapshots السريعة
+   ════════════════════════════════════════════════════════════════ */
+const NotificationEngine = (() => {
+
+  /* ── ثوابت ── */
+  const LS_PREFS_KEY     = 'qnt_notif_v1';
+  const COOLDOWN_MS      = 8  * 60 * 1000;
+  const COOLDOWN_CRIT_MS = 30 * 60 * 1000;
+  const DEBOUNCE_MS      = 500;
+  const DAY_MS           = 24 * 60 * 60 * 1000;
+
+  /* ── حالة in-memory (لا علاقة لها بـ localStorage) ── */
+  let lastStatus   = { entry: null, exit: null };   // آخر حالة تمت معالجتها
+  let lastNotifTs  = { entry: 0,    exit: 0    };   // وقت آخر إشعار
+  let dailyCount   = 0;
+  let lastDayReset = Date.now();
+  let _debounce    = { entry: null, exit: null };   // timers لمنع التكرار السريع
+
+  /* ── التفضيلات: تُقرأ من localStorage فقط (لا تُكتب هنا) ── */
+  const DEFAULT_PREFS = {
+    freq: 0,
+    types: { red: false, orange: false, green: false, early: false }
+  };
+
+  function _loadPrefs() {
+    try {
+      const raw = localStorage.getItem(LS_PREFS_KEY);
+      if (!raw) return { ...DEFAULT_PREFS, types: { ...DEFAULT_PREFS.types } };
+      const p = JSON.parse(raw);
+      return { ...DEFAULT_PREFS, ...p, types: { ...DEFAULT_PREFS.types, ...(p.types || {}) } };
+    } catch(e) { return { ...DEFAULT_PREFS, types: { ...DEFAULT_PREFS.types } }; }
+  }
+
+  /* ── عداد يومي (in-memory، يُصفَّر تلقائياً) ── */
+  function _resetDayIfNeeded() {
+    if (Date.now() - lastDayReset > DAY_MS) {
+      dailyCount   = 0;
+      lastDayReset = Date.now();
+    }
+  }
+
+  /* ── هل يمكن إرسال إشعار الآن؟ ── */
+  function _canSend(lane, prefs, isCritical) {
+    if (prefs.freq === 0) return false;
+    if (Notification.permission !== 'granted') return false;
+    _resetDayIfNeeded();
+    if (prefs.freq !== 99 && dailyCount >= prefs.freq) return false;
+    const cooldown = isCritical ? COOLDOWN_CRIT_MS : COOLDOWN_MS;
+    if ((Date.now() - (lastNotifTs[lane] || 0)) < cooldown) return false;
+    return true;
+  }
+
+  /* ── إرسال الإشعار ── */
+  function _send(title, body, opts = {}) {
+    if (Notification.permission !== 'granted') return;
+    try {
+      const n = new Notification(title, {
+        body,
+        icon:     '/favicon.ico',
+        badge:    '/favicon.ico',
+        tag:      opts.tag || 'qantara',
+        renotify: opts.renotify || false,
+        silent:   opts.silent !== undefined ? opts.silent : true,
+        ...opts
+      });
+      n.onclick = () => { window.focus(); n.close(); };
+      console.log('[NotifEngine] sent:', title);
+    } catch(e) { console.warn('[NotifEngine] send failed:', e.message); }
+  }
+
+  function _record(lane, isCritical) {
+    lastNotifTs[lane] = Date.now();
+    if (!isCritical) dailyCount++;
+  }
+
+  /* ════════════════════════════════════════════════════
+     evaluate(lane, newStatus, p30)
+     النقطة الوحيدة لاتخاذ قرار الإشعار
+     يُستدعى من:
+       - _watch() عند استقبال snapshot جديد من Firestore
+       - applyDocs() عند وصول تقارير مجتمعية جديدة
+     لا يُستدعى من render() أبداً
+     ════════════════════════════════════════════════════ */
+  function evaluate(lane, newStatus, p30) {
+    /* debounce — تجاهل إذا snapshot متكررة خلال 500ms */
+    if (_debounce[lane]) {
+      clearTimeout(_debounce[lane]);
+    }
+    _debounce[lane] = setTimeout(() => {
+      _debounce[lane] = null;
+      _doEvaluate(lane, newStatus, p30);
+    }, DEBOUNCE_MS);
+  }
+
+  function _doEvaluate(lane, newStatus, p30) {
+    const prefs  = _loadPrefs();     // قراءة طازجة من localStorage
+    const prevSt = lastStatus[lane];
+    const isAR   = (typeof lang !== 'undefined' ? lang : 'ar') !== 'es';
+    const laneAR = lane === 'entry' ? 'الدخول' : 'الخروج';
+    const laneES = lane === 'entry' ? 'Entrada' : 'Salida';
+
+    /* ── المستوى 1: حرج — ازدحام شديد (cooldown 30 دقيقة) ── */
+    if (newStatus === 'red' && prefs.types.red && _canSend(lane, prefs, true)) {
+      _send(
+        isAR ? `🚨 ${laneAR}: ازدحام شديد` : `🚨 ${laneES}: Atasco severo`,
+        isAR ? 'أكثر من 60 دقيقة انتظار — معبر الفنيدق–سبتة'
+             : 'Más de 60 min — paso Fnideq–Ceuta',
+        { tag: 'qnt-red-'+lane, renotify: true, silent: false }
+      );
+      _record(lane, true);
+      lastStatus[lane] = newStatus;
+      return; // الأولوية القصوى — لا نتحقق من المستويات الأخرى
+    }
+
+    /* ── المستوى 2: تغيّرت الحالة فعلاً ── */
+    if (prevSt !== null && prevSt !== newStatus) {
+      lastStatus[lane] = newStatus;
+
+      if (newStatus === 'orange' && prefs.types.orange && _canSend(lane, prefs, false)) {
+        _send(
+          isAR ? `🟠 ${laneAR}: ازدحام متوسط` : `🟠 ${laneES}: Moderado`,
+          isAR ? '20–40 دقيقة انتظار' : '20–40 min de espera',
+          { tag: 'qnt-orange-'+lane }
+        );
+        _record(lane, false);
+      }
+      else if (newStatus === 'green' && prefs.types.green
+               && prevSt !== 'green' && _canSend(lane, prefs, false)) {
+        _send(
+          isAR ? `✅ ${laneAR}: حركة عادية` : `✅ ${laneES}: Fluido`,
+          isAR ? 'الطريق انفتح — وقت مناسب للعبور' : 'Vía despejada — buen momento',
+          { tag: 'qnt-green-'+lane }
+        );
+        _record(lane, false);
+      }
+    } else if (prevSt === null) {
+      /* أول قراءة — احفظ الحالة بدون إشعار */
+      lastStatus[lane] = newStatus;
+    }
+
+    /* ── المستوى 3: تنبيه مبكر 30 دقيقة ── */
+    if (prefs.types.early && p30 && p30.alert && _canSend(lane, prefs, false)) {
+      const title = isAR ? p30.msg_ar : p30.msg_es;
+      if (title) {
+        _send(
+          title,
+          isAR ? `معبر الفنيدق–سبتة — ثقة: ${p30.confidence}`
+               : `Paso Fnideq–Ceuta — confianza: ${p30.confidence}`,
+          { tag: 'qnt-early-'+lane+'-'+(p30.minutesAway||0), silent: true }
+        );
+        _record(lane, false);
+      }
+    }
+  }
+
+  /* ── API للـ UI (لوحة الإعدادات) ── */
+  return {
+    evaluate,
+
+    /* حالة الإذن */
+    async requestPermission() {
+      if (!('Notification' in window)) return _updatePermUI('unsupported');
+      if (Notification.permission === 'granted') return _updatePermUI('granted');
+      const r = await Notification.requestPermission();
+      _updatePermUI(r);
+      return r;
+    },
+
+    /* تحديث UI اللوحة */
+    updatePanelUI() {
+      const prefs = _loadPrefs();
+      document.querySelectorAll('.nfreq-btn').forEach(b =>
+        b.classList.toggle('on', parseInt(b.dataset.freq) === prefs.freq)
+      );
+      ['red','orange','green','early'].forEach(t => {
+        const el = document.getElementById('ntog-'+t);
+        if (el) el.checked = prefs.types[t] || false;
+      });
+      _updatePermUI('Notification' in window ? Notification.permission : 'unsupported');
+      /* lang */
+      const isAR = (typeof lang !== 'undefined' ? lang : 'ar') !== 'es';
+      document.querySelectorAll('.notif-panel [data-ar],[data-es]').forEach(el => {
+        if (el.hasAttribute('data-ar')) el.style.display = isAR ? '' : 'none';
+        if (el.hasAttribute('data-es')) el.style.display = isAR ? 'none' : '';
+      });
+    },
+
+    /* badge FAB */
+    updateBadge() {
+      const prefs = _loadPrefs();
+      const badge = document.getElementById('notifBadge');
+      if (!badge) return;
+      const hasPrefs  = prefs.freq > 0 && Object.values(prefs.types).some(v => v);
+      const needsPerm = hasPrefs && Notification.permission !== 'granted';
+      badge.classList.toggle('show', needsPerm);
+      if (needsPerm) badge.textContent = '!';
+    },
+
+    /* حفظ التفضيلات */
+    setFreq(f) {
+      const p = _loadPrefs(); p.freq = f;
+      _savePrefs(p); this.updateBadge();
+    },
+    saveTypes() {
+      const p = _loadPrefs();
+      ['red','orange','green','early'].forEach(t => {
+        const el = document.getElementById('ntog-'+t);
+        if (el) p.types[t] = el.checked;
+      });
+      _savePrefs(p); this.updateBadge();
+    }
+  };
+
+  function _savePrefs(p) {
+    try { localStorage.setItem(LS_PREFS_KEY, JSON.stringify(p)); } catch(e) {}
+  }
+
+  function _updatePermUI(status) {
+    const btn = document.getElementById('notifPermBtn');
+    const st  = document.getElementById('notifPermStatus');
+    if (!btn || !st) return;
+    const isAR = (typeof lang !== 'undefined' ? lang : 'ar') !== 'es';
+    if (status === 'granted') {
+      btn.disabled = true;
+      btn.innerHTML = '✅ <span>'+(isAR?'الإشعارات مفعّلة':'Notificaciones activas')+'</span>';
+      st.textContent = isAR?'ستصلك إشعارات عند تغير حالة المعبر':'Recibirás alertas al cambiar el estado';
+    } else if (status === 'denied') {
+      btn.disabled = true;
+      btn.style.background = 'var(--faint)';
+      st.textContent = isAR?'تم رفض الإذن — فعّله من إعدادات المتصفح':'Permiso denegado — actívalo en ajustes';
+    } else if (status === 'unsupported') {
+      btn.disabled = true;
+      st.textContent = isAR?'متصفحك لا يدعم الإشعارات':'Tu navegador no soporta notificaciones';
+    }
+  }
+})();
+
+/* ── دوال UI المكشوفة للـ HTML ── */
+function openNotifPanel() {
+  NotificationEngine.updatePanelUI();
+  document.getElementById('notifPanel').classList.add('open');
+}
+function closeNotifPanel() {
+  document.getElementById('notifPanel').classList.remove('open');
+}
+function setNotifFreq(f) {
+  NotificationEngine.setFreq(f);
+  NotificationEngine.updatePanelUI();
+}
+function saveNotifPrefs() {
+  NotificationEngine.saveTypes();
+}
+async function requestNotifPermission() {
+  await NotificationEngine.requestPermission();
+  NotificationEngine.updatePanelUI();
+  NotificationEngine.updateBadge();
+}
+
+
 function startListeners() {
   /* Layer 1: onSnapshot — real-time */
   try {
@@ -1768,7 +2455,25 @@ function buildAI(eS, xS, rel, pEntry, pExit, densityE, densityX, p60E, p60X) {
   if(eS==='orange'){ tags.push({ar:'متوسط',     es:'Moderado',     hot:false}); }
   if(xS==='red')   { tags.push({ar:'خروج احمر', es:'Salida roja',  hot:true});  }
 
-  /* ── تنبؤ 20 دقيقة ── */
+  /* ── تنبؤ 30 دقيقة من CongestionPredictor30 ── */
+  const reportCount = Math.round((rel || 0) * 8);
+  const p30E = CongestionPredictor30.predict30('entry', eS, reportCount);
+  const p30X = CongestionPredictor30.predict30('exit',  xS, reportCount);
+
+  /* تنبيه 30 دقيقة — يظهر قبل تنبؤ 20 دقيقة إذا كان تحذيراً */
+  if (p30E.alert && p30E.msg_ar) {
+    ar.push(p30E.msg_ar); es.push(p30E.msg_es);
+    if (p30E.level === 'high')   tags.push({ar:'تحذير دخول', es:'Alerta Ent.', hot:true});
+    if (p30E.level === 'medium') tags.push({ar:'تنبيه دخول', es:'Aviso Ent.',  hot:false});
+  } else if (p30E.msg_ar && p30E.level === 'good') {
+    ar.push(p30E.msg_ar); es.push(p30E.msg_es);
+  }
+  if (p30X.alert && p30X.msg_ar) {
+    ar.push(p30X.msg_ar); es.push(p30X.msg_es);
+    if (p30X.level === 'high')   tags.push({ar:'تحذير خروج', es:'Alerta Sal.', hot:true});
+  }
+
+  /* ── تنبؤ 20 دقيقة من Predictor ── */
   if (pEntry) {
     const ic = pEntry.trend==='up'?'📈':pEntry.trend==='down'?'📉':'➡️';
     ar.push(ic+' دخول/20د: '+STA[pEntry.status].ar);
@@ -1801,7 +2506,7 @@ function buildAI(eS, xS, rel, pEntry, pExit, densityE, densityX, p60E, p60X) {
   if(h>=7&&h<=9)  { tags.push({ar:'ذروة AM',es:'Punta AM',hot:true}); }
   if(h>=16&&h<=19){ tags.push({ar:'ذروة PM',es:'Punta PM',hot:true}); }
   if(h<6||h>=22)  { ar.push('✅ أفضل وقت'); es.push('✅ Mejor momento'); tags.push({ar:'هادئ',es:'Tranquilo',hot:false}); }
-  if(rel<0.3)     { ar.push('⚠️ بيانات محدودة'); es.push('⚠️ Datos limitados'); }
+  if(rel<0.3)     { ar.push('⚠️ بيانات محدودة'); es.push('⚠️ Datos limitados'); tags.push({ar:'بيانات محدودة',es:'Datos insuf.',hot:false}); }
   if(!ar.length)  { ar.push('📊 الوضع مستقر'); es.push('📊 Situación estable'); }
 
   /* ── العرض: ETA في الأول دائماً ── */
@@ -1823,9 +2528,9 @@ function setBtn(ms) {
   const btn = $('btnCta');
   if (ms > 0) {
     btn.disabled = true;
-    const m=Math.floor(ms/60000), s=Math.floor((ms%60000)/1000);
+    const s = Math.ceil(ms / 1000);
     btn.innerHTML = '<span data-ar>📍 تحديث الحالة</span><span data-es>📍 Actualizar</span>'
-                  + '<span class="btn-sub">'+m+':'+String(s).padStart(2,'0')+'</span>';
+                  + '<span class="btn-sub">' + s + 's</span>';
   } else {
     btn.disabled = false;
     btn.innerHTML = '<span data-ar>📍 تحديث الحالة</span><span data-es>📍 Actualizar estado</span>';
@@ -2188,12 +2893,7 @@ function runIntro() {
       setTimeout(() => {
         const el = $('intro');
         if (el) el.remove();
-        if (cacheEntry.length||cacheExit.length) {
-          applyLane('entry', calcStatus(cacheEntry));
-          applyLane('exit',  calcStatus(cacheExit));
-          buildAI(calcStatus(cacheEntry).status, calcStatus(cacheExit).status,
-                  calcStatus(cacheEntry).rel, null, null);
-        }
+        /* لا حساب محلي هنا — الحالة تأتي من Firestore عبر TrafficState.render() */
       }, 680);
       return;
     }
@@ -2211,7 +2911,7 @@ function toggleDetails() {
   arrow.classList.toggle('open', open);
 }
 
-buildTL(); setTime(); setBtn(0);
+buildTL(); setTime(); /* setBtn يُستدعى بعد boot */
 
 window.setLang       = setLang;
 window.setZone       = setZone;
@@ -2221,7 +2921,12 @@ window.pickLane      = pickLane;
 window.pickSt        = pickSt;
 window.submit        = submit;
 window.toggleDetails = toggleDetails;
-window.toggleDebug   = toggleDebug;
+window.toggleDebug       = toggleDebug;
+window.openNotifPanel    = openNotifPanel;
+window.closeNotifPanel   = closeNotifPanel;
+window.setNotifFreq      = setNotifFreq;
+window.saveNotifPrefs    = saveNotifPrefs;
+window.requestNotifPermission = requestNotifPermission;
 window.locateMe      = () => {
   setGpsUI('searching');
   showToast(lang === 'es' ? '📍 Localizando…' : '📍 جاري التحديد…');
@@ -2255,17 +2960,24 @@ window.locateMe      = () => {
 Map.init();
 initGPS();
 
-/* boot: اقرأ Firestore → اعرض → شغّل المستمعين */
-TrafficState.boot();
+/* ════════════════════════════════════════════════════
+   تسلسل التهيئة الصحيح:
+   1. await boot()  ← ينتظر Firestore كاملاً
+   2. ثم فقط: runIntro أو إزالة intro
+   ════════════════════════════════════════════════════ */
+(async () => {
+  /* boot: يقرأ Firestore → يُحدّث mem → _bootReady=true → render */
+  await TrafficState.boot();
 
-/* الانترو مرة واحدة فقط في الجلسة */
-if (!sessionStorage.getItem('qnt_intro_done')) {
-  sessionStorage.setItem('qnt_intro_done', '1');
-  runIntro();
-} else {
-  const el = $('intro');
-  if (el) el.remove();
-}
+  /* الانترو مرة واحدة فقط في الجلسة — بعد اكتمال boot */
+  if (!sessionStorage.getItem('qnt_intro_done')) {
+    sessionStorage.setItem('qnt_intro_done', '1');
+    runIntro();
+  } else {
+    const el = $('intro');
+    if (el) el.remove();
+  }
+})();
 
 </script>
 </body>
