@@ -22,7 +22,7 @@
 html,body{height:100%;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
 body{font-family:'Sora','Noto Naskh Arabic',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden}
 #intro{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .65s ease,transform .65s ease}
-#intro.out{opacity:0;transform:scale(1.05);pointer-events:none}
+#intro.out{opacity:0;transform:scale(1.05);pointer-events:none;transition:opacity .65s ease,transform .65s ease}
 #introCanvas{position:absolute;inset:0;width:100%;height:100%}
 #app{display:flex;flex-direction:column;align-items:center;padding:14px 12px 44px}
 .shell{width:100%;max-width:420px;display:flex;flex-direction:column;gap:10px}
@@ -475,10 +475,8 @@ function toggleDetails() {
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
-
 <script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { initializeApp }  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp,
          doc, setDoc, getDoc, onSnapshot as onSnap }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
@@ -493,6 +491,8 @@ const _app = initializeApp({
 });
 const _db        = getFirestore(_app);
 const reportsCol = collection(_db, 'reports');
+
+/* ── FCM Messaging: يُهيَّأ داخل FCMSystem فقط — ليس هنا ── */
 const lanesRef   = {
   entry: doc(_db, 'lanes_state', 'entry'),
   exit:  doc(_db, 'lanes_state', 'exit')
@@ -1775,6 +1775,9 @@ const TrafficState = (() => {
     setInterval(updateDebug, 1000);
     /* تهيئة badge الإشعارات */
     if (typeof NotificationEngine !== 'undefined') NotificationEngine.updateBadge();
+    /* تسجيل SW فوراً (لا يحتاج إذن) + استقبال foreground messages */
+    FCMSystem.registerSW().then(() => FCMSystem.listenForeground());
+    _updateFCMStatusUI();
   }
 
   /* ════════════════════════════════════════
@@ -2350,6 +2353,196 @@ const NotificationEngine = (() => {
       st.textContent = isAR?'متصفحك لا يدعم الإشعارات':'Tu navegador no soporta notificaciones';
     }
   }
+/* ════════════════════════════════════════════════════════════════
+   FCM PUSH SYSTEM — إشعارات حقيقية خارج التطبيق
+   التسلسل:
+     1. registerSW()     — تسجيل Service Worker
+     2. getFCMToken()    — الحصول على token من Firebase
+     3. saveToken()      — حفظ token في Firestore (fcm_tokens)
+     4. listenForeground() — استقبال إشعارات حين التطبيق مفتوح
+   ════════════════════════════════════════════════════════════════ */
+const FCMSystem = (() => {
+
+  /* VAPID Public Key — من Firebase Console → Project Settings → Cloud Messaging */
+  /* ⚠️ يجب استبداله بـ VAPID key الحقيقي من Firebase Console */
+  const VAPID_KEY = 'BEw3BJLfACDwfld9x3KPOvfDxjr5m2f9BWt_YpuOPv2dZi4HgD-5Qf3DE1kRD7Qu167HwkPBPjeGjdf8ykI8XVk';
+
+  const TOKEN_COL = 'fcm_tokens';
+  let _swReg      = null;
+  let _token      = null;
+  let _fcm        = null;  /* lazy init — dynamic import */
+  let _getToken   = null;
+  let _onMessage  = null;
+
+  async function _initFCM() {
+    if (_fcm) return _fcm;
+    try {
+      const mod = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js');
+      _getToken  = mod.getToken;
+      _onMessage = mod.onMessage;
+      _fcm = mod.getMessaging(_app);
+    } catch(e) { console.warn('[FCM] init failed:', e.message); }
+    return _fcm;
+  }
+
+  /* ── 1. تسجيل Service Worker ── */
+  async function registerSW() {
+    if (!('serviceWorker' in navigator)) {
+      console.warn('[FCM] Service Worker غير مدعوم');
+      return null;
+    }
+    try {
+      /* المسار النسبي — SW في نفس مجلد index.html */
+      _swReg = await navigator.serviceWorker.register(
+        './firebase-messaging-sw.js',
+        { scope: './' }
+      );
+      console.log('[FCM] SW registered:', _swReg.scope);
+      return _swReg;
+    } catch(e) {
+      console.warn('[FCM] SW register failed:', e.message);
+      return null;
+    }
+  }
+
+  /* ── 2. طلب الإذن + الحصول على FCM Token ── */
+  async function requestAndGetToken() {
+    const fcm = await _initFCM();
+    if (!fcm) return null;
+
+    /* طلب إذن الإشعارات */
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') {
+      console.log('[FCM] إذن مرفوض');
+      return null;
+    }
+
+    /* تأكد من تسجيل SW أولاً */
+    if (!_swReg) await registerSW();
+    if (!_swReg) return null;
+
+    try {
+      _token = await _getToken(fcm, {
+        vapidKey:            VAPID_KEY,
+        serviceWorkerRegistration: _swReg
+      });
+      if (_token) {
+        console.log('[FCM] Token:', _token.slice(0, 20) + '…');
+        await _saveToken(_token);
+      }
+      return _token;
+    } catch(e) {
+      console.warn('[FCM] getToken failed:', e.message);
+      return null;
+    }
+  }
+
+  /* ── 3. حفظ Token في Firestore ── */
+  async function _saveToken(token) {
+    if (!token) return;
+    try {
+      const prefs = (() => {
+        try { return JSON.parse(localStorage.getItem('qnt_notif_v1') || '{}'); }
+        catch(e) { return {}; }
+      })();
+
+      const data = {
+        token,
+        lang:        typeof lang !== 'undefined' ? lang : 'ar',
+        notifFreq:   prefs.freq      || 0,
+        notifTypes:  prefs.types     || { red:true, orange:false, green:false, early:false },
+        updatedAt:   Date.now(),
+        /* GPS — يُحدَّث لاحقاً إذا أذن المستخدم */
+        lastLat:     null,
+        lastLon:     null
+      };
+
+      /* استخدم token كـ document ID لتجنب التكرار */
+      const tokenDoc = doc(_db, TOKEN_COL, _tokenId(token));
+      await setDoc(tokenDoc, data, { merge: true });
+      console.log('[FCM] Token saved to Firestore');
+    } catch(e) {
+      console.warn('[FCM] saveToken failed:', e.message);
+    }
+  }
+
+  /* ── تحديث GPS في token ── */
+  async function updateTokenGPS(lat, lon) {
+    if (!_token) return;
+    try {
+      const tokenDoc = doc(_db, TOKEN_COL, _tokenId(_token));
+      await setDoc(tokenDoc, { lastLat: lat, lastLon: lon, gpsAt: Date.now() }, { merge: true });
+    } catch(e) {}
+  }
+
+  /* ── تحديث تفضيلات المستخدم في token ── */
+  async function syncPrefsToToken() {
+    if (!_token) return;
+    try {
+      const prefs = (() => {
+        try { return JSON.parse(localStorage.getItem('qnt_notif_v1') || '{}'); }
+        catch(e) { return {}; }
+      })();
+      const tokenDoc = doc(_db, TOKEN_COL, _tokenId(_token));
+      await setDoc(tokenDoc, {
+        notifFreq:  prefs.freq   || 0,
+        notifTypes: prefs.types  || {},
+        lang:       typeof lang !== 'undefined' ? lang : 'ar',
+        updatedAt:  Date.now()
+      }, { merge: true });
+    } catch(e) {}
+  }
+
+  /* ── 4. استقبال إشعارات حين التطبيق مفتوح ── */
+  async function listenForeground() {
+    const fcm = await _initFCM();
+    if (!fcm || !_onMessage) return;
+    try {
+      _onMessage(fcm, payload => {
+        console.log('[FCM] Foreground message:', payload);
+        const data  = payload.data || {};
+        const notif = payload.notification || {};
+        const title = notif.title || data.title || '🔔 قنطرة';
+        const body  = notif.body  || data.body  || '';
+        /* اعرض كـ toast داخل التطبيق */
+        if (typeof showToast === 'function') showToast(title + (body ? ' — ' + body : ''));
+      });
+    } catch(e) { console.warn('[FCM] onMessage:', e.message); }
+  }
+
+  /* ── إرسال إشعار تجريبي للتحقق ── */
+  async function sendTest() {
+    if (Notification.permission !== 'granted') return;
+    try {
+      new Notification('✅ قنطرة — الإشعارات تعمل!', {
+        body:  'ستصلك إشعارات عند تغير حالة معبر باب سبتة',
+        icon:  './icon-192.png',
+        badge: './icon-96.png',
+        tag:   'qantara-test'
+      });
+    } catch(e) {}
+  }
+
+  /* ── hash بسيط لتوليد document ID من token ── */
+  function _tokenId(token) {
+    let h = 0;
+    for (let i = 0; i < token.length; i++) {
+      h = (Math.imul(31, h) + token.charCodeAt(i)) | 0;
+    }
+    return 'tok_' + Math.abs(h).toString(36);
+  }
+
+  return {
+    registerSW,
+    requestAndGetToken,
+    updateTokenGPS,
+    syncPrefsToToken,
+    listenForeground,
+    sendTest,
+    getToken: () => _token
+  };
+})();
+
 })();
 
 /* ── دوال UI المكشوفة للـ HTML ── */
@@ -2363,14 +2556,30 @@ function closeNotifPanel() {
 function setNotifFreq(f) {
   NotificationEngine.setFreq(f);
   NotificationEngine.updatePanelUI();
+  FCMSystem.syncPrefsToToken();
 }
 function saveNotifPrefs() {
   NotificationEngine.saveTypes();
+  /* مزامنة التفضيلات مع Firestore */
+  FCMSystem.syncPrefsToToken();
 }
 async function requestNotifPermission() {
   await NotificationEngine.requestPermission();
+
+  /* FCM Push — تسجيل الجهاز وحفظ token في Firestore */
+  if (Notification.permission === 'granted') {
+    const token = await FCMSystem.requestAndGetToken();
+    if (token) {
+      /* إشعار تجريبي للتأكيد */
+      setTimeout(() => FCMSystem.sendTest(), 800);
+      /* مزامنة التفضيلات */
+      FCMSystem.syncPrefsToToken();
+    }
+  }
+
   NotificationEngine.updatePanelUI();
   NotificationEngine.updateBadge();
+  _updateFCMStatusUI();
 }
 
 
@@ -2920,6 +3129,21 @@ window.onBD          = onBD;
 window.pickLane      = pickLane;
 window.pickSt        = pickSt;
 window.submit        = submit;
+function _updateFCMStatusUI() {
+  const btn = document.getElementById('notifPermBtn');
+  const st  = document.getElementById('notifPermStatus');
+  if (!btn || !st) return;
+  const isAR = (typeof lang !== 'undefined' ? lang : 'ar') !== 'es';
+  const token = FCMSystem.getToken();
+  if (Notification.permission === 'granted' && token) {
+    btn.disabled = true;
+    btn.innerHTML = '✅ <span>'+(isAR?'Push مفعّل — ستصلك إشعارات خارجية':'Push activo — recibirás alertas')+'</span>';
+    st.textContent = isAR
+      ? 'الجهاز مسجّل — الإشعارات تعمل حتى لو المتصفح مغلق'
+      : 'Dispositivo registrado — alertas aunque el navegador esté cerrado';
+  }
+}
+
 window.toggleDetails = toggleDetails;
 window.toggleDebug       = toggleDebug;
 window.openNotifPanel    = openNotifPanel;
@@ -2935,6 +3159,8 @@ window.locateMe      = () => {
     pos => {
       const lat = pos.coords.latitude, lon = pos.coords.longitude;
       gpsPos = pos.coords;
+      /* حدّث GPS في FCM token */
+      FCMSystem.updateTokenGPS(lat, lon);
       if (!inBounds(lat, lon)) {
         setGpsUI('out');
         showToast(lang === 'es'
@@ -2965,9 +3191,23 @@ initGPS();
    1. await boot()  ← ينتظر Firestore كاملاً
    2. ثم فقط: runIntro أو إزالة intro
    ════════════════════════════════════════════════════ */
+/* safety net — يُزيل الشاشة السوداء بعد 6 ثوانٍ حتى لو فشل كل شيء */
+const _safetyTimer = setTimeout(() => {
+  hideLoader();
+  const el = $('intro'); if (el) el.remove();
+  console.warn('[Q] safety net fired — check boot errors');
+}, 6000);
+
 (async () => {
-  /* boot: يقرأ Firestore → يُحدّث mem → _bootReady=true → render */
-  await TrafficState.boot();
+  try {
+    /* boot: يقرأ Firestore → يُحدّث mem → _bootReady=true → render */
+    await TrafficState.boot();
+  } catch(e) {
+    console.error('[Q] boot failed:', e);
+    hideLoader();
+  } finally {
+    clearTimeout(_safetyTimer);
+  }
 
   /* الانترو مرة واحدة فقط في الجلسة — بعد اكتمال boot */
   if (!sessionStorage.getItem('qnt_intro_done')) {
