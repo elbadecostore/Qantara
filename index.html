@@ -184,7 +184,28 @@ body:not(.es) [data-es]{display:none!important}
     border-top-color:#f59e0b;border-radius:50%;animation:spin .8s linear infinite"></div>
   <span style="color:rgba(255,255,255,.5);font-size:13px;font-family:system-ui" id="loaderTxt">جارٍ التحميل…</span>
 </div>
-<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+<style>@keyframes spin{to{transform:rotate(360deg)}}
+  /* ══ بطاقة التوقع القادم ══ */
+  .pred-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;position:relative;overflow:hidden;margin-bottom:0}
+  .pred-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(139,92,246,.5),transparent)}
+  .pred-hd{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .pred-ico{font-size:20px;line-height:1}
+  .pred-ttl{font-size:12px;font-weight:800;color:var(--fg);letter-spacing:.04em;text-transform:uppercase}
+  .pred-sub{font-size:10px;color:var(--muted);margin-top:1px}
+  .pred-now{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.04);margin-bottom:8px}
+  .pred-now-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .pred-now-lbl{font-size:12px;font-weight:700;color:var(--muted)}
+  .pred-now-val{font-size:14px;font-weight:800;margin-right:auto}
+  .pred-conf{font-size:10px;color:var(--muted);margin-right:4px}
+  .pred-rows{display:flex;flex-direction:column;gap:5px}
+  .pred-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,.025)}
+  .pred-row-ico{font-size:13px;width:16px;text-align:center;flex-shrink:0}
+  .pred-row-lbl{font-size:11px;color:var(--muted);flex:1}
+  .pred-row-val{font-size:12px;font-weight:700}
+  .pred-row-bar{width:48px;height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;flex-shrink:0}
+  .pred-row-fill{height:100%;border-radius:2px;transition:width .4s}
+  .pred-src{font-size:9px;color:var(--muted);text-align:center;margin-top:8px;opacity:.6}
+</style>
 
 <div id="intro"><canvas id="introCanvas"></canvas></div>
 
@@ -231,6 +252,47 @@ body:not(.es) [data-es]{display:none!important}
     <div class="ai-tags" id="aiTags"></div>
   </div>
 </div>
+
+<!-- ══ بطاقة التوقع القادم ══ -->
+<div class="pred-card" id="predCard">
+  <div class="pred-hd">
+    <div class="pred-ico">📊</div>
+    <div>
+      <div class="pred-ttl"><span data-ar>التوقع القادم</span><span data-es>Previsión</span></div>
+      <div class="pred-sub"><span data-ar>مبني على الأنماط + التقارير الحية</span><span data-es>Basado en patrones + reportes</span></div>
+    </div>
+  </div>
+  <!-- الحالة الآن -->
+  <div class="pred-now" id="predNow">
+    <div class="pred-now-dot" id="predNowDot" style="background:#00d46e"></div>
+    <span class="pred-now-lbl"><span data-ar>الآن:</span><span data-es>Ahora:</span></span>
+    <span class="pred-now-val" id="predNowVal">—</span>
+    <span class="pred-conf" id="predNowConf"></span>
+  </div>
+  <!-- صفوف التوقع -->
+  <div class="pred-rows">
+    <div class="pred-row">
+      <span class="pred-row-ico">⏱️</span>
+      <span class="pred-row-lbl"><span data-ar>خلال 30 دقيقة</span><span data-es>En 30 min</span></span>
+      <span class="pred-row-val" id="pred30Val">—</span>
+      <div class="pred-row-bar"><div class="pred-row-fill" id="pred30Bar" style="width:0%;background:#00d46e"></div></div>
+    </div>
+    <div class="pred-row">
+      <span class="pred-row-ico">🕐</span>
+      <span class="pred-row-lbl"><span data-ar>خلال ساعة</span><span data-es>En 1 hora</span></span>
+      <span class="pred-row-val" id="pred60Val">—</span>
+      <div class="pred-row-bar"><div class="pred-row-fill" id="pred60Bar" style="width:0%;background:#00d46e"></div></div>
+    </div>
+    <div class="pred-row">
+      <span class="pred-row-ico">🌅</span>
+      <span class="pred-row-lbl"><span data-ar>خلال ساعتين</span><span data-es>En 2 horas</span></span>
+      <span class="pred-row-val" id="pred120Val">—</span>
+      <div class="pred-row-bar"><div class="pred-row-fill" id="pred120Bar" style="width:0%;background:#00d46e"></div></div>
+    </div>
+  </div>
+  <div class="pred-src" id="predSrc"></div>
+</div>
+
 
 <div class="lanes">
   <div class="lc" id="lc-e"><div class="lc-top"><div class="lc-dir"><span data-ar>↑ دخول سبتة</span><span data-es>↑ Entrada</span></div><span class="lc-arr">⬆️</span></div><div class="lc-st" id="eSt">—</div><div class="lc-wt" id="eWt">—</div><div class="mbar"><div class="mfill" id="eBar"></div></div></div>
@@ -1515,6 +1577,8 @@ const TrafficState = (() => {
         Predictor.predict('entry', dE), Predictor.predict('exit', dX),
         dE, dX,
         Predictor.predict60('entry', dE), Predictor.predict60('exit', dX));
+    if (typeof updatePredCard === 'function')
+      updatePredCard(eS, xS, mem[lane].rel ?? 0);
   }
 
   /* ════════════════════════════
@@ -2080,6 +2144,74 @@ function buildAI(eS, xS, rel, pEntry, pExit, densityE, densityX, p60E, p60X) {
   ).join('');
 }
 
+/* ════════════════════════════════════════════════════════════════
+   updatePredCard() — يُحدّث بطاقة التوقع القادم
+   يستخدم CongestionPredictor30.predictAt() + بيانات Firestore الحية
+   يُستدعى من render() فقط
+   ════════════════════════════════════════════════════════════════ */
+function updatePredCard(liveStatusEntry, liveStatusExit, rel) {
+  const $ = id => document.getElementById(id);
+  if (!$('predCard')) return;
+
+  const isAR = lang !== 'es';
+
+  /* ── تحويل مستوى رقمي → نص + لون + عرض ── */
+  const LVL = {
+    0: { ar:'🟢 عادي',   es:'🟢 Fluido',    color:'#00d46e', fill: 33 },
+    1: { ar:'🟠 متوسط',  es:'🟠 Moderado',  color:'#f59e0b', fill: 66 },
+    2: { ar:'🔴 شديد',   es:'🔴 Atasco',    color:'#ff3355', fill:100 }
+  };
+
+  /* ── الحالة الحية → رقم ── */
+  const ST_VAL = { green:0, orange:1, red:2 };
+  const liveE  = ST_VAL[liveStatusEntry] ?? 0;
+  const liveX  = ST_VAL[liveStatusExit]  ?? 0;
+  const liveAvg = Math.round((liveE + liveX) / 2);
+
+  /* ── توقعات CongestionPredictor30 لنقاط زمنية ── */
+  const at30  = Math.round((CongestionPredictor30.predictAt('entry', 30)  + CongestionPredictor30.predictAt('exit', 30))  / 2);
+  const at60  = Math.round((CongestionPredictor30.predictAt('entry', 60)  + CongestionPredictor30.predictAt('exit', 60))  / 2);
+  const at120 = Math.round((CongestionPredictor30.predictAt('entry', 120) + CongestionPredictor30.predictAt('exit', 120)) / 2);
+
+  /* ── مزج الحالة الحية مع النمط الزمني (weight 60% حي + 40% نمط) ── */
+  const blend30  = rel > 0.3 ? Math.round(liveAvg * 0.5 + at30  * 0.5)
+                              : at30;
+  const blend60  = rel > 0.3 ? Math.round(liveAvg * 0.3 + at60  * 0.7)
+                              : at60;
+  const blend120 = at120; /* بعيد جداً — النمط فقط */
+
+  /* ── تحقق من القيم ── */
+  const clamp = v => Math.max(0, Math.min(2, v));
+
+  /* ── مصدر البيانات ── */
+  const dataQuality = rel > 0.5 ? (isAR ? '📡 بيانات حية + أنماط تاريخية' : '📡 Datos en vivo + patrones')
+                    : rel > 0.1 ? (isAR ? '📊 أنماط تاريخية + تقارير محدودة' : '📊 Patrones + datos parciales')
+                    :              (isAR ? '📈 أنماط تاريخية فقط' : '📈 Solo patrones históricos');
+
+  /* ── حدّث الواجهة ── */
+  const nowLvl = LVL[clamp(liveAvg)];
+  $('predNowDot').style.background = nowLvl.color;
+  $('predNowVal').textContent = isAR ? nowLvl.ar : nowLvl.es;
+  $('predNowVal').style.color = nowLvl.color;
+  $('predNowConf').textContent = rel > 0.3 ? (isAR ? `(${Math.round(rel*100)}% ثقة)` : `(${Math.round(rel*100)}% conf.)`) : '';
+
+  const set = (id, barId, lvl) => {
+    const L = LVL[clamp(lvl)];
+    const el = $(id), bar = $(barId);
+    if (!el || !bar) return;
+    el.textContent  = isAR ? L.ar : L.es;
+    el.style.color  = L.color;
+    bar.style.width = L.fill + '%';
+    bar.style.background = L.color;
+  };
+
+  set('pred30Val',  'pred30Bar',  blend30);
+  set('pred60Val',  'pred60Bar',  blend60);
+  set('pred120Val', 'pred120Bar', blend120);
+
+  $('predSrc').textContent = dataQuality;
+}
+
 function setTime() {
   $('stTime').textContent = new Date().toLocaleTimeString('ar-MA',{hour:'2-digit',minute:'2-digit'});
 }
@@ -2533,7 +2665,6 @@ initGPS();
     if (el) el.remove();
   }
 })();
-
 </script>
 </body>
 </html>
