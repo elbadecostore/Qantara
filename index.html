@@ -21,7 +21,7 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
 body{font-family:'Sora','Noto Naskh Arabic',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden}
-#intro{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .65s ease,transform .65s ease}
+#intro{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .65s ease,transform .65s ease;animation:loaderFadeOut .6s ease 6s forwards}
 #intro.out{opacity:0;transform:scale(1.05);pointer-events:none;transition:opacity .65s ease,transform .65s ease}
 #introCanvas{position:absolute;inset:0;width:100%;height:100%}
 #app{display:flex;flex-direction:column;align-items:center;padding:14px 12px 44px}
@@ -245,21 +245,6 @@ body:not(.es) [data-es]{display:none!important}
 </head>
 <body>
 
-<!-- Loading overlay — يختفي بعد أول snapshot -->
-<div id="appLoader" style="
-  position:fixed;inset:0;z-index:9999;
-  background:#0d1117;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:16px;
-  transition:opacity .4s ease;">
-  <div style="width:44px;height:44px;border:3px solid rgba(255,255,255,.1);
-    border-top-color:#f59e0b;border-radius:50%;animation:spin .8s linear infinite"></div>
-  <span style="color:rgba(255,255,255,.5);font-size:13px;font-family:system-ui" id="loaderTxt">جارٍ التحميل…</span>
-</div>
-<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-
-<div id="intro"><canvas id="introCanvas"></canvas></div>
-
 <div id="app"><div class="shell">
 
 <div class="topbar">
@@ -465,15 +450,12 @@ function toggleDetails() {
         <label class="ntog"><input type="checkbox" id="ntog-early" onchange="saveNotifPrefs()"><span class="nslider"></span></label>
       </div>
     </div>
-
     <!-- تفعيل إذن الإشعارات -->
     <button class="notif-perm-btn" id="notifPermBtn" onclick="requestNotifPermission()">
       <span>🔔</span>
       <span data-ar>تفعيل الإشعارات</span><span data-es>Activar notificaciones</span>
     </button>
-    <div class="notif-perm-status" id="notifPermStatus"></div>
-  </div>
-</div>
+    <div class="notif-perm-status" id="notifPe
 
 <script type="module">
 import { initializeApp }  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
@@ -1592,16 +1574,7 @@ function applyLane(lane, {status, count, rel}) {
   }
 }
 
-/* hideLoader */
-let _loaderHidden = false;
-function hideLoader() {
-  if (_loaderHidden) return;
-  _loaderHidden = true;
-  const el = document.getElementById('appLoader');
-  if (!el) return;
-  el.style.opacity = '0';
-  setTimeout(() => el.parentNode && el.parentNode.removeChild(el), 450);
-}
+
 
 /* ════════════════════════════════════════════════════════════════
    TRAFFIC STATE — مصدر الحقيقة الوحيد
@@ -1758,8 +1731,7 @@ const TrafficState = (() => {
     render('entry', mem.entry);
     render('exit',  mem.exit);
 
-    /* الخطوة 5: أخفِ loader */
-    hideLoader();
+    /* الخطوة 5: boot كاملة */
 
     /* الخطوة 6: _booted = true — الآن ingest/tick/userReport مسموحة */
     _booted = true;
@@ -2596,8 +2568,7 @@ function startListeners() {
       if (docs.length) _lastDataTs = now;
       setFbUI(true, snap.size);
       applyDocs(docs);
-      hideLoader();
-    }, err => { console.warn('[Q] onSnapshot:', err.code); setFbUI(false); });
+          }, err => { console.warn('[Q] onSnapshot:', err.code); setFbUI(false); });
   } catch(e) { console.warn('[Q] onSnapshot threw:', e.message); }
 
   /* Layer 2: REST polling كل 10 ثوانٍ */
@@ -2622,8 +2593,7 @@ function startListeners() {
       if (docs.length) _lastDataTs = now;
       setFbUI(true, docs.length);
       applyDocs(docs);
-      hideLoader();
-    } catch(e) { setFbUI(false); }
+          } catch(e) { setFbUI(false); }
   }
   poll();
   setInterval(poll, 10000);
@@ -2857,7 +2827,12 @@ function pickSt(k) {
   $('btnCf').disabled = false;
 }
 function runIntro() {
+  /* timeout أمان — يُظهر التطبيق بعد 5s حتى لو animation فشلت */
   const cv = $('introCanvas'), ctx = cv.getContext('2d');
+  /* polyfill roundRect للمتصفحات القديمة */
+  if (!ctx.roundRect) {
+    ctx.roundRect = function(x,y,w,h,r){ this.rect(x,y,w,h); };
+  }
   const W = window.innerWidth, H = window.innerHeight;
   cv.width = W; cv.height = H;
 
@@ -3098,12 +3073,6 @@ function runIntro() {
     /* نهاية */
     if (frame >= T_END) {
       done = true;
-      $('intro').classList.add('out');
-      setTimeout(() => {
-        const el = $('intro');
-        if (el) el.remove();
-        /* لا حساب محلي هنا — الحالة تأتي من Firestore عبر TrafficState.render() */
-      }, 680);
       return;
     }
     requestAnimationFrame(tick);
@@ -3182,41 +3151,10 @@ window.locateMe      = () => {
   );
 };
 
-/* تهيئة الخريطة + GPS بالتوازي مع boot */
-Map.init();
-initGPS();
-
-/* ════════════════════════════════════════════════════
-   تسلسل التهيئة الصحيح:
-   1. await boot()  ← ينتظر Firestore كاملاً
-   2. ثم فقط: runIntro أو إزالة intro
-   ════════════════════════════════════════════════════ */
-/* safety net — يُزيل الشاشة السوداء بعد 6 ثوانٍ حتى لو فشل كل شيء */
-const _safetyTimer = setTimeout(() => {
-  hideLoader();
-  const el = $('intro'); if (el) el.remove();
-  console.warn('[Q] safety net fired — check boot errors');
-}, 6000);
-
 (async () => {
-  try {
-    /* boot: يقرأ Firestore → يُحدّث mem → _bootReady=true → render */
-    await TrafficState.boot();
-  } catch(e) {
-    console.error('[Q] boot failed:', e);
-    hideLoader();
-  } finally {
-    clearTimeout(_safetyTimer);
-  }
-
-  /* الانترو مرة واحدة فقط في الجلسة — بعد اكتمال boot */
-  if (!sessionStorage.getItem('qnt_intro_done')) {
-    sessionStorage.setItem('qnt_intro_done', '1');
-    runIntro();
-  } else {
-    const el = $('intro');
-    if (el) el.remove();
-  }
+  try { await TrafficState.boot(); } catch(e) { console.error('[Q] boot:', e); }
+  try { Map.init(); }  catch(e) { console.warn('[Q] map:', e.message); }
+  try { initGPS(); }   catch(e) { console.warn('[Q] gps:', e.message); }
 })();
 
 </script>
