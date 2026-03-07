@@ -205,6 +205,9 @@ body:not(.es) [data-es]{display:none!important}
   .pred-row-bar{width:48px;height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;flex-shrink:0}
   .pred-row-fill{height:100%;border-radius:2px;transition:width .4s}
   .pred-src{font-size:9px;color:var(--muted);text-align:center;margin-top:8px;opacity:.6}
+
+  .btn-share{display:block;width:100%;margin-top:8px;padding:10px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:background .15s,color .15s;font-family:inherit}
+  .btn-share:active{background:var(--card2);color:var(--fg)}
 </style>
 
 <div id="intro"><canvas id="introCanvas"></canvas></div>
@@ -356,6 +359,9 @@ function toggleDetails() {
 <button class="btn-cta" id="btnCta" onclick="openSheet()">
   <span data-ar>📍 تحديث الحالة</span><span data-es>📍 Actualizar estado</span>
 </button>
+<button class="btn-share" onclick="shareStatus()">
+  <span data-ar>📤 مشاركة الحالة</span><span data-es>📤 Compartir estado</span>
+</button>
 
 <div class="footer"><span data-ar>بيانات مجتمعية · الفنيدق / سبتة · Beta v1</span><span data-es>Datos comunitarios · Fnideq / Ceuta · Beta v1</span></div>
 </div></div>
@@ -396,6 +402,7 @@ const _app = initializeApp({
 });
 const _db        = getFirestore(_app);
 const reportsCol = collection(_db, 'reports');
+const historyCol  = collection(_db, 'lane_reports_history');
 const lanesRef   = {
   entry: doc(_db, 'lanes_state', 'entry'),
   exit:  doc(_db, 'lanes_state', 'exit')
@@ -1162,6 +1169,13 @@ function fbAddReport(lane, status, weight) {
     w:         w
   })
     .then(() => {
+      /* حفظ في التاريخ — لا يؤثر على أي شيء آخر */
+      const _histStatus = {green:'normal', orange:'medium', red:'heavy'};
+      addDoc(historyCol, {
+        timestamp: serverTimestamp(),
+        lane:      lane,
+        status:    _histStatus[status] || status
+      }).catch(() => {});
       Cool.set();
       setFbUI(true);
       /* عداد تنازلي يتناقص كل 250ms */
@@ -2605,6 +2619,124 @@ function toggleDetails() {
 
 buildTL(); setTime(); /* setBtn يُستدعى بعد boot */
 
+
+/* ════════════════════════════════════════
+   shareStatus — مشاركة حالة المعبر
+   ════════════════════════════════════════ */
+function shareStatus() {
+  const eStEl = document.getElementById('eSt');
+  const xStEl = document.getElementById('xSt');
+  const eWtEl = document.getElementById('eWt');
+  const eSt   = eStEl ? eStEl.textContent.trim() : '—';
+  const xSt   = xStEl ? xStEl.textContent.trim() : '—';
+  const eWt   = eWtEl ? eWtEl.textContent.trim() : '—';
+  const isAR  = (typeof lang !== 'undefined') ? lang !== 'es' : true;
+
+  const SITE = 'https://elbadecostore.github.io/Qantara/';
+  const msg  = isAR
+    ? '🚦 حالة معبر باب سبتة الآن:\nالدخول: ' + eSt + '\nالخروج: ' + xSt + '\n⏱️ وقت الانتظار: ' + eWt + '\n🔗 ' + SITE
+    : '🚦 Paso de Ceuta ahora:\nEntrada: ' + eSt + '\nSalida: ' + xSt + '\n⏱️ Espera: ' + eWt + '\n🔗 ' + SITE;
+
+  /* ── نسخ آمن: يعمل على HTTP + HTTPS + content:// ── */
+  function safeCopy(text, onDone) {
+    /* الطريقة 1: Clipboard API (HTTPS فقط) */
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(onDone).catch(() => fallbackCopy(text, onDone));
+      return;
+    }
+    fallbackCopy(text, onDone);
+  }
+
+  function fallbackCopy(text, onDone) {
+    /* الطريقة 2: execCommand (يعمل في كل مكان) */
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:-999px;left:-999px;opacity:0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+    if (onDone) onDone();
+  }
+
+  /* ── بناء الـ overlay ── */
+  const existing = document.getElementById('_shareOverlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = '_shareOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center';
+
+  const sheet = document.createElement('div');
+  sheet.style.cssText = 'background:#1a1f2e;border-radius:20px 20px 0 0;padding:20px 16px 36px;width:100%;max-width:480px;display:flex;flex-direction:column;gap:10px';
+
+  const titleEl = document.createElement('div');
+  titleEl.style.cssText = 'font-size:13px;font-weight:700;color:rgba(255,255,255,.5);text-align:center;margin-bottom:2px';
+  titleEl.textContent = isAR ? 'مشاركة عبر' : 'Compartir vía';
+
+  const BS = 'display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;border:none;background:rgba(255,255,255,.07);color:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;text-align:' + (isAR?'right':'left');
+
+  function makeBtn(icon, label, cb) {
+    const b = document.createElement('button');
+    b.style.cssText = BS;
+    b.innerHTML = '<span style="font-size:22px;flex-shrink:0">' + icon + '</span><span>' + label + '</span>';
+    b.onclick = function(e) { e.stopPropagation(); overlay.remove(); cb(); };
+    return b;
+  }
+
+  /* WhatsApp */
+  const wa = makeBtn('🟢', 'WhatsApp', function() {
+    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+  });
+
+  /* Telegram */
+  const tg = makeBtn('🔷', 'Telegram', function() {
+    const txtOnly = isAR
+      ? '🚦 حالة معبر باب سبتة:\nالدخول: ' + eSt + '\nالخروج: ' + xSt + '\n⏱️ ' + eWt
+      : '🚦 Paso de Ceuta:\nEntrada: ' + eSt + '\nSalida: ' + xSt + '\n⏱️ ' + eWt;
+    window.open('https://t.me/share/url?url=' + encodeURIComponent(SITE) + '&text=' + encodeURIComponent(txtOnly), '_blank');
+  });
+
+  /* Facebook:
+     - نفتح Facebook أولاً (في نفس onclick — قبل أي async)
+     - ثم ننسخ النص في الخلفية
+     هذا يمنع Android من حجب window.open */
+  const fb = makeBtn('🔵', 'Facebook', function() {
+    /* افتح Facebook فوراً — قبل أي async */
+    const win = window.open('https://www.facebook.com/', '_blank');
+    /* انسخ النص في الخلفية */
+    safeCopy(msg, function() {
+      showToast && showToast(isAR
+        ? '✅ تم النسخ — الصقه في منشورك على Facebook'
+        : '✅ Copiado — pégalo en tu publicación de Facebook');
+    });
+    if (!win) {
+      /* إذا حُجب popup: انسخ فقط */
+      safeCopy(msg, function() {
+        showToast && showToast(isAR ? '✅ تم النسخ' : '✅ Copiado');
+      });
+    }
+  });
+
+  /* نسخ مباشر */
+  const cp = makeBtn('📋', isAR ? 'نسخ النص' : 'Copiar texto', function() {
+    safeCopy(msg, function() {
+      showToast && showToast(isAR ? '✅ تم نسخ النص' : '✅ Texto copiado');
+    });
+  });
+
+  /* إلغاء */
+  const cancel = document.createElement('button');
+  cancel.style.cssText = 'padding:12px;border-radius:12px;border:none;background:transparent;color:rgba(255,255,255,.35);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;margin-top:2px';
+  cancel.textContent = isAR ? 'إلغاء' : 'Cancelar';
+  cancel.onclick = function() { overlay.remove(); };
+
+  sheet.append(titleEl, wa, tg, fb, cp, cancel);
+  overlay.appendChild(sheet);
+  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
 window.setLang       = setLang;
 window.setZone       = setZone;
 window.openSheet     = openSheet;
@@ -2614,6 +2746,7 @@ window.pickSt        = pickSt;
 window.submit        = submit;
 window.toggleDetails = toggleDetails;
 window.toggleDebug   = toggleDebug;
+window.shareStatus   = shareStatus;
 window.locateMe      = () => {
   setGpsUI('searching');
   showToast(lang === 'es' ? '📍 Localizando…' : '📍 جاري التحديد…');
