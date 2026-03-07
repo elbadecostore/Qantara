@@ -1884,6 +1884,16 @@ const TrafficState = (() => {
 setInterval(() => TrafficState.tick('entry'), 5 * 60 * 1000);
 setInterval(() => TrafficState.tick('exit'),  5 * 60 * 1000);
 
+/* ── تحديث بطاقة التنبؤ كل دقيقة (النمط يتغير مع الساعة) ──
+   الخريطة لا تتغير — فقط predCard يُعاد حسابه بالنمط الزمني الجديد */
+setInterval(function() {
+  if (typeof updatePredCard !== 'function') return;
+  if (!TrafficState) return;
+  const eS = TrafficState.status('entry');
+  const xS = TrafficState.status('exit');
+  updatePredCard(eS, xS, 0);
+}, 60 * 1000);
+
 /* ════════════════════════════════════════════════════════════════
    calcStatus — لـ Predictor وحساب count/rel فقط
    لا يتحكم في الألوان — TrafficState هو المتحكم الوحيد
@@ -2624,117 +2634,126 @@ buildTL(); setTime(); /* setBtn يُستدعى بعد boot */
    shareStatus — مشاركة حالة المعبر
    ════════════════════════════════════════ */
 function shareStatus() {
-  const eStEl = document.getElementById('eSt');
-  const xStEl = document.getElementById('xSt');
-  const eWtEl = document.getElementById('eWt');
-  const eSt   = eStEl ? eStEl.textContent.trim() : '—';
-  const xSt   = xStEl ? xStEl.textContent.trim() : '—';
-  const eWt   = eWtEl ? eWtEl.textContent.trim() : '—';
-  const isAR  = (typeof lang !== 'undefined') ? lang !== 'es' : true;
+  const eSt = ((document.getElementById('eSt')||{}).textContent||'—').trim();
+  const xSt = ((document.getElementById('xSt')||{}).textContent||'—').trim();
+  const eWt = ((document.getElementById('eWt')||{}).textContent||'—').trim();
+  const isAR = (typeof lang !== 'undefined') ? lang !== 'es' : true;
 
   const SITE = 'https://elbadecostore.github.io/Qantara/';
   const msg  = isAR
-    ? '🚦 حالة معبر باب سبتة الآن:\nالدخول: ' + eSt + '\nالخروج: ' + xSt + '\n⏱️ وقت الانتظار: ' + eWt + '\n🔗 ' + SITE
-    : '🚦 Paso de Ceuta ahora:\nEntrada: ' + eSt + '\nSalida: ' + xSt + '\n⏱️ Espera: ' + eWt + '\n🔗 ' + SITE;
+    ? '🚦 حالة معبر باب سبتة الآن:\nالدخول: '+eSt+'\nالخروج: '+xSt+'\n⏱️ وقت الانتظار: '+eWt+'\n🔗 '+SITE
+    : '🚦 Paso de Ceuta ahora:\nEntrada: '+eSt+'\nSalida: '+xSt+'\n⏱️ Espera: '+eWt+'\n🔗 '+SITE;
 
-  /* ── نسخ آمن: يعمل على HTTP + HTTPS + content:// ── */
-  function safeCopy(text, onDone) {
-    /* الطريقة 1: Clipboard API (HTTPS فقط) */
+  function safeCopy(text, cb) {
     if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(text).then(onDone).catch(() => fallbackCopy(text, onDone));
-      return;
-    }
-    fallbackCopy(text, onDone);
+      navigator.clipboard.writeText(text).then(cb).catch(function(){ execCopy(text); cb(); });
+    } else { execCopy(text); cb(); }
   }
-
-  function fallbackCopy(text, onDone) {
-    /* الطريقة 2: execCommand (يعمل في كل مكان) */
-    const ta = document.createElement('textarea');
+  function execCopy(text) {
+    var ta = document.createElement('textarea');
     ta.value = text;
-    ta.style.cssText = 'position:fixed;top:-999px;left:-999px;opacity:0';
-    document.body.appendChild(ta);
-    ta.focus(); ta.select();
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px';
+    document.body.appendChild(ta); ta.focus(); ta.select();
     try { document.execCommand('copy'); } catch(e) {}
     document.body.removeChild(ta);
-    if (onDone) onDone();
   }
 
-  /* ── بناء الـ overlay ── */
-  const existing = document.getElementById('_shareOverlay');
-  if (existing) existing.remove();
+  /* ── overlay ── */
+  var ex = document.getElementById('_shareOverlay');
+  if (ex) ex.remove();
 
-  const overlay = document.createElement('div');
-  overlay.id = '_shareOverlay';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center';
+  var ov = document.createElement('div');
+  ov.id = '_shareOverlay';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.65);display:flex;align-items:flex-end;justify-content:center';
 
-  const sheet = document.createElement('div');
-  sheet.style.cssText = 'background:#1a1f2e;border-radius:20px 20px 0 0;padding:20px 16px 36px;width:100%;max-width:480px;display:flex;flex-direction:column;gap:10px';
+  var sh = document.createElement('div');
+  sh.style.cssText = 'background:#1a1f2e;border-radius:20px 20px 0 0;padding:20px 16px 40px;width:100%;max-width:480px;display:flex;flex-direction:column;gap:10px';
 
-  const titleEl = document.createElement('div');
-  titleEl.style.cssText = 'font-size:13px;font-weight:700;color:rgba(255,255,255,.5);text-align:center;margin-bottom:2px';
-  titleEl.textContent = isAR ? 'مشاركة عبر' : 'Compartir vía';
+  var ttl = document.createElement('div');
+  ttl.style.cssText = 'font-size:12px;font-weight:700;color:rgba(255,255,255,.4);text-align:center;margin-bottom:4px;letter-spacing:.06em;text-transform:uppercase';
+  ttl.textContent = isAR ? 'مشاركة عبر' : 'Compartir vía';
 
-  const BS = 'display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;border:none;background:rgba(255,255,255,.07);color:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;text-align:' + (isAR?'right':'left');
+  var BS = 'display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;border:none;background:rgba(255,255,255,.07);color:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;width:100%';
 
-  function makeBtn(icon, label, cb) {
-    const b = document.createElement('button');
+  function btn(ico, lbl, sub, fn) {
+    var b = document.createElement('button');
     b.style.cssText = BS;
-    b.innerHTML = '<span style="font-size:22px;flex-shrink:0">' + icon + '</span><span>' + label + '</span>';
-    b.onclick = function(e) { e.stopPropagation(); overlay.remove(); cb(); };
+    var subHtml = sub ? '<span style="font-size:10px;color:rgba(255,255,255,.4);display:block;font-weight:400;margin-top:1px">'+sub+'</span>' : '';
+    b.innerHTML = '<span style="font-size:22px;width:28px;text-align:center;flex-shrink:0">'+ico+'</span><span style="text-align:right;flex:1"><span style="display:block">'+lbl+'</span>'+subHtml+'</span>';
+    b.onclick = function(e){ e.stopPropagation(); ov.remove(); fn(); };
     return b;
   }
 
   /* WhatsApp */
-  const wa = makeBtn('🟢', 'WhatsApp', function() {
-    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+  var wa = btn('🟢','WhatsApp','', function(){
+    window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
   });
 
-  /* Telegram */
-  const tg = makeBtn('🔷', 'Telegram', function() {
-    const txtOnly = isAR
-      ? '🚦 حالة معبر باب سبتة:\nالدخول: ' + eSt + '\nالخروج: ' + xSt + '\n⏱️ ' + eWt
-      : '🚦 Paso de Ceuta:\nEntrada: ' + eSt + '\nSalida: ' + xSt + '\n⏱️ ' + eWt;
-    window.open('https://t.me/share/url?url=' + encodeURIComponent(SITE) + '&text=' + encodeURIComponent(txtOnly), '_blank');
-  });
-
-  /* Facebook:
-     - نفتح Facebook أولاً (في نفس onclick — قبل أي async)
-     - ثم ننسخ النص في الخلفية
-     هذا يمنع Android من حجب window.open */
-  const fb = makeBtn('🔵', 'Facebook', function() {
-    /* افتح Facebook فوراً — قبل أي async */
-    const win = window.open('https://www.facebook.com/', '_blank');
-    /* انسخ النص في الخلفية */
-    safeCopy(msg, function() {
-      showToast && showToast(isAR
-        ? '✅ تم النسخ — الصقه في منشورك على Facebook'
-        : '✅ Copiado — pégalo en tu publicación de Facebook');
+  /* Instagram */
+  var ig = btn('🟣','Instagram', isAR?'ينسخ النص ثم يفتح Instagram':'Copia texto y abre Instagram', function(){
+    safeCopy(msg, function(){
+      showToast && showToast(isAR ? '✅ تم النسخ — افتح Instagram والصقه' : '✅ Copiado — pégalo en Instagram');
+      setTimeout(function(){ window.open('https://www.instagram.com/','_blank'); }, 900);
     });
-    if (!win) {
-      /* إذا حُجب popup: انسخ فقط */
-      safeCopy(msg, function() {
-        showToast && showToast(isAR ? '✅ تم النسخ' : '✅ Copiado');
-      });
-    }
+  });
+
+  /* Facebook — نسخ فقط مع شرح واضح، بدون فتح Facebook تلقائياً
+     لأن Facebook يمنع أي نص مسبق وسيفتح فارغاً مما يربك المستخدم */
+  var fb = btn('🔵','Facebook', isAR?'انسخ النص ثم الصقه في منشور جديد':'Copia y pega en una nueva publicación', function(){
+    safeCopy(msg, function(){
+      /* أظهر الرسالة المنسوخة في overlay صغير بدل فتح Facebook مباشرة */
+      var conf = document.createElement('div');
+      conf.style.cssText = 'position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:20px';
+      var box = document.createElement('div');
+      box.style.cssText = 'background:#1a1f2e;border-radius:16px;padding:20px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px';
+
+      var h = document.createElement('div');
+      h.style.cssText = 'font-size:15px;font-weight:700;color:#fff;text-align:center';
+      h.textContent = isAR ? '📋 تم نسخ النص!' : '📋 ¡Texto copiado!';
+
+      var p = document.createElement('div');
+      p.style.cssText = 'font-size:12px;color:rgba(255,255,255,.6);text-align:center;line-height:1.6';
+      p.textContent = isAR
+        ? 'افتح Facebook واضغط على "ما الذي يدور في ذهنك؟" ثم الصق النص'
+        : 'Abre Facebook, toca "¿Qué estás pensando?" y pega el texto';
+
+      var preview = document.createElement('div');
+      preview.style.cssText = 'background:rgba(255,255,255,.05);border-radius:10px;padding:12px;font-size:11px;color:rgba(255,255,255,.5);line-height:1.7;white-space:pre-wrap;direction:rtl;text-align:right';
+      preview.textContent = msg;
+
+      var openFb = document.createElement('button');
+      openFb.style.cssText = 'padding:13px;border-radius:12px;border:none;background:#1877f2;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;width:100%';
+      openFb.textContent = isAR ? '🔵 افتح Facebook' : '🔵 Abrir Facebook';
+      openFb.onclick = function(){ conf.remove(); window.open('https://www.facebook.com/','_blank'); };
+
+      var cl = document.createElement('button');
+      cl.style.cssText = 'padding:10px;border:none;background:transparent;color:rgba(255,255,255,.3);font-size:13px;cursor:pointer;font-family:inherit;width:100%';
+      cl.textContent = isAR ? 'إغلاق' : 'Cerrar';
+      cl.onclick = function(){ conf.remove(); };
+
+      box.append(h, p, preview, openFb, cl);
+      conf.appendChild(box);
+      conf.onclick = function(e){ if(e.target===conf) conf.remove(); };
+      document.body.appendChild(conf);
+    });
   });
 
   /* نسخ مباشر */
-  const cp = makeBtn('📋', isAR ? 'نسخ النص' : 'Copiar texto', function() {
-    safeCopy(msg, function() {
-      showToast && showToast(isAR ? '✅ تم نسخ النص' : '✅ Texto copiado');
+  var cp = btn('📋', isAR?'نسخ النص':'Copiar texto', '', function(){
+    safeCopy(msg, function(){
+      showToast && showToast(isAR?'✅ تم نسخ النص':'✅ Texto copiado');
     });
   });
 
-  /* إلغاء */
-  const cancel = document.createElement('button');
-  cancel.style.cssText = 'padding:12px;border-radius:12px;border:none;background:transparent;color:rgba(255,255,255,.35);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;margin-top:2px';
-  cancel.textContent = isAR ? 'إلغاء' : 'Cancelar';
-  cancel.onclick = function() { overlay.remove(); };
+  var cn = document.createElement('button');
+  cn.style.cssText = 'padding:12px;border:none;background:transparent;color:rgba(255,255,255,.3);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;margin-top:2px';
+  cn.textContent = isAR?'إلغاء':'Cancelar';
+  cn.onclick = function(){ ov.remove(); };
 
-  sheet.append(titleEl, wa, tg, fb, cp, cancel);
-  overlay.appendChild(sheet);
-  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
-  document.body.appendChild(overlay);
+  sh.append(ttl, wa, ig, fb, cp, cn);
+  ov.appendChild(sh);
+  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+  document.body.appendChild(ov);
 }
 
 window.setLang       = setLang;
