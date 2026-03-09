@@ -27,9 +27,9 @@ body{font-family:'Sora','Noto Naskh Arabic',system-ui,sans-serif;background:var(
 #app{display:flex;flex-direction:column;align-items:center;padding:14px 12px 44px}
 .shell{width:100%;max-width:420px;display:flex;flex-direction:column;gap:10px}
 .topbar{display:flex;align-items:center;justify-content:space-between}
-.ltog{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:3px;gap:2px}
-.lt{padding:4px 11px;border-radius:7px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;font-family:'Sora',sans-serif;border:none;background:none;transition:all .2s}
-.lt.on{background:var(--card2);color:var(--text)}
+
+
+
 .live-pill{display:flex;align-items:center;gap:6px;background:var(--sb);border:1px solid var(--si);border-radius:99px;padding:5px 13px;font-size:12px;font-weight:700;color:var(--si);transition:all .4s;white-space:nowrap}
 .ldot{width:7px;height:7px;border-radius:50%;background:var(--si);animation:blink 2s ease infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
@@ -79,7 +79,7 @@ body{font-family:'Sora','Noto Naskh Arabic',system-ui,sans-serif;background:var(
 .lc{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:13px 12px;display:flex;flex-direction:column;gap:7px;transition:border-color .4s}
 .lc-top{display:flex;align-items:center;justify-content:space-between}
 .lc-dir{font-size:10px;font-weight:700;color:var(--muted)}.lc-arr{font-size:14px}
-.lc-st{font-size:15px;font-weight:800;letter-spacing:-.02em}.lc-wt{font-size:10px;color:var(--muted);font-weight:600}
+.lc-st{font-size:15px;font-weight:800;letter-spacing:-.02em}.lc-wt{font-size:14px;font-weight:700;color:#c8d0e0;margin-top:5px;min-height:18px}
 .mbar{height:3px;border-radius:99px;background:var(--faint);overflow:hidden}
 .mfill{height:100%;border-radius:99px;transition:width .7s cubic-bezier(.4,0,.2,1),background .4s}
 /* AI */
@@ -144,7 +144,7 @@ body{font-family:'Sora','Noto Naskh Arabic',system-ui,sans-serif;background:var(
 .opt{display:flex;align-items:center;gap:11px;padding:13px;border:2px solid var(--border);border-radius:13px;background:var(--surface);cursor:pointer;transition:all .18s}
 .opt.sg{border-color:var(--green);background:var(--green-bg)}.opt.so{border-color:var(--orange);background:var(--orange-bg)}.opt.sr{border-color:var(--red);background:var(--red-bg)}
 .opt-ic{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--faint);flex-shrink:0}
-.opt-b{flex:1}.opt-n{font-size:13px;font-weight:700}.opt-d{font-size:11px;color:var(--muted)}
+.opt-b{flex:1}.opt-n{font-size:13px;font-weight:700}.opt-d{font-size:12px;font-weight:700;color:#c8d0e0;margin-top:3px}
 .opt-r{width:20px;height:20px;border-radius:50%;border:2px solid var(--faint);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;transition:all .2s}
 .opt.sg .opt-r{background:var(--green);border-color:var(--green)}.opt.so .opt-r{background:var(--orange);border-color:var(--orange)}.opt.sr .opt-r{background:var(--red);border-color:var(--red)}
 .btn-cf{width:100%;padding:15px;border-radius:13px;border:none;background:linear-gradient(135deg,#1a5fff,#00aaff);color:#fff;font-family:'Sora',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s}
@@ -152,11 +152,11 @@ body{font-family:'Sora','Noto Naskh Arabic',system-ui,sans-serif;background:var(
 /* Toast */
 .toast{position:fixed;top:calc(16px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-130%);background:#1a2236;border:1px solid var(--border2);color:var(--text);padding:10px 20px;border-radius:99px;font-size:13px;font-weight:600;white-space:nowrap;z-index:90;transition:transform .4s cubic-bezier(.16,1,.3,1);pointer-events:none;backdrop-filter:blur(12px)}
 .toast.show{transform:translateX(-50%) translateY(0)}
-body.es [data-ar]{display:none!important}
-body:not(.es) [data-es]{display:none!important}
+
+
 
 /* ── DEBUG BAR ── */
-#dbgBar{display:none;background:rgba(0,0,0,.85);border:1px solid rgba(255,200,0,.3);
+#dbgBar{display:none!important;background:rgba(0,0,0,.85);border:1px solid rgba(255,200,0,.3);
   border-radius:12px;margin:8px 16px 0;padding:10px 14px}
 #dbgBar.show{display:block}
 .dbg-row{display:flex;gap:8px;margin-bottom:4px}
@@ -166,9 +166,30 @@ body:not(.es) [data-es]{display:none!important}
 .dbg-kv{display:flex;justify-content:space-between;margin:2px 0}
 .dbg-k{color:rgba(255,255,255,.45);font-size:10px;font-family:monospace}
 .dbg-v{color:#ffe066;font-size:10px;font-weight:700;font-family:monospace}
-#dbgToggle{display:block;margin:6px auto 0;background:rgba(255,200,0,.1);
+#dbgToggle{display:none!important;margin:6px auto 0;background:rgba(255,200,0,.1);
   border:1px solid rgba(255,200,0,.25);color:rgba(255,200,0,.7);
   font-size:10px;font-family:monospace;padding:3px 12px;border-radius:20px;cursor:pointer}
+/* ── lc-rep + quickConfirm ── */
+.lc-rep{display:block;font-size:10px;color:var(--muted);margin-top:5px;min-height:14px}
+.btn-confirm-quick{display:block;width:100%;margin-top:6px;padding:6px 0;border-radius:10px;border:1px solid rgba(0,212,110,.35);background:rgba(0,212,110,.08);color:#00d46e;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-confirm-quick:active{background:rgba(0,212,110,.2)}
+.btn-confirm-quick:disabled{opacity:.35;cursor:default}
+/* ── Language Picker ── */
+.lang-pick{position:relative;display:inline-block}
+.lang-btn{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+.lang-btn:active{background:var(--card2)}
+.lang-dropdown{display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--card2);border:1px solid var(--border);border-radius:10px;overflow:hidden;z-index:900;min-width:130px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.lang-pick.open .lang-dropdown{display:block}
+.lang-opt{display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text);transition:background .12s}
+.lang-opt:hover{background:var(--surface)}
+.lang-opt.on{color:var(--accent)}
+/* ── CSS Language visibility ── */
+/* ── Language visibility ── */
+/* ── Language visibility ── */
+[data-ar]{display:none}
+[data-es]{display:none}
+body:not(.es) [data-ar]{display:inline!important}
+body.es [data-es]{display:inline!important}.lc-wait{font-size:11px;color:var(--muted);margin-top:3px;min-height:14px}
 </style>
 </head>
 <body>
@@ -215,9 +236,16 @@ body:not(.es) [data-es]{display:none!important}
 <div id="app"><div class="shell">
 
 <div class="topbar">
-  <div class="ltog">
-    <button class="lt on" id="lb-ar" onclick="setLang('ar')">🇲🇦 AR</button>
-    <button class="lt"    id="lb-es" onclick="setLang('es')">🇪🇸 ES</button>
+  <div class="lang-pick" id="langPick">
+    <button class="lang-btn" onclick="toggleLangPick()">
+      <span id="langFlag">🇲🇦</span>
+      <span id="langCode">AR</span>
+      <span style="font-size:9px;opacity:.6">▼</span>
+    </button>
+    <div class="lang-dropdown" id="langDropdown">
+      <div class="lang-opt on" id="lopt-ar" onclick="pickLang('ar')">🇲🇦 العربية</div>
+      <div class="lang-opt"    id="lopt-es" onclick="pickLang('es')">🇪🇸 Español</div>
+    </div>
   </div>
   <div class="live-pill" id="livePill"><div class="ldot"></div><span id="pillTxt">—</span></div>
 </div>
@@ -298,14 +326,14 @@ body:not(.es) [data-es]{display:none!important}
 
 
 <div class="lanes">
-  <div class="lc" id="lc-e"><div class="lc-top"><div class="lc-dir"><span data-ar>↑ دخول سبتة</span><span data-es>↑ Entrada</span></div><span class="lc-arr">⬆️</span></div><div class="lc-st" id="eSt">—</div><div class="lc-wt" id="eWt">—</div><div class="mbar"><div class="mfill" id="eBar"></div></div></div>
-  <div class="lc" id="lc-x"><div class="lc-top"><div class="lc-dir"><span data-ar>↓ خروج الفنيدق</span><span data-es>↓ Salida</span></div><span class="lc-arr">⬇️</span></div><div class="lc-st" id="xSt">—</div><div class="lc-wt" id="xWt">—</div><div class="mbar"><div class="mfill" id="xBar"></div></div></div>
+  <div class="lc" id="lc-e"><div class="lc-top"><div class="lc-dir"><span data-ar>↑ دخول سبتة</span><span data-es>↑ Entrada</span></div><span class="lc-arr">⬆️</span></div><div class="lc-st" id="eSt">—</div><div class="lc-wt" id="eWt">—</div><div class="mbar"><div class="mfill" id="eBar"></div></div><span id="eRep" class="lc-rep"></span><button class="btn-confirm-quick" id="qcE" onclick="quickConfirm('entry')"><span data-ar>✅ تأكيد</span><span data-es>✅ Confirmar</span></button></div>
+  <div class="lc" id="lc-x"><div class="lc-top"><div class="lc-dir"><span data-ar>↓ خروج الفنيدق</span><span data-es>↓ Salida</span></div><span class="lc-arr">⬇️</span></div><div class="lc-st" id="xSt">—</div><div class="lc-wt" id="xWt">—</div><div class="mbar"><div class="mfill" id="xBar"></div></div><span id="xRep" class="lc-rep"></span><button class="btn-confirm-quick" id="qcX" onclick="quickConfirm('exit')"><span data-ar>✅ تأكيد</span><span data-es>✅ Confirmar</span></button></div>
 </div>
 
 <div class="zones">
-  <div class="zone zg"    id="z-green"  onclick="setZone('green')"><div class="z-ico">🟢</div><div class="z-name"><span data-ar>عادي</span><span data-es>Fluido</span></div><div class="z-wait"><span data-ar>&lt;10 د</span><span data-es>&lt;10 min</span></div></div>
-  <div class="zone zo on" id="z-orange" onclick="setZone('orange')"><div class="z-ico">🟠</div><div class="z-name"><span data-ar>متوسط</span><span data-es>Moderado</span></div><div class="z-wait"><span data-ar>20–40 د</span><span data-es>20–40 min</span></div></div>
-  <div class="zone zr"    id="z-red"    onclick="setZone('red')"><div class="z-ico">🔴</div><div class="z-name"><span data-ar>ازدحام شديد</span><span data-es>Atasco</span></div><div class="z-wait"><span data-ar>&gt;60 د</span><span data-es>&gt;60 min</span></div></div>
+  <div class="zone zg"    id="z-green"  onclick="setZone('green')"><div class="z-ico">🟢</div><div class="z-name"><span data-ar>عادي</span><span data-es>Fluido</span></div><div class="z-wait"><span data-ar>30–60 د</span><span data-es>30–60 min</span></div></div>
+  <div class="zone zo on" id="z-orange" onclick="setZone('orange')"><div class="z-ico">🟠</div><div class="z-name"><span data-ar>متوسط</span><span data-es>Moderado</span></div><div class="z-wait"><span data-ar>1–2 ساعة</span><span data-es>1–2 h</span></div></div>
+  <div class="zone zr"    id="z-red"    onclick="setZone('red')"><div class="z-ico">🔴</div><div class="z-name"><span data-ar>ازدحام شديد</span><span data-es>Atasco</span></div><div class="z-wait"><span data-ar>2–4 ساعة</span><span data-es>2–4 h</span></div></div>
 </div>
 
 <div class="details-toggle" onclick="toggleDetails()">
@@ -376,9 +404,9 @@ function toggleDetails() {
       <button class="sh-lt"    id="lt-x" onclick="pickLane('exit')"><span data-ar>⬇️ خروج الفنيدق</span><span data-es>⬇️ Salida</span></button>
     </div>
     <div class="opts">
-      <div class="opt" id="opt-g" onclick="pickSt('green')"><div class="opt-ic">🟢</div><div class="opt-b"><div class="opt-n"><span data-ar>حركة عادية</span><span data-es>Fluido</span></div><div class="opt-d"><span data-ar>أقل من 10 دقائق</span><span data-es>&lt;10 min</span></div></div><div class="opt-r" id="r-g"></div></div>
-      <div class="opt" id="opt-o" onclick="pickSt('orange')"><div class="opt-ic">🟠</div><div class="opt-b"><div class="opt-n"><span data-ar>ازدحام متوسط</span><span data-es>Moderado</span></div><div class="opt-d"><span data-ar>20–40 دقيقة</span><span data-es>20–40 min</span></div></div><div class="opt-r" id="r-o"></div></div>
-      <div class="opt" id="opt-r" onclick="pickSt('red')"><div class="opt-ic">🔴</div><div class="opt-b"><div class="opt-n"><span data-ar>ازدحام شديد</span><span data-es>Atasco severo</span></div><div class="opt-d"><span data-ar>أكثر من 60 دقيقة</span><span data-es>&gt;60 min</span></div></div><div class="opt-r" id="r-r"></div></div>
+      <div class="opt" id="opt-g" onclick="pickSt('green')"><div class="opt-ic">🟢</div><div class="opt-b"><div class="opt-n"><span data-ar>حركة عادية</span><span data-es>Fluido</span></div><div class="opt-d"><span data-ar>⏱ 30 – 60 دقيقة</span><span data-es>⏱ 30 – 60 min</span></div></div><div class="opt-r" id="r-g"></div></div>
+      <div class="opt" id="opt-o" onclick="pickSt('orange')"><div class="opt-ic">🟠</div><div class="opt-b"><div class="opt-n"><span data-ar>ازدحام متوسط</span><span data-es>Moderado</span></div><div class="opt-d"><span data-ar>⏱ 1 – 2 ساعة</span><span data-es>⏱ 1 – 2 horas</span></div></div><div class="opt-r" id="r-o"></div></div>
+      <div class="opt" id="opt-r" onclick="pickSt('red')"><div class="opt-ic">🔴</div><div class="opt-b"><div class="opt-n"><span data-ar>ازدحام شديد</span><span data-es>Atasco severo</span></div><div class="opt-d"><span data-ar>⏱ 2 – 4 ساعات</span><span data-es>⏱ 2 – 4 horas</span></div></div><div class="opt-r" id="r-r"></div></div>
     </div>
     <button class="btn-cf" id="btnCf" disabled onclick="submit()"><span data-ar>إرسال التقرير</span><span data-es>Enviar informe</span></button>
   </div>
@@ -412,7 +440,10 @@ const $ = id => document.getElementById(id);
 /* ══ Config ══ */
 const COOL_KEY        = 'qnt_v11_cool';
 const COOLDOWN        = 5 * 1000;
-const WIN_MS          = 2 * 60 * 60 * 1000;
+const WIN_MS          = 15 * 60 * 1000;
+const USER_LOCK_MS     = 10 * 60 * 1000;
+const MIN_HOLD_MS = { red: 120*60*1000, orange: 60*60*1000, green: 0 };
+const OVERRIDE_COUNT = 3; /* تقارير كافية للتجاوز المبكر */
 const RECENT_MS       = 20 * 60 * 1000;
 const TEST_MODE       = false;
 const DECAY_HALF_LIFE = Infinity;
@@ -764,8 +795,8 @@ const Predictor = (() => {
     /* إشعار 4: ازدحام مرتفع مستمر */
     else if (currentStatus === 'red' && pred.trend !== 'down') {
       msg = isAR
-        ? `🚨 ${lbl}: أكثر من 60 دقيقة انتظار`
-        : `🚨 ${lbl}: > 60 min de espera`;
+        ? `🚨 ${lbl}: 2 – 4 ساعات انتظار`
+        : `🚨 ${lbl}: 2 – 4 horas de espera`;
     }
 
     if (msg) {
@@ -887,10 +918,17 @@ const CongestionPredictor30 = (() => {
 })();
 
 
+
+/* WAIT_TEXT مشتق من ST مباشرة — لا قيم مكررة */
+function getWaitText(status) {
+  const cfg = ST[status] ?? ST.green;
+  const w = lang==='es' ? cfg.wes : cfg.war;
+  return '⏱ ' + w;
+}
 const ST = {
-  green:  {ar:'عادي',        es:'Fluido',   war:'أقل من 10 دقائق', wes:'< 10 min',  color:'#00d46e', bg:'rgba(0,212,110,.10)',  fill:15},
-  orange: {ar:'متوسط',       es:'Moderado', war:'20–40 دقيقة',      wes:'20-40 min', color:'#ff8f00', bg:'rgba(255,143,0,.10)',  fill:55},
-  red:    {ar:'ازدحام شديد', es:'Atasco',   war:'أكثر من 60 دقيقة', wes:'> 60 min',  color:'#ff3355', bg:'rgba(255,51,85,.10)', fill:90}
+  green:  {ar:'عادي',        es:'Fluido',   en:'Fluent',   war:'30 – 60 دقيقة',   wes:'30 – 60 min', wen:'30 – 60 min',  color:'#00d46e', bg:'rgba(0,212,110,.10)',  fill:15},
+  orange: {ar:'متوسط',       es:'Moderado', en:'Moderate', war:'1 – 2 ساعة',       wes:'1 – 2 horas', wen:'1 – 2 hours', color:'#ff8f00', bg:'rgba(255,143,0,.10)',  fill:55},
+  red:    {ar:'ازدحام شديد', es:'Atasco',   en:'Heavy',    war:'2 – 4 ساعات',      wes:'2 – 4 horas', wen:'2 – 4 hours',   color:'#ff3355', bg:'rgba(255,51,85,.10)', fill:90}
 };
 
 /* ══ حدود الخريطة — تعتمد على أبعد نقطة RED لكل جانب ══
@@ -1464,12 +1502,68 @@ function setFbUI(on, n) {
 }
 /* setFbUI interval — يبدأ بعد boot */
 
+function toggleLangPick() {
+  const p = $('langPick');
+  if (p) p.classList.toggle('open');
+  setTimeout(() => {
+    document.addEventListener('click', function _close(e) {
+      if (!$('langPick')?.contains(e.target)) {
+        if ($('langPick')) $('langPick').classList.remove('open');
+      }
+      document.removeEventListener('click', _close);
+    });
+  }, 0);
+}
+
+function pickLang(l) {
+  if ($('langPick')) $('langPick').classList.remove('open');
+  const flags = {ar:'🇲🇦', es:'🇪🇸'};
+  const codes  = {ar:'AR',  es:'ES'};
+  if ($('langFlag')) $('langFlag').textContent = flags[l] || flags.ar;
+  if ($('langCode')) $('langCode').textContent = codes[l] || codes.ar;
+  ['ar','es'].forEach(x => {
+    if ($('lopt-'+x)) $('lopt-'+x).classList.toggle('on', x===l);
+  });
+  setLang(l);
+}
+
 function setLang(l) {
   lang = l;
   document.body.classList.toggle('es', l === 'es');
-  $('lb-ar').classList.toggle('on', l === 'ar');
-  $('lb-es').classList.toggle('on', l === 'es');
   Map._updateTooltips();
+  _refreshLangUI();
+}
+
+function _refreshLangUI() {
+  if (!TrafficState) return;
+  ['entry','exit'].forEach(function(lane) {
+    const s   = TrafficState.status(lane);
+    const cfg = ST[s] ?? ST.green;
+    const lbl  = lang==='es'?cfg.es:cfg.ar;
+    const dirL = lang==='es'?'Entrada: ':'دخول: ';
+    const mem = TrafficState.debug ? TrafficState.debug(lane) : null;
+    const cnt = mem ? (mem.count || 0) : 0;
+    const repTxt = cnt > 0 ? (lang==='es' ? `👥 ${cnt} usuarios confirmaron el estado` : `👥 ${cnt} مستخدمون أكدوا الحالة`) : '';
+    if (lane === 'entry') {
+      $('eSt').textContent = lbl;  $('eSt').style.color = cfg.color;
+      $('eWt').textContent = getWaitText(s);
+      if ($('pillTxt')) $('pillTxt').textContent = dirL + lbl;
+      if ($('eRep')) $('eRep').textContent = repTxt;
+    } else {
+      $('xSt').textContent = lbl;  $('xSt').style.color = cfg.color;
+      if ($('xRep')) $('xRep').textContent = repTxt;
+      $('xWt').textContent = getWaitText(s);
+    }
+  });
+  if (typeof buildAI === 'function') {
+    const eS=TrafficState.status('entry'), xS=TrafficState.status('exit');
+    const dE=TrafficState.density('entry'), dX=TrafficState.density('exit');
+    buildAI(eS,xS,0,
+      Predictor.predict('entry',dE), Predictor.predict('exit',dX), dE, dX,
+      Predictor.predict60('entry',dE), Predictor.predict60('exit',dX));
+  }
+  if (typeof updatePredCard === 'function')
+    updatePredCard(TrafficState.status('entry'), TrafficState.status('exit'), 0);
 }
 
 function setZone(s) {
@@ -1484,26 +1578,42 @@ function setZone(s) {
    ════════════════════════════════════════════════════════════════ */
 function applyLane(lane, {status, count, rel}) {
   const cfg  = ST[status] ?? ST.green;
-  const lbl  = lang === 'es' ? cfg.es  : cfg.ar;
-  const wait = lang === 'es' ? cfg.wes : cfg.war;
+  const lbl  = lang==='es'?cfg.es:cfg.ar;
   if (lane === 'entry') {
     $('eSt').textContent = lbl;  $('eSt').style.color = cfg.color;
-    $('eWt').textContent = wait;
+    $('eWt').textContent = getWaitText(status);
     $('eBar').style.cssText = 'width:' + cfg.fill + '%;background:' + cfg.color;
     $('lc-e').style.borderColor = cfg.color;
     document.documentElement.style.setProperty('--si', cfg.color);
     document.documentElement.style.setProperty('--sb', cfg.bg);
-    $('pillTxt').textContent = (lang === 'es' ? 'Entrada: ' : 'دخول: ') + lbl;
+    $('pillTxt').textContent = (lang==='es'?'Entrada: ':'دخول: ') + lbl;
     $('stRep').textContent = (count > 0) ? count : '—';
     $('stRel').textContent = (count > 0) ? Math.round((rel ?? 0) * 100) + '%' : '—';
     Map.setEntryStatus(status);
+    if($('eRep'))$('eRep').textContent=count>0?(lang==='es'?`👥 ${count} usuarios confirmaron el estado`:`👥 ${count} مستخدمون أكدوا الحالة`):'';
   } else {
     $('xSt').textContent = lbl;  $('xSt').style.color = cfg.color;
-    $('xWt').textContent = wait;
+    $('xWt').textContent = getWaitText(status);
     $('xBar').style.cssText = 'width:' + cfg.fill + '%;background:' + cfg.color;
     $('lc-x').style.borderColor = cfg.color;
     Map.setExitStatus(status);
+    if($('xRep'))$('xRep').textContent=count>0?(lang==='es'?`👥 ${count} usuarios confirmaron el estado`:`👥 ${count} مستخدمون أكدوا الحالة`):'';
   }
+}
+
+/* ── زر التأكيد السريع ── */
+const _qcCool = { entry:0, exit:0 };
+function quickConfirm(lane) {
+  const now = Date.now();
+  if (now < _qcCool[lane]) return;
+  _qcCool[lane] = now + 30000;
+  const btnId = lane==='entry'?'qcE':'qcX';
+  const btn = $(btnId);
+  if (btn) { btn.disabled=true; setTimeout(()=>{if($(btnId))$(btnId).disabled=false;},30000); }
+  const status = TrafficState.status(lane);
+  fbAddReport(lane, status, 0.5)
+    .then(()=>showToast(lang==='es'?'✅ Confirmado':'✅ تم التأكيد'))
+    .catch(()=>showToast(lang==='es'?'⚠️ Sin conexión':'⚠️ خطأ في الاتصال'));
 }
 
 /* hideLoader */
@@ -1540,15 +1650,16 @@ const TrafficState = (() => {
 
   /* حالة محلية — مرآة لـ Firestore */
   const mem = {
-    entry: { status:'green', cars:20, density:0.2, waitMin:6.7, count:0, rel:0, lastTs:0, savedAt:0 },
-    exit:  { status:'green', cars:20, density:0.2, waitMin:6.7, count:0, rel:0, lastTs:0, savedAt:0 }
+    entry: { status:'green', cars:20, density:0.2, waitMin:6.7, count:0, rel:0, lastTs:0, savedAt:0, statusSince:0 },
+    exit:  { status:'green', cars:20, density:0.2, waitMin:6.7, count:0, rel:0, lastTs:0, savedAt:0, statusSince:0 }
   };
 
   let _booted    = false;   // يصبح true بعد boot() — يُطلق ingest/tick/userReport
   let _bootReady = false;   // يصبح true بعد تحميل lanes_state — يُطلق render()
   const _wlock   = { entry:false, exit:false };   // منع كتابتين متزامنتين
   const _pending = { entry:null,  exit:null  };   // آخر patch بانتظار الكتابة
-  const _seen    = { entry:new Set(), exit:new Set() };
+  const _seen      = { entry:new Set(), exit:new Set() };
+  const _userLockTs = { entry:0, exit:0 };
 
   /* ── فيزياء ── */
   function physics(cars) {
@@ -1569,6 +1680,28 @@ const TrafficState = (() => {
     if (cur === 'red'   && next === 'green') return 'orange';
     if (cur === 'green' && next === 'red')   return 'orange';
     return next;
+  }
+
+  /* safeStepHold: يحترم المدة الدنيا — إلا إذا وصل OVERRIDE_COUNT تقارير */
+  function safeStepHold(lane, next, incomingCount) {
+    const cur = mem[lane].status;
+    const stepped = safeStep(cur, next);
+    if (stepped === cur) return cur; /* لا تغيير أصلاً */
+
+    const STATUS_RANK = { green:0, orange:1, red:2 };
+    const improving = STATUS_RANK[stepped] < STATUS_RANK[cur];
+    if (!improving) return stepped; /* تدهور → اسمح فوراً */
+
+    /* تحسن → تحقق من المدة الدنيا */
+    const since = mem[lane].statusSince || 0;
+    const held  = Date.now() - since;
+    const minHold = MIN_HOLD_MS[cur] || 0;
+    if (held >= minHold) return stepped; /* انقضت المدة → اسمح */
+
+    /* لم تنقضِ — هل يوجد OVERRIDE_COUNT تقارير تؤكد التحسن؟ */
+    if ((incomingCount || 0) >= OVERRIDE_COUNT) return stepped;
+
+    return cur; /* ابقَ على الحالة الحالية */
   }
 
   /* ════════════════════════════
@@ -1825,14 +1958,18 @@ const TrafficState = (() => {
     if (!_booted) return;
     const cars = CARS_INIT[status] ?? 20;
     const { density, waitMin } = physics(cars);
-    const safe  = safeStep(mem[lane].status, status);
+    const inCount = meta?.count ?? mem[lane].count ?? 0;
+    const safe  = safeStepHold(lane, status, inCount);
     const now   = Date.now();
     const patch = { status: safe, cars, density, waitMin,
-                    count: meta?.count ?? mem[lane].count ?? 0,
-                    rel:   meta?.rel   ?? mem[lane].rel   ?? 0,
-                    lastTs: now, savedAt: now };
+                    count: inCount,
+                    rel:   meta?.rel ?? mem[lane].rel ?? 0,
+                    lastTs: now,
+                    statusSince: safe !== mem[lane].status ? now : (mem[lane].statusSince||now),
+                    savedAt: now };
     console.log('[Q] userReport [' + lane + '] →', safe, '| cars:', cars);
     _seen[lane].add(now); /* منع re-ingest من onSnapshot */
+    _userLockTs[lane] = now;
     render(lane, patch);
     write(lane, patch);
   }
@@ -1849,18 +1986,30 @@ const TrafficState = (() => {
     if (!m.lastTs || m.cars <= 0) return;
     /* لا decay إذا lastTs أحدث من 5 دقائق */
     const elapsed = (Date.now() - m.lastTs) / 60000;
-    if (elapsed < 5) return;   /* حارس مضاعف */
+    if (elapsed < 5) return;
+    if ((Date.now()-(_userLockTs[lane]||0)) < USER_LOCK_MS) return;
     const steps   = Math.floor(elapsed / 5);
     if (steps < 1) return;
-    const decayed = Math.max(0, m.cars * Math.pow(0.90, steps));
+    let decayed;
+    if (elapsed >= 30) {
+      const s3 = Math.floor((elapsed - 30) / 5) + 1;
+      decayed = Math.max(0, m.cars * Math.pow(0.90,2) * Math.pow(0.88,3) * Math.pow(0.80,s3));
+    } else if (elapsed >= 15) {
+      const s2 = Math.floor((elapsed - 15) / 5) + 1;
+      decayed = Math.max(0, m.cars * Math.pow(0.90,2) * Math.pow(0.88,s2));
+    } else {
+      decayed = Math.max(0, m.cars * Math.pow(0.90, steps));
+    }
     const next    = classify(decayed);
-    const safe    = safeStep(m.status, next);
+    const safe    = safeStepHold(lane, next, m.count);
     if (safe === m.status && Math.abs(decayed - m.cars) < 2) return;
     const { density, waitMin } = physics(decayed);
+    const nowTs = Date.now();
     const patch = { status: safe, cars: decayed, density, waitMin,
                     count: m.count, rel: m.rel,
-                    lastTs: m.lastTs, /* نحتفظ بـ lastTs الأصلي */
-                    savedAt: Date.now() };
+                    lastTs: m.lastTs,
+                    statusSince: safe !== m.status ? nowTs : (m.statusSince||nowTs),
+                    savedAt: nowTs };
     console.log('[Q] tick [' + lane + ']', m.status, '→', safe,
       '| cars:', Math.round(m.cars), '→', Math.round(decayed));
     render(lane, patch);
@@ -2087,7 +2236,7 @@ function buildTL() {
 
 function buildAI(eS, xS, rel, pEntry, pExit, densityE, densityX, p60E, p60X) {
   const h=new Date().getHours(), ar=[], es=[], tags=[];
-  const isAR = lang !== 'es';
+  const isAR=lang!=='es';
   const STA  = {green:{ar:'عادي',es:'fluido'}, orange:{ar:'متوسط',es:'moderado'}, red:{ar:'شديد',es:'atasco'}};
 
   /* ── ETA ── */
@@ -2124,28 +2273,28 @@ function buildAI(eS, xS, rel, pEntry, pExit, densityE, densityX, p60E, p60X) {
   /* ── تنبؤ 20 دقيقة من Predictor ── */
   if (pEntry) {
     const ic = pEntry.trend==='up'?'📈':pEntry.trend==='down'?'📉':'➡️';
-    ar.push(ic+' دخول/20د: '+STA[pEntry.status].ar);
-    es.push(ic+' Entrada/20min: '+STA[pEntry.status].es);
+    ar.push(ic+' دخول/20د: '+STA[pEntry.status].ar+' ('+ST[pEntry.status].war+')');
+    es.push(ic+' Entrada/20min: '+STA[pEntry.status].es+' ('+ST[pEntry.status].wes+')');
     if(pEntry.enteringPeak){ ar.push('⏰ ذروة قادمة — تحرك الآن'); es.push('⏰ Punta próxima — sal ya'); tags.push({ar:'ذروة قادمة',es:'Punta próx.',hot:true}); }
     if(pEntry.trend==='down'&&eS!=='green'){ ar.push('✅ سيخف قريباً'); es.push('✅ Bajará pronto'); tags.push({ar:'يخف',es:'Bajando',hot:false}); }
   }
   if (pExit) {
     const ic = pExit.trend==='up'?'📈':pExit.trend==='down'?'📉':'➡️';
-    ar.push(ic+' خروج/20د: '+STA[pExit.status].ar);
-    es.push(ic+' Salida/20min: '+STA[pExit.status].es);
+    ar.push(ic+' خروج/20د: '+STA[pExit.status].ar+' ('+ST[pExit.status].war+')');
+    es.push(ic+' Salida/20min: '+STA[pExit.status].es+' ('+ST[pExit.status].wes+')');
   }
 
   /* ── تنبؤ 60 دقيقة ── */
   const STA60 = {green:{ar:'🟢 عادي',es:'🟢 fluido'}, orange:{ar:'🟠 متوسط',es:'🟠 moderado'}, red:{ar:'🔴 شديد',es:'🔴 atasco'}};
   if (p60E) {
     const conf = p60E.confidence;
-    ar.push(`🔮 دخول/60د: ${STA60[p60E.status].ar} (${conf}%)`);
-    es.push(`🔮 Entrada/60min: ${STA60[p60E.status].es} (${conf}%)`);
+    ar.push(`🔮 دخول/60د: ${STA60[p60E.status].ar} — ${ST[p60E.status].war} (${conf}%)`);
+    es.push(`🔮 Entrada/60min: ${STA60[p60E.status].es} — ${ST[p60E.status].wes} (${conf}%}`);
   }
   if (p60X) {
     const conf = p60X.confidence;
-    ar.push(`🔮 خروج/60د: ${STA60[p60X.status].ar} (${conf}%)`);
-    es.push(`🔮 Salida/60min: ${STA60[p60X.status].es} (${conf}%)`);
+    ar.push(`🔮 خروج/60د: ${STA60[p60X.status].ar} — ${ST[p60X.status].war} (${conf}%)`);
+    es.push(`🔮 Salida/60min: ${STA60[p60X.status].es} — ${ST[p60X.status].wes} (${conf}%)`);
   }
 
 
@@ -2159,7 +2308,7 @@ function buildAI(eS, xS, rel, pEntry, pExit, densityE, densityX, p60E, p60X) {
 
   /* ── العرض: ETA في الأول دائماً ── */
   /* ETA السطر 1+2، تنبؤ 60د السطر 3+4 — نعرض أول 4 مع فاصل سطر */
-  const lines = (isAR?ar:es);
+  const lines=(isAR?ar:es);
   $('aiTxt').innerHTML =
     lines.slice(0,2).join('<br>') +
     (lines[2] ? '<br><span class="ai-60">'+lines.slice(2,4).join('<br>')+'</span>' : '');
@@ -2177,7 +2326,7 @@ function updatePredCard(liveStatusEntry, liveStatusExit, rel) {
   const $ = id => document.getElementById(id);
   if (!$('predCard')) return;
 
-  const isAR = lang !== 'es';
+  const isAR=lang!=='es';
 
   /* ── تحويل مستوى رقمي → نص + لون + عرض ── */
   const LVL = {
@@ -2251,8 +2400,6 @@ function setBtn(ms) {
     btn.disabled = false;
     btn.innerHTML = '<span data-ar>📍 تحديث الحالة</span><span data-es>📍 Actualizar estado</span>';
   }
-  if (lang==='es') btn.querySelectorAll('[data-ar]').forEach(e=>e.style.display='none');
-  else             btn.querySelectorAll('[data-es]').forEach(e=>e.style.display='none');
 }
 
 function showToast(msg) {
@@ -2766,6 +2913,9 @@ window.submit        = submit;
 window.toggleDetails = toggleDetails;
 window.toggleDebug   = toggleDebug;
 window.shareStatus   = shareStatus;
+window.quickConfirm  = quickConfirm;
+window.toggleLangPick = toggleLangPick;
+window.pickLang       = pickLang;
 window.locateMe      = () => {
   setGpsUI('searching');
   showToast(lang === 'es' ? '📍 Localizando…' : '📍 جاري التحديد…');
