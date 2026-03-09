@@ -24,8 +24,8 @@ body{font-family:'Sora','Noto Naskh Arabic',system-ui,sans-serif;background:var(
 #intro{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .65s ease,transform .65s ease}
 #intro.out{opacity:0;transform:scale(1.05);pointer-events:none}
 #introCanvas{position:absolute;inset:0;width:100%;height:100%}
-#app{display:flex;flex-direction:column;align-items:center;padding:14px 12px 44px}
-.shell{width:100%;max-width:420px;display:flex;flex-direction:column;gap:10px}
+#app{display:flex;flex-direction:column;align-items:center;padding:10px 12px 32px}
+.shell{width:100%;max-width:420px;display:flex;flex-direction:column;gap:12px}
 .topbar{display:flex;align-items:center;justify-content:space-between}
 
 
@@ -33,10 +33,10 @@ body{font-family:'Sora','Noto Naskh Arabic',system-ui,sans-serif;background:var(
 .live-pill{display:flex;align-items:center;gap:6px;background:var(--sb);border:1px solid var(--si);border-radius:99px;padding:5px 13px;font-size:12px;font-weight:700;color:var(--si);transition:all .4s;white-space:nowrap}
 .ldot{width:7px;height:7px;border-radius:50%;background:var(--si);animation:blink 2s ease infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-.hdr{display:flex;flex-direction:column;gap:1px}
-.hdr-brand{font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted)}
-.hdr-title{font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1}
-.hdr-sub{font-size:12px;color:var(--muted)}
+.hdr{display:flex;flex-direction:column;align-items:center;text-align:center;padding:4px 0 6px;gap:3px}
+.hdr-brand{font-size:9px;letter-spacing:.35em;text-transform:uppercase;color:var(--muted);opacity:.7;font-weight:600}
+.hdr-title{font-size:28px;font-weight:900;letter-spacing:-.04em;line-height:1;background:linear-gradient(135deg,#ffffff 30%,rgba(255,255,255,.55));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hdr-sub{font-size:11px;color:var(--muted);letter-spacing:.04em;opacity:.75}
 .fb-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;font-size:9px;font-weight:700;transition:all .3s;width:fit-content;margin-top:3px}
 .fb-badge.on{background:rgba(0,212,110,.12);color:var(--green);border:1px solid rgba(0,212,110,.25)}
 .fb-badge.off{background:rgba(255,143,0,.10);color:var(--orange);border:1px solid rgba(255,143,0,.2)}
@@ -75,12 +75,12 @@ body{font-family:'Sora','Noto Naskh Arabic',system-ui,sans-serif;background:var(
 .zone.on.zg{border-color:var(--green);background:var(--green-bg)}.zone.on.zo{border-color:var(--orange);background:var(--orange-bg)}.zone.on.zr{border-color:var(--red);background:var(--red-bg)}
 .z-ico{font-size:18px}.z-name{font-size:11px;font-weight:700;text-align:center}.z-wait{font-size:9px;color:var(--muted);text-align:center}
 /* Lanes */
-.lanes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.lc{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:13px 12px;display:flex;flex-direction:column;gap:7px;transition:border-color .4s}
-.lc-top{display:flex;align-items:center;justify-content:space-between}
-.lc-dir{font-size:10px;font-weight:700;color:var(--muted)}.lc-arr{font-size:14px}
-.lc-st{font-size:15px;font-weight:800;letter-spacing:-.02em}.lc-wt{font-size:14px;font-weight:700;color:#c8d0e0;margin-top:5px;min-height:18px}
-.mbar{height:3px;border-radius:99px;background:var(--faint);overflow:hidden}
+.lanes{display:flex;flex-direction:column;gap:6px}
+.lc{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:9px 12px;display:flex;flex-direction:row;align-items:center;gap:8px;transition:border-color .4s}
+.lc-top{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.lc-dir{font-size:10px;font-weight:700;color:var(--muted)}.lc-arr{font-size:12px}
+.lc-st{font-size:13px;font-weight:800;letter-spacing:-.01em;white-space:nowrap}.lc-wt{font-size:11px;font-weight:600;color:#c8d0e0;white-space:nowrap}
+.mbar{display:none}
 .mfill{height:100%;border-radius:99px;transition:width .7s cubic-bezier(.4,0,.2,1),background .4s}
 /* AI */
 .ai-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px 14px;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden}
@@ -170,8 +170,8 @@ body{font-family:'Sora','Noto Naskh Arabic',system-ui,sans-serif;background:var(
   border:1px solid rgba(255,200,0,.25);color:rgba(255,200,0,.7);
   font-size:10px;font-family:monospace;padding:3px 12px;border-radius:20px;cursor:pointer}
 /* ── lc-rep + quickConfirm ── */
-.lc-rep{display:block;font-size:10px;color:var(--muted);margin-top:5px;min-height:14px}
-.btn-confirm-quick{display:block;width:100%;margin-top:6px;padding:6px 0;border-radius:10px;border:1px solid rgba(0,212,110,.35);background:rgba(0,212,110,.08);color:#00d46e;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
+.lc-rep{font-size:10px;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.btn-confirm-quick{padding:5px 12px;border-radius:8px;border:1px solid rgba(0,212,110,.35);background:rgba(0,212,110,.08);color:#00d46e;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;flex-shrink:0;white-space:nowrap}
 .btn-confirm-quick:active{background:rgba(0,212,110,.2)}
 .btn-confirm-quick:disabled{opacity:.35;cursor:default}
 /* ── Language Picker ── */
@@ -252,7 +252,6 @@ body.es [data-es]{display:inline!important}.lc-wait{font-size:11px;color:var(--m
 
 <div class="hdr">
   <div class="hdr-brand">Qantara · قنطرة</div>
-  <div class="hdr-title"><span data-ar>باب سبتة</span><span data-es>Paso de Ceuta</span></div>
   <div class="hdr-sub"><span data-ar>الفنيدق ⟷ سبتة</span><span data-es>Fnideq ⟷ Ceuta</span></div>
   <div class="fb-badge off" id="fbBadge"><div class="fb-dot"></div><span id="fbTxt">Firebase…</span></div>
 </div>
@@ -326,8 +325,30 @@ body.es [data-es]{display:inline!important}.lc-wait{font-size:11px;color:var(--m
 
 
 <div class="lanes">
-  <div class="lc" id="lc-e"><div class="lc-top"><div class="lc-dir"><span data-ar>↑ دخول سبتة</span><span data-es>↑ Entrada</span></div><span class="lc-arr">⬆️</span></div><div class="lc-st" id="eSt">—</div><div class="lc-wt" id="eWt">—</div><div class="mbar"><div class="mfill" id="eBar"></div></div><span id="eRep" class="lc-rep"></span><button class="btn-confirm-quick" id="qcE" onclick="quickConfirm('entry')"><span data-ar>✅ تأكيد</span><span data-es>✅ Confirmar</span></button></div>
-  <div class="lc" id="lc-x"><div class="lc-top"><div class="lc-dir"><span data-ar>↓ خروج الفنيدق</span><span data-es>↓ Salida</span></div><span class="lc-arr">⬇️</span></div><div class="lc-st" id="xSt">—</div><div class="lc-wt" id="xWt">—</div><div class="mbar"><div class="mfill" id="xBar"></div></div><span id="xRep" class="lc-rep"></span><button class="btn-confirm-quick" id="qcX" onclick="quickConfirm('exit')"><span data-ar>✅ تأكيد</span><span data-es>✅ Confirmar</span></button></div>
+  <div class="lc" id="lc-e">
+    <div class="lc-top"><span class="lc-arr">⬆️</span><div class="lc-dir"><span data-ar>دخول سبتة</span><span data-es>Entrada</span></div></div>
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="lc-st" id="eSt">—</span>
+        <span class="lc-wt" id="eWt">—</span>
+      </div>
+      <span id="eRep" class="lc-rep"></span>
+    </div>
+    <div class="mbar"><div class="mfill" id="eBar"></div></div>
+    <button class="btn-confirm-quick" id="qcE" onclick="quickConfirm('entry')"><span data-ar>تأكيد</span><span data-es>OK</span></button>
+  </div>
+  <div class="lc" id="lc-x">
+    <div class="lc-top"><span class="lc-arr">⬇️</span><div class="lc-dir"><span data-ar>خروج الفنيدق</span><span data-es>Salida</span></div></div>
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="lc-st" id="xSt">—</span>
+        <span class="lc-wt" id="xWt">—</span>
+      </div>
+      <span id="xRep" class="lc-rep"></span>
+    </div>
+    <div class="mbar"><div class="mfill" id="xBar"></div></div>
+    <button class="btn-confirm-quick" id="qcX" onclick="quickConfirm('exit')"><span data-ar>تأكيد</span><span data-es>OK</span></button>
+  </div>
 </div>
 
 <div class="zones">
