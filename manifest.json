@@ -1,13 +1,13 @@
 {
-  "name": "Qantara · قنطرة",
+  "name": "Qantara",
   "short_name": "Qantara",
-  "description": "مراقبة ازدحام معبر باب سبتة - Fnideq / Ceuta",
+  "description": "تطبيق لمتابعة حالة الازدحام في معبر باب سبتة",
   "start_url": "/Qantara/",
   "scope": "/Qantara/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0a0d14",
-  "theme_color": "#0a0d14",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
   "lang": "ar",
   "icons": [
     {
