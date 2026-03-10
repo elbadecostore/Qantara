@@ -2,19 +2,17 @@ importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  apiKey:            'AIzaSyAhefwgwnF2hoipXjEc_rjOW4sSaR1bQCY',
-  authDomain:        'qantara-app-cb1c4.firebaseapp.com',
-  projectId:         'qantara-app-cb1c4',
-  storageBucket:     'qantara-app-cb1c4.firebasestorage.app',
-  messagingSenderId: '402727898752',
-  appId:             '1:402727898752:web:e7be8a336d344ad9566065'
+  apiKey:            'AIzaSyCxVDBRV20xCo8sYmlnKt67ggh8HY3KxF8',
+  authDomain:        'qantara-live.firebaseapp.com',
+  projectId:         'qantara-live',
+  storageBucket:     'qantara-live.firebasestorage.app',
+  messagingSenderId: '219692468615',
+  appId:             '1:219692468615:web:4598dd00cb99afa38a6b22'
 });
 
 const messaging = firebase.messaging();
 
-/* استقبال الإشعارات عندما التطبيق مغلق أو في الخلفية */
 messaging.onBackgroundMessage(payload => {
-  console.log('[FCM SW] background message:', payload);
   const title = payload.notification?.title || 'Qantara · قنطرة';
   const body  = payload.notification?.body  || 'تحديث جديد على المعبر';
   self.registration.showNotification(title, {
@@ -28,7 +26,6 @@ messaging.onBackgroundMessage(payload => {
   });
 });
 
-/* عند الضغط على الإشعار يفتح التطبيق */
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   const url = e.notification.data?.url || 'https://elbadecostore.github.io/Qantara/';
