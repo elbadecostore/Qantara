@@ -2890,29 +2890,53 @@ async function requestNotifPermission() {
   const btn = document.getElementById('btnNotif');
   if (!btn) return;
 
+  /* تشخيص أولي */
+  if (!('Notification' in window)) {
+    showToast('⚠️ المتصفح لا يدعم الإشعارات'); return;
+  }
+  if (!('serviceWorker' in navigator)) {
+    showToast('⚠️ Service Worker غير مدعوم'); return;
+  }
+
+  showToast('⏳ جاري التفعيل...');
+
   /* إذا كان مفعلاً بالفعل */
   if (Notification.permission === 'granted') {
     await _registerFCMToken();
     return;
   }
 
+  /* إذا كان مرفوضاً */
+  if (Notification.permission === 'denied') {
+    showToast('⚠️ الإشعارات مرفوضة — فعّليها من إعدادات Chrome'); return;
+  }
+
   /* طلب الإذن */
-  const perm = await Notification.requestPermission();
-  if (perm === 'granted') {
-    await _registerFCMToken();
-  } else {
-    showToast(lang === 'es'
-      ? '⚠️ تم رفض الإشعارات من إعدادات المتصفح'
-      : '⚠️ رفضتَ الإذن — يمكن تفعيله من إعدادات المتصفح');
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') {
+      await _registerFCMToken();
+    } else {
+      showToast('⚠️ رفضتِ الإذن — اضغطي موافق عند السؤال');
+    }
+  } catch(e) {
+    showToast('⚠️ خطأ: ' + e.message);
   }
 }
 
 async function _registerFCMToken() {
   const btn = document.getElementById('btnNotif');
   try {
+    showToast('⏳ جاري تسجيل الجهاز...');
+    let swReg;
+    try {
+      swReg = await navigator.serviceWorker.ready;
+    } catch(e) {
+      showToast('⚠️ SW error: ' + e.message); return;
+    }
     const token = await getToken(_messaging, {
       vapidKey: _VAPID,
-      serviceWorkerRegistration: await navigator.serviceWorker.ready
+      serviceWorkerRegistration: swReg
     });
     if (token) {
       console.log('[FCM] token:', token);
