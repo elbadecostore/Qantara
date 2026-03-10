@@ -164,6 +164,9 @@ body{font-family:system-ui,-apple-system,'Noto Naskh Arabic',Arial,sans-serif;ba
 @keyframes btn-pulse{0%,100%{box-shadow:0 4px 24px rgba(26,95,255,.45)}50%{box-shadow:0 4px 32px rgba(26,95,255,.75)}}
 .btn-cta:not(:disabled){animation:btn-pulse 2.5s ease infinite}
 .footer{font-size:10px;color:var(--muted);text-align:center;padding:4px 0}
+.btn-notif{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:8px;padding:12px 16px;border-radius:14px;border:1px solid rgba(255,180,0,.3);background:rgba(255,180,0,.08);color:rgba(255,200,80,.9);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-notif:active{background:rgba(255,180,0,.18);transform:scale(.98)}
+.btn-notif.done{border-color:rgba(0,212,110,.3);background:rgba(0,212,110,.08);color:rgba(0,212,110,.9);pointer-events:none}
 .btn-install{display:none;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:8px;padding:12px 16px;border-radius:14px;border:1px solid rgba(26,95,255,.3);background:rgba(26,95,255,.08);color:rgba(100,149,255,.9);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit}
 .btn-install.visible{display:flex}
 .btn-install:active{background:rgba(26,95,255,.18);transform:scale(.98)}
@@ -461,6 +464,9 @@ function toggleDetails() {
   <span data-ar>شارك حالة المعبر مع أصدقائك</span><span data-es>Comparte el estado del paso</span>
 </button>
 
+<button class="btn-notif" id="btnNotif" onclick="requestNotifPermission()">
+  🔔 <span data-ar>تفعيل الإشعارات</span><span data-es>Activar notificaciones</span>
+</button>
 <button class="btn-install" id="btnInstall" onclick="installApp()">
   📲 <span data-ar>تثبيت التطبيق</span><span data-es>Instalar app</span>
 </button>
@@ -515,6 +521,7 @@ function toggleDetails() {
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp,
          doc, setDoc, getDoc, onSnapshot as onSnap }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
@@ -528,6 +535,8 @@ const _app = initializeApp({
   appId:'1:402727898752:web:e7be8a336d344ad9566065'
 });
 const _db        = getFirestore(_app);
+const _messaging = getMessaging(_app);
+const _VAPID     = '64w-I6aXAm81YPkqT6AM3jVWGGGuNo63Z_PgNLaKM8Y';
 const reportsCol = collection(_db, 'reports');
 const historyCol  = collection(_db, 'lane_reports_history');
 const lanesRef   = {
@@ -1678,6 +1687,7 @@ function setZone(s) {
    يُستدعى فقط من TrafficState.render()
    ════════════════════════════════════════════════════════════════ */
 function applyLane(lane, {status, count, rel}) {
+  console.log('[Q] applyLane ['+lane+'] status='+status+' count='+count, new Error().stack.split('\n')[2]);
   const cfg  = ST[status] ?? ST.green;
   const lbl  = lang==='es'?cfg.es:cfg.ar;
   if (lane === 'entry') {
@@ -1887,16 +1897,30 @@ async function boot() {
     ]);
 
     /* الخطوة 2: حمّل البيانات في mem مباشرة بدون render */
+    let loadedFromFirestore = false;
     if (sE && sE.exists()) {
       const d = sE.data();
       Object.assign(mem.entry, d);
+      try { localStorage.setItem('qnt_lane_entry', JSON.stringify(d)); } catch(e) {}
       console.log('[Q] boot entry loaded:', d.status, '| cars:', d.cars,
         '| savedAt:', new Date(d.savedAt || 0).toLocaleTimeString());
+      loadedFromFirestore = true;
     }
     if (sX && sX.exists()) {
       const d = sX.data();
       Object.assign(mem.exit, d);
+      try { localStorage.setItem('qnt_lane_exit', JSON.stringify(d)); } catch(e) {}
       console.log('[Q] boot exit loaded:', d.status, '| cars:', d.cars);
+      loadedFromFirestore = true;
+    }
+    /* إذا فشل Firestore (Quota أو شبكة) — اقرأ من localStorage */
+    if (!loadedFromFirestore) {
+      try {
+        const ce = localStorage.getItem('qnt_lane_entry');
+        const cx = localStorage.getItem('qnt_lane_exit');
+        if (ce) { Object.assign(mem.entry, JSON.parse(ce)); console.log('[Q] boot entry ← localStorage (offline)'); }
+        if (cx) { Object.assign(mem.exit,  JSON.parse(cx)); console.log('[Q] boot exit  ← localStorage (offline)'); }
+      } catch(e) {}
     }
 
     /* الخطوة 3: _bootReady = true — الآن render() مسموح */
@@ -2290,33 +2314,7 @@ function startListeners() {
     }, err => { console.warn('[Q] onSnapshot:', err.code); setFbUI(false); });
   } catch(e) { console.warn('[Q] onSnapshot threw:', e.message); }
 
-  /* Layer 2: REST polling كل 10 ثوانٍ */
-  async function poll() {
-    try {
-      const res = await fetch(
-        'https://firestore.googleapis.com/v1/projects/qantara-app-cb1c4' +
-        '/databases/(default)/documents/reports' +
-        '?key=AIzaSyAhefwgwnF2hoipXjEc_rjOW4sSaR1bQCY&pageSize=300'
-      );
-      if (!res.ok) { setFbUI(false); return; }
-      const json = await res.json(), now = Date.now();
-      const docs = (json.documents || []).map(d => {
-        const f = d.fields || {};
-        return {
-          lane:   (f.lane   && f.lane.stringValue)   || '',
-          status: (f.status && f.status.stringValue) || '',
-          ts:     parseInt((f.tsMs && f.tsMs.integerValue) || '0'),
-          w:      parseFloat((f.w && (f.w.doubleValue || f.w.integerValue)) || '1')
-        };
-      }).filter(r => r.lane && r.status && r.ts && (now - r.ts) <= WIN_MS);
-      if (docs.length) _lastDataTs = now;
-      setFbUI(true, docs.length);
-      applyDocs(docs);
-      hideLoader();
-    } catch(e) { setFbUI(false); }
-  }
-  poll();
-  setInterval(poll, 10000);
+  /* Layer 2: حُذف poll() — onSnapshot وحده يكفي ويوفر الحصة */
 }
 
 
@@ -2886,6 +2884,76 @@ initGPS();
     if (el) el.remove();
   }
 })();
+
+/* ══ الإشعارات ══ */
+async function requestNotifPermission() {
+  const btn = document.getElementById('btnNotif');
+  if (!btn) return;
+
+  /* إذا كان مفعلاً بالفعل */
+  if (Notification.permission === 'granted') {
+    await _registerFCMToken();
+    return;
+  }
+
+  /* طلب الإذن */
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    await _registerFCMToken();
+  } else {
+    showToast(lang === 'es'
+      ? '⚠️ تم رفض الإشعارات من إعدادات المتصفح'
+      : '⚠️ رفضتَ الإذن — يمكن تفعيله من إعدادات المتصفح');
+  }
+}
+
+async function _registerFCMToken() {
+  const btn = document.getElementById('btnNotif');
+  try {
+    const token = await getToken(_messaging, {
+      vapidKey: _VAPID,
+      serviceWorkerRegistration: await navigator.serviceWorker.ready
+    });
+    if (token) {
+      console.log('[FCM] token:', token);
+      /* احفظ الـ token في Firestore */
+      try {
+        await setDoc(
+          doc(_db, 'fcm_tokens', token.substring(0, 60)),
+          { token, ts: Date.now(), lang }
+        );
+      } catch(e) { console.warn('[FCM] save token failed:', e.message); }
+      /* حدّث الزر */
+      if (btn) {
+        btn.classList.add('done');
+        btn.innerHTML = '✅ <span>' + (lang==='es'?'Notificaciones activadas':'الإشعارات مفعّلة') + '</span>';
+      }
+      showToast(lang==='es' ? '✅ Notificaciones activadas' : '✅ تم تفعيل الإشعارات');
+    }
+  } catch(e) {
+    console.warn('[FCM] getToken error:', e.message);
+    showToast(lang==='es'
+      ? '⚠️ Error al activar notificaciones'
+      : '⚠️ خطأ في تفعيل الإشعارات');
+  }
+}
+
+/* استقبال الإشعارات عندما التطبيق مفتوح */
+onMessage(_messaging, payload => {
+  console.log('[FCM] message received:', payload);
+  const title = payload.notification?.title || 'Qantara';
+  const body  = payload.notification?.body  || '';
+  showToast('🔔 ' + body);
+});
+
+/* تحقق عند التحميل — إذا كان مفعلاً بالفعل */
+window.addEventListener('load', () => {
+  const btn = document.getElementById('btnNotif');
+  if (Notification.permission === 'granted' && btn) {
+    btn.classList.add('done');
+    btn.innerHTML = '✅ <span>' + (lang==='es'?'Notificaciones activadas':'الإشعارات مفعّلة') + '</span>';
+  }
+});
 
 /* ══ Service Worker ══ */
 if ('serviceWorker' in navigator) {
