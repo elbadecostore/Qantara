@@ -2834,6 +2834,7 @@ window.quickConfirm  = quickConfirm;
 window.toggleLangPick = toggleLangPick;
 window.pickLang       = pickLang;
 window.requestNotifPermission = requestNotifPermission;
+window.disableNotifications  = disableNotifications;
 window.installApp    = installApp;
 window.locateMe      = () => {
   setGpsUI('searching');
@@ -2942,7 +2943,8 @@ async function _registerFCMToken() {
     });
     if (token) {
       console.log('[FCM] token:', token);
-      /* احفظ الـ token في Firestore */
+      /* احفظ الـ token في localStorage و Firestore */
+      try { localStorage.setItem('qnt_fcm_token', token); } catch(e) {}
       try {
         await setDoc(
           doc(_db, 'fcm_tokens', token.substring(0, 60)),
@@ -2953,6 +2955,7 @@ async function _registerFCMToken() {
       if (btn) {
         btn.classList.add('done');
         btn.innerHTML = '✅ <span>' + (lang==='es'?'Notificaciones activadas':'الإشعارات مفعّلة') + '</span>';
+        btn.onclick = disableNotifications;
       }
       showToast(lang==='es' ? '✅ Notificaciones activadas' : '✅ تم تفعيل الإشعارات');
     }
@@ -2961,6 +2964,31 @@ async function _registerFCMToken() {
     showToast(lang==='es'
       ? '⚠️ Error al activar notificaciones'
       : '⚠️ خطأ في تفعيل الإشعارات');
+  }
+}
+
+/* إلغاء الإشعارات */
+async function disableNotifications() {
+  try {
+    /* احذف الـ token من Firestore */
+    const token = localStorage.getItem('qnt_fcm_token');
+    if (token) {
+      try {
+        const { deleteDoc, doc: _doc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+        await deleteDoc(_doc(_db, 'fcm_tokens', token.substring(0, 60)));
+      } catch(e) {}
+      localStorage.removeItem('qnt_fcm_token');
+    }
+    /* أعِد الزر لحالته الأصلية */
+    const btn = document.getElementById('btnNotif');
+    if (btn) {
+      btn.classList.remove('done');
+      btn.innerHTML = '🔔 <span data-ar>تفعيل الإشعارات</span><span data-es>Activar notificaciones</span>';
+      btn.onclick = requestNotifPermission;
+    }
+    showToast(lang==='es' ? '🔕 Notificaciones desactivadas' : '🔕 تم إلغاء الإشعارات');
+  } catch(e) {
+    showToast('⚠️ خطأ: ' + e.message);
   }
 }
 
@@ -2978,6 +3006,7 @@ window.addEventListener('load', () => {
   if (Notification.permission === 'granted' && btn) {
     btn.classList.add('done');
     btn.innerHTML = '✅ <span>' + (lang==='es'?'Notificaciones activadas':'الإشعارات مفعّلة') + '</span>';
+    btn.onclick = disableNotifications;
   }
 });
 
