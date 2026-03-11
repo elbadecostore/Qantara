@@ -2247,6 +2247,15 @@ function _checkAlert(lane, liveStatus, reportCount) {
 function submit() {
   if (!_st) return;
   $('backdrop').classList.remove('open');
+  /* تحقق من الـ cooldown أولاً */
+  const rem = Cool.get();
+  if (rem > 0) {
+    showToast(lang === 'es'
+      ? `⏳ Espera ${Math.ceil(rem/1000)}s antes de enviar`
+      : `⏳ انتظر ${Math.ceil(rem/1000)} ثانية قبل إرسال تقرير جديد`);
+    setBtn(rem);
+    return;
+  }
   const trust = TrustEngine.record(_st);
   if (trust.ignored) {
     showToast(lang === 'es'
@@ -2261,8 +2270,14 @@ function submit() {
   const cs = calcStatus(_lane === 'entry' ? cacheEntry : cacheExit);
   TrafficState.userReport(_lane, _st, { count: cs.count, rel: cs.rel });
   setTime();
-  /* أعطّل الزر فوراً لمنع الضغط المزدوج — fbAddReport سيُعيد ضبطه */
-  $('btnCta').disabled = true;
+  /* فعّل الـ cooldown فوراً */
+  Cool.set();
+  setBtn(Cool.get());
+  const _ctick = setInterval(() => {
+    const rem = Cool.get();
+    if (rem <= 0) { clearInterval(_ctick); setBtn(0); }
+    else { setBtn(rem); }
+  }, 250);
   showToast(lang === 'es' ? '✅ ¡Actualizado!' : '✅ تم التحديث!');
   fbAddReport(_lane, _st, trust.weight).catch(() => {
     showToast(lang === 'es' ? '⚠️ Sin conexión' : '⚠️ خطأ في الاتصال');
@@ -2624,7 +2639,7 @@ function runIntro() {
   setTimeout(() => {
     const el = document.getElementById('intro');
     if (el) { el.classList.add('out'); setTimeout(() => el.remove(), 450); }
-  }, 2200);
+  }, 2000);
 }
 
 /* ════════════════════════════════════════════════════════════════
