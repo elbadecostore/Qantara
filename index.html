@@ -3012,10 +3012,15 @@ window.addEventListener('load', () => {
 
 /* ══ Service Worker ══ */
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
+  window.addEventListener('load', async () => {
+    /* سجّل service-worker.js للـ PWA */
     navigator.serviceWorker.register('/Qantara/service-worker.js')
       .then(r => console.log('[SW] registered', r.scope))
       .catch(e => console.warn('[SW] failed', e));
+    /* سجّل firebase-messaging-sw.js للإشعارات */
+    navigator.serviceWorker.register('/Qantara/firebase-messaging-sw.js')
+      .then(r => console.log('[FCM-SW] registered', r.scope))
+      .catch(e => console.warn('[FCM-SW] failed', e));
   });
 }
 
