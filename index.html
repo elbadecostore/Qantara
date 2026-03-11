@@ -70,7 +70,7 @@ body{font-family:system-ui,-apple-system,'Noto Naskh Arabic',Arial,sans-serif;ba
 .fb-badge.on{background:rgba(0,212,110,.12);color:var(--green);border:1px solid rgba(0,212,110,.25)}
 .fb-badge.off{background:rgba(255,143,0,.10);color:var(--orange);border:1px solid rgba(255,143,0,.2)}
 .fb-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
-.map-wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(0,0,0,.3);box-shadow:0 12px 40px rgba(0,0,0,.5);height:320px}
+.map-wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(0,0,0,.3);box-shadow:0 12px 40px rgba(0,0,0,.5);height:430px}
 
 #leafletMap{width:100%;height:100%}
 .map-ui{position:absolute;inset:0;pointer-events:none;z-index:1000}
@@ -1054,8 +1054,23 @@ const MAP_BOUNDS = {
   east:  -5.340
 };
 const BOUNDS = {north:35.877538, south:35.861263, west:-5.351656, east:-5.339000}; // kept for compat
-const CENTER  = [35.8700, -5.3445];
-const ZOOM_DEF = 17, ZOOM_MIN = 16, ZOOM_MAX = 19;
+const CENTER  = [35.8693, -5.3445];
+const REPORT_RADIUS_KM = 15; /* نصف قطر مسموح به للتقارير */
+
+/* حساب المسافة بين نقطتين (Haversine) بالكيلومتر */
+function distKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLon = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+/* هل المستخدم قريب من المعبر (ضمن REPORT_RADIUS_KM)؟ */
+function nearBorder(lat, lon) {
+  return distKm(lat, lon, CENTER[0], CENTER[1]) <= REPORT_RADIUS_KM;
+}
+const ZOOM_DEF = 15, ZOOM_MIN = 14, ZOOM_MAX = 19;
 
 /* ══ مسار احتياطي — يُستخدم إذا فشل OSRM ══
    إحداثيات دقيقة من OSM على الطريق الحقيقي P4700 */
@@ -2612,6 +2627,15 @@ function openSheet() {
       ? '⏳ Espera ' + s + 's antes de enviar otro reporte'
       : '⏳ يرجى الانتظار ' + s + ' ثانية قبل إرسال تقرير جديد');
     return;
+  }
+  /* تحقق من الموقع إذا كان GPS متاحاً */
+  if (gpsPos) {
+    if (!nearBorder(gpsPos.latitude, gpsPos.longitude)) {
+      showToast(lang==='es'
+        ? '📍 Debes estar cerca del paso fronterizo'
+        : '📍 يجب أن تكون في منطقة سبتة أو الفنيدق');
+      return;
+    }
   }
   _st  = null;
   _lane = 'entry';   // دائماً ابدأ بـ entry
