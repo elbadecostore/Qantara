@@ -1874,14 +1874,15 @@ const TrafficState = (() => {
     const now = Date.now();
     try {
       await setDoc(lanesRef[lane], {
-        status:  patch.status,
-        cars:    Math.round(patch.cars   ?? mem[lane].cars),
-        density: +((patch.density ?? mem[lane].density).toFixed(3)),
-        waitMin: +((patch.waitMin ?? mem[lane].waitMin).toFixed(1)),
-        count:   patch.count  ?? mem[lane].count,
-        rel:     patch.rel    ?? mem[lane].rel,
-        lastTs:  patch.lastTs ?? mem[lane].lastTs,
-        savedAt: now
+        status:      patch.status,
+        cars:        Math.round(patch.cars   ?? mem[lane].cars),
+        density:     +((patch.density ?? mem[lane].density).toFixed(3)),
+        waitMin:     +((patch.waitMin ?? mem[lane].waitMin).toFixed(1)),
+        count:       patch.count  ?? mem[lane].count,
+        rel:         patch.rel    ?? mem[lane].rel,
+        lastTs:      patch.lastTs ?? mem[lane].lastTs,
+        statusSince: patch.statusSince ?? mem[lane].statusSince ?? now,
+        savedAt:     now
       }, { merge: true });
       /* حدّث mem بعد نجاح الكتابة — يمنع _watch() من قبول الـ echo */
       mem[lane].savedAt = now;
