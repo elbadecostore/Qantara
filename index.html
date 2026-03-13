@@ -53,6 +53,33 @@ body{font-family:system-ui,-apple-system,'Noto Naskh Arabic',Arial,sans-serif;ba
 @keyframes i-glow{0%,100%{box-shadow:0 0 0 2px rgba(255,255,255,.08),0 0 16px rgba(26,95,255,.3)}50%{box-shadow:0 0 0 2px rgba(255,255,255,.12),0 0 28px rgba(26,95,255,.6)}}
 @keyframes i-bounce{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.2);background:rgba(26,95,255,.9)}}
 #intro-status{display:none}#intro-bwrap{display:none}
+/* ── Reputation ── */
+#repBtn{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:99px;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:700;color:rgba(255,255,255,.8);transition:background .2s}
+#repBtn:hover{background:rgba(255,255,255,.1)}
+#repPts{font-size:12px;font-weight:800;color:#ffd700}
+#repPopup{position:fixed;top:60px;right:12px;z-index:8000;background:#141926;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px;min-width:200px;box-shadow:0 8px 32px rgba(0,0,0,.5);display:none;animation:i-popin .2s cubic-bezier(.32,.72,0,1)}
+#repPopup.open{display:block}
+.rep-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px}
+.rep-row:last-child{border-bottom:none}
+.rep-key{color:rgba(255,255,255,.4)}
+.rep-val{font-weight:700;color:rgba(255,255,255,.85)}
+#repLevel{font-size:13px;font-weight:800;color:#ffd700;text-align:center;margin-bottom:10px}
+#statsBtn{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:99px;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:700;color:rgba(255,255,255,.8);transition:background .2s}
+#statsBtn:hover{background:rgba(255,255,255,.1)}
+#statsPopup{position:fixed;top:60px;right:12px;z-index:8000;background:#141926;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px;min-width:210px;box-shadow:0 8px 32px rgba(0,0,0,.5);display:none;animation:i-popin .2s cubic-bezier(.32,.72,0,1)}
+#statsPopup.open{display:block}
+#statsTitle{font-size:12px;font-weight:800;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-bottom:10px}
+#onlineChip{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:99px;padding:4px 10px;font-size:12px;font-weight:700;color:rgba(255,255,255,.75)}
+#onlineDot{width:7px;height:7px;border-radius:50%;background:#00d46e;animation:pulse-dot 2s infinite}
+.lc-trust span{font-weight:700;color:rgba(255,255,255,.65)}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+#decayTimer{background:rgba(15,20,35,.85);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:10px 14px;display:flex;flex-direction:column;gap:6px;margin-top:8px}
+#decayTimer.hidden{display:none}
+.dt-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.dt-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dt-lbl{font-size:11px;color:rgba(255,255,255,.5);flex:1}
+.dt-time{font-size:13px;font-weight:700;font-family:'Sora',monospace;color:rgba(255,255,255,.85);letter-spacing:.04em}
+.dt-next{font-size:10px;color:rgba(255,255,255,.3)}
 #app{display:flex;flex-direction:column;align-items:center;padding:10px 12px 32px}
 .shell{width:100%;max-width:420px;display:flex;flex-direction:column;gap:12px}
 .topbar{display:flex;align-items:center;justify-content:space-between}
@@ -336,7 +363,25 @@ body.es [data-es]{display:inline!important}.lc-wait{font-size:11px;color:var(--m
       <div class="lang-opt"    id="lopt-es" onclick="pickLang('es')">🇪🇸 Español</div>
     </div>
   </div>
-  <div class="live-pill" id="livePill"><div class="ldot"></div><span id="pillTxt">—</span></div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button id="statsBtn" onclick="toggleStatsPopup()">📊</button>
+    <div id="onlineChip"><div id="onlineDot"></div><span id="onlineCnt">—</span></div>
+    <button id="repBtn" onclick="toggleRepPopup()">⭐ <span id="repPts">0</span></button>
+    <div class="live-pill" id="livePill"><div class="ldot"></div><span id="pillTxt">—</span></div>
+  </div>
+</div>
+<div id="statsPopup">
+  <div id="statsTitle">إحصائيات اليوم</div>
+  <div class="rep-row"><span class="rep-key">📋 التقارير اليوم</span><span class="rep-val" id="stTodayCount">—</span></div>
+  <div class="rep-row"><span class="rep-key">🔴 أكثر حالة</span><span class="rep-val" id="stTopStatus">—</span></div>
+  <div class="rep-row"><span class="rep-key">📈 المتوسط</span><span class="rep-val" id="stAvg">—</span></div>
+  <div class="rep-row"><span class="rep-key">⏱️ آخر تقرير</span><span class="rep-val" id="stLastTime">—</span></div>
+</div>
+<div id="repPopup">
+  <div id="repLevel">مبتدئ 🌱</div>
+  <div class="rep-row"><span class="rep-key">⭐ النقاط</span><span class="rep-val" id="rpPts">0</span></div>
+  <div class="rep-row"><span class="rep-key">📊 التقارير</span><span class="rep-val" id="rpCnt">0</span></div>
+  <div class="rep-row"><span class="rep-key">🏅 المستوى</span><span class="rep-val" id="rpLvl">مبتدئ</span></div>
 </div>
 
 <div class="hdr">
@@ -355,6 +400,21 @@ body.es [data-es]{display:inline!important}.lc-wait{font-size:11px;color:var(--m
       <div class="leg-r"><div class="leg-l" id="legExit"  style="background:#ff3355"></div><span data-ar>خروج الفنيدق</span><span data-es>Salida</span></div>
     </div>
     <div class="road-chip" id="roadChip">OSM</div>
+  </div>
+</div>
+
+<div id="decayTimer" class="hidden">
+  <div class="dt-row" id="dtRowEntry">
+    <div class="dt-dot" id="dtDotE"></div>
+    <span class="dt-lbl" id="dtLblE"></span>
+    <span class="dt-time" id="dtTimeE"></span>
+    <span class="dt-next" id="dtNextE"></span>
+  </div>
+  <div class="dt-row" id="dtRowExit">
+    <div class="dt-dot" id="dtDotX"></div>
+    <span class="dt-lbl" id="dtLblX"></span>
+    <span class="dt-time" id="dtTimeX"></span>
+    <span class="dt-next" id="dtNextX"></span>
   </div>
 </div>
 
@@ -436,6 +496,7 @@ function toggleDetails() {
     <div class="sc"><div class="sc-ico">📊</div><div class="sc-val" id="stRep">—</div><div class="sc-lbl"><span data-ar>تقرير/2س</span><span data-es>inf./2h</span></div></div>
     <div class="sc"><div class="sc-ico">🎯</div><div class="sc-val" id="stRel">—%</div><div class="sc-lbl"><span data-ar>موثوقية</span><span data-es>Fiabilidad</span></div></div>
     <div class="sc"><div class="sc-ico">🕐</div><div class="sc-val" id="stTime">—</div><div class="sc-lbl"><span data-ar>آخر تحديث</span><span data-es>Última act.</span></div></div>
+
   </div>
   <div class="tl">
     <div class="tl-hd"><div class="tl-ttl"><span data-ar>📈 نمط الازدحام اليومي</span><span data-es>📈 Patrón diario</span></div><div class="tl-sub"><span data-ar>تقدير · دخول</span><span data-es>Estimación · Entrada</span></div></div>
@@ -1720,6 +1781,8 @@ function applyLane(lane, {status, count, rel}) {
     $('stRep').textContent = (count > 0) ? count : '—';
     $('stRel').textContent = (count > 0) ? Math.round((rel ?? 0) * 100) + '%' : '—';
     Map.setEntryStatus(status);
+    updateTrustUI();
+    updateLastUp();
     if($('eRep'))$('eRep').textContent=count>0?(lang==='es'?`👥 ${count} usuarios confirmaron el estado`:`👥 ${count} مستخدمون أكدوا الحالة`):'';
   } else {
     $('xSt').textContent = lbl;  $('xSt').style.color = cfg.color;
@@ -1727,6 +1790,8 @@ function applyLane(lane, {status, count, rel}) {
     $('xBar').style.cssText = 'width:' + cfg.fill + '%;background:' + cfg.color;
     $('lc-x').style.borderColor = cfg.color;
     Map.setExitStatus(status);
+    updateTrustUI();
+    updateLastUp();
     if($('xRep'))$('xRep').textContent=count>0?(lang==='es'?`👥 ${count} usuarios confirmaron el estado`:`👥 ${count} مستخدمون أكدوا الحالة`):'';
   }
 }
@@ -1947,6 +2012,47 @@ async function boot() {
     _bootReady = true;
     console.log('[Q] bootReady=true');
 
+    /* الخطوة 3.5: تطبيق decay فوري عند boot إذا مضى الوقت الكافي */
+    ['entry','exit'].forEach(lane => {
+      const m = mem[lane];
+      if (!m.lastTs || !m.statusSince || m.status === 'green') return;
+      const elapsedMin = (Date.now() - m.lastTs) / 60000;
+      const heldMin    = (Date.now() - m.statusSince) / 60000;
+      console.log('[Q] boot decay check ['+lane+'] elapsed:', Math.round(elapsedMin)+'min held:', Math.round(heldMin)+'min status:', m.status);
+      /* احسب الـ decay المتراكم */
+      if (elapsedMin < 5) return;
+      let decayed = m.cars;
+      const steps = Math.floor(elapsedMin / 5);
+      if (elapsedMin >= 30) {
+        const s3 = Math.floor((elapsedMin - 30) / 5) + 1;
+        decayed = Math.max(0, m.cars * Math.pow(0.90,2) * Math.pow(0.88,3) * Math.pow(0.80,s3));
+      } else if (elapsedMin >= 15) {
+        const s2 = Math.floor((elapsedMin - 15) / 5) + 1;
+        decayed = Math.max(0, m.cars * Math.pow(0.90,2) * Math.pow(0.88,s2));
+      } else {
+        decayed = Math.max(0, m.cars * Math.pow(0.90, steps));
+      }
+      const next = classify(decayed);
+      /* safeStepHold باستخدام heldMin */
+      const STATUS_RANK = { green:0, orange:1, red:2 };
+      const improving = STATUS_RANK[next] < STATUS_RANK[m.status];
+      let safe = next;
+      if (improving) {
+        const minHold = MIN_HOLD_MS[m.status] || 0;
+        if (heldMin * 60000 < minHold) safe = m.status; // لم تنقضِ المدة
+      }
+      if (safe !== m.status) {
+        const { density, waitMin } = physics(decayed);
+        const now = Date.now();
+        const patch = { status: safe, cars: decayed, density, waitMin,
+                        count: m.count, rel: m.rel, lastTs: m.lastTs,
+                        statusSince: now, savedAt: now };
+        console.log('[Q] boot decay ['+lane+']', m.status, '→', safe);
+        Object.assign(mem[lane], patch);
+        write(lane, patch);
+      }
+    });
+
     /* الخطوة 4: render مرة واحدة لكل جهة بالبيانات الحقيقية */
     render('entry', mem.entry);
     render('exit',  mem.exit);
@@ -1956,6 +2062,7 @@ async function boot() {
 
     /* الخطوة 6: _booted = true — الآن ingest/tick/userReport مسموحة */
     _booted = true;
+    window._TrafficMem = mem;
     console.log('[Q] boot complete — _booted=true');
 
     /* الخطوة 7: ابدأ المستمعين — بعد _bootReady و _booted */
@@ -1964,8 +2071,11 @@ async function boot() {
 
     /* الخطوة 8: ابدأ intervals بعد boot — لا قبل */
     setBtn(Cool.get());
+    loadReputation();
+    _startPresence();
     setInterval(() => setFbUI(), 30000);
     setInterval(updateDebug, 1000);
+setInterval(updateDecayTimer, 1000);
   }
 
   /* ════════════════════════════════════════
@@ -1994,6 +2104,13 @@ async function boot() {
         /* تجاهل إذا هذا التحديث أقدم أو نفس savedAt (كتبناه نحن) */
         if (d.savedAt && mem[lane].savedAt && d.savedAt <= mem[lane].savedAt) {
           console.log('[Q] watch ['+lane+'] skipped (savedAt not newer)');
+          return;
+        }
+        /* إذا الحالة نفسها ولم تتغير — لا داعي لـ render */
+        if (d.status === mem[lane].status && d.cars && mem[lane].cars &&
+            Math.abs(d.cars - mem[lane].cars) < 2) {
+          mem[lane].savedAt = d.savedAt;
+          console.log('[Q] watch ['+lane+'] same status, mem updated only');
           return;
         }
 
@@ -2295,6 +2412,7 @@ function submit() {
     else { setBtn(rem); }
   }, 250);
   showToast(lang === 'es' ? '✅ ¡Actualizado!' : '✅ تم التحديث!');
+  addRepPoint();
   fbAddReport(_lane, _st, trust.weight).catch(() => {
     showToast(lang === 'es' ? '⚠️ Sin conexión' : '⚠️ خطأ في الاتصال');
   });
@@ -2336,6 +2454,10 @@ function startListeners() {
   /* Layer 1: onSnapshot — real-time */
   try {
     onSnapshot(reportsCol, snap => {
+      /* تحديث إحصائيات اليوم */
+      const allReports = [];
+      snap.forEach(d => allReports.push(d.data()));
+      _calcStats(allReports);
       const now = Date.now(), docs = [];
       snap.forEach(d => {
         const f = d.data();
@@ -2518,6 +2640,366 @@ function updatePredCard(liveStatusEntry, liveStatusExit, rel) {
   set('pred120Val', 'pred120Bar', blend120);
 
   $('predSrc').textContent = dataQuality;
+}
+
+/* ════════════════════════════════════════════════════════
+   Reputation System — نظام سمعة المستخدم
+   ════════════════════════════════════════════════════════ */
+const REP_LEVELS = [
+  { min:0,  max:10,  ar:'مبتدئ',          es:'Principiante', icon:'🌱' },
+  { min:10, max:30,  ar:'مساهم',           es:'Colaborador',  icon:'🤝' },
+  { min:30, max:80,  ar:'مساهم موثوق',    es:'Confiable',    icon:'⭐' },
+  { min:80, max:Infinity, ar:'مراقب الطريق', es:'Vigilante', icon:'🛡️' }
+];
+
+function getRepLevel(pts) {
+  return REP_LEVELS.find(l => pts >= l.min && pts < l.max) || REP_LEVELS[0];
+}
+
+/* deviceId — معرف فريد لكل جهاز */
+function getDeviceId() {
+  let id = localStorage.getItem('qnt_device_id');
+  if (!id) {
+    id = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
+    localStorage.setItem('qnt_device_id', id);
+  }
+  return id;
+}
+
+/* بيانات السمعة محلياً */
+let _repData = { points: 0, reportsCount: 0 };
+
+function _loadRepLocal() {
+  try {
+    const d = localStorage.getItem('qnt_rep');
+    if (d) _repData = JSON.parse(d);
+  } catch(e) {}
+}
+
+function _saveRepLocal() {
+  try { localStorage.setItem('qnt_rep', JSON.stringify(_repData)); } catch(e) {}
+}
+
+/* تحديث الواجهة */
+function _updateRepUI() {
+  const pts = _repData.points || 0;
+  const lvl = getRepLevel(pts);
+  const isES = (typeof lang !== 'undefined' ? lang : 'ar') === 'es';
+  const lvlName = isES ? lvl.es : lvl.ar;
+
+  const repPts = $('repPts'); if (repPts) repPts.textContent = pts;
+  const rpPts  = $('rpPts');  if (rpPts)  rpPts.textContent  = pts;
+  const rpCnt  = $('rpCnt');  if (rpCnt)  rpCnt.textContent  = _repData.reportsCount || 0;
+  const rpLvl  = $('rpLvl');  if (rpLvl)  rpLvl.textContent  = lvlName;
+  const repLvl = $('repLevel'); if (repLvl) repLvl.textContent = lvl.icon + ' ' + lvlName;
+}
+
+/* قراءة من Firestore */
+async function loadReputation() {
+  _loadRepLocal();
+  _updateRepUI();
+  try {
+    const devId = getDeviceId();
+    const ref = doc(_db, 'users', devId);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const d = snap.data();
+      _repData.points       = d.points       || 0;
+      _repData.reportsCount = d.reportsCount || 0;
+      _saveRepLocal();
+      _updateRepUI();
+    }
+  } catch(e) { console.warn('[Rep] load failed:', e.message); }
+}
+
+/* إضافة نقطة عند إرسال تقرير */
+async function addRepPoint() {
+  _repData.points       = (_repData.points || 0) + 1;
+  _repData.reportsCount = (_repData.reportsCount || 0) + 1;
+  _saveRepLocal();
+  _updateRepUI();
+  try {
+    const devId = getDeviceId();
+    const ref = doc(_db, 'users', devId);
+    await setDoc(ref, {
+      points:       _repData.points,
+      reportsCount: _repData.reportsCount,
+      level:        getRepLevel(_repData.points).ar,
+      lastReport:   serverTimestamp()
+    }, { merge: true });
+  } catch(e) { console.warn('[Rep] save failed:', e.message); }
+}
+
+/* ════════════════════════════════════════════════════════
+   Online Presence — عداد المستخدمين المباشرين
+   ════════════════════════════════════════════════════════ */
+const ONLINE_TIMEOUT_MS = 3 * 60 * 1000; /* 3 دقائق */
+const ONLINE_PING_MS    = 60 * 1000;     /* ping كل دقيقة */
+
+async function _presencePing() {
+  try {
+    const devId = getDeviceId();
+    await setDoc(doc(_db, 'online_users', devId), {
+      lastSeen: Date.now()
+    }, { merge: true });
+  } catch(e) { console.warn('[Presence] ping failed:', e.message); }
+}
+
+function _startPresence() {
+  _presencePing();
+  setInterval(_presencePing, ONLINE_PING_MS);
+
+  /* onSnapshot لحساب المستخدمين النشطين */
+  const onlineCol = collection(_db, 'online_users');
+  onSnapshot(onlineCol, snap => {
+    const now = Date.now();
+    let count = 0;
+    snap.forEach(d => {
+      const ls = d.data().lastSeen || 0;
+      if (now - ls <= ONLINE_TIMEOUT_MS) count++;
+    });
+    const el = document.getElementById('onlineCnt');
+    if (el) el.textContent = '👥 ' + count;
+  }, e => console.warn('[Presence] snapshot:', e.message));
+}
+
+/* ════════════════════════════════════════════════════════
+   Trust Score — مؤشر موثوقية الحالة
+   ════════════════════════════════════════════════════════ */
+function calcTrustScore(lane) {
+  /* نحتاج: count, rel, lastTs من mem */
+  const m = window._TrafficMem ? window._TrafficMem[lane] : null;
+  if (!m) return 0;
+
+  const count   = m.count   || 0;
+  const rel     = m.rel     || 0;   /* 0..1 — وزن التقارير */
+  const lastTs  = m.lastTs  || 0;
+
+  if (count === 0 || lastTs === 0) return 0;
+
+  /* عامل الحداثة: 100% إذا < 10 دقائق، ينخفض حتى 20% بعد 60 دقيقة */
+  const agMin  = (Date.now() - lastTs) / 60000;
+  const fresh  = agMin < 10 ? 1.0
+               : agMin < 60 ? 1.0 - (agMin - 10) * (0.8 / 50)
+               : 0.20;
+
+  /* عامل الكمية: 1 تقرير=40%, 2=60%, 3=75%, 5+=90% */
+  const qty = count >= 5 ? 0.90
+            : count === 4 ? 0.82
+            : count === 3 ? 0.75
+            : count === 2 ? 0.60
+            : 0.40;
+
+  /* عامل الموثوقية (rel) */
+  const trust = qty * fresh * (0.5 + 0.5 * rel);
+
+  return Math.min(99, Math.round(trust * 100));
+}
+
+function updateTrustUI() {
+  ['entry','exit'].forEach(lane => {
+    const score = calcTrustScore(lane);
+    const elId  = lane === 'entry' ? 'eTrust' : 'xTrust';
+    const el    = document.getElementById(elId);
+    if (!el) return;
+    if (score === 0) { el.textContent = ''; return; }
+    const isES = (typeof lang !== 'undefined' ? lang : 'ar') === 'es';
+    el.innerHTML = (isES ? 'Fiabilidad: ' : 'موثوقية: ') +
+                   '<span>' + score + '%</span>';
+  });
+}
+
+/* ════════════════════════════════════════════════════════
+   Last Update — مؤشر آخر تحديث
+   ════════════════════════════════════════════════════════ */
+function updateLastUp() {
+  ['entry','exit'].forEach(lane => {
+    const m    = window._TrafficMem ? window._TrafficMem[lane] : null;
+    const elId = lane === 'entry' ? 'eLastUp' : 'xLastUp';
+    const el   = document.getElementById(elId);
+    if (!el) return;
+    if (!m || !m.lastTs) { el.textContent = ''; return; }
+
+    const isES  = (typeof lang !== 'undefined' ? lang : 'ar') === 'es';
+    const agMin = Math.floor((Date.now() - m.lastTs) / 60000);
+
+    let txt;
+    if (agMin < 1) {
+      txt = isES ? '⏱ Ahora mismo' : '⏱ الآن';
+    } else if (agMin === 1) {
+      txt = isES ? '⏱ Hace 1 min' : '⏱ منذ دقيقة';
+    } else if (agMin < 60) {
+      txt = isES ? '⏱ Hace ' + agMin + ' min' : '⏱ منذ ' + agMin + ' دقيقة';
+    } else {
+      const agH = Math.floor(agMin / 60);
+      txt = isES ? '⏱ Hace ' + agH + ' h' : '⏱ منذ ' + agH + ' ساعة';
+    }
+    el.textContent = txt;
+  });
+}
+
+/* ════════════════════════════════════════════════════════
+   Daily Stats — إحصائيات اليوم
+   ════════════════════════════════════════════════════════ */
+let _statsCache = { count:0, topStatus:'—', avg:'—', lastTime:'—' };
+
+function _calcStats(reports) {
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const todayReports = reports.filter(r => (r.tsMs || 0) >= startOfDay);
+
+  if (todayReports.length === 0) {
+    _statsCache = { count:0, topStatus:'—', avg:'—', lastTime:'—' };
+    _updateStatsUI(); return;
+  }
+
+  /* عدد التقارير */
+  const count = todayReports.length;
+
+  /* أكثر حالة */
+  const freq = { green:0, orange:0, red:0 };
+  todayReports.forEach(r => { if (freq[r.status] !== undefined) freq[r.status]++; });
+  const topStatus = Object.entries(freq).sort((a,b)=>b[1]-a[1])[0][0];
+
+  /* المتوسط */
+  const RANK = { green:0, orange:1, red:2 };
+  const NAMES_AR = { green:'عادي', orange:'متوسط', red:'شديد' };
+  const avg_val = todayReports.reduce((s,r) => s + (RANK[r.status]||0), 0) / count;
+  const avg = avg_val < 0.5 ? NAMES_AR.green : avg_val < 1.5 ? NAMES_AR.orange : NAMES_AR.red;
+
+  /* آخر تقرير */
+  const latest = Math.max(...todayReports.map(r => r.tsMs || 0));
+  const d = new Date(latest);
+  const lastTime = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+
+  _statsCache = { count, topStatus: NAMES_AR[topStatus] || topStatus, avg, lastTime };
+  _updateStatsUI();
+}
+
+function _updateStatsUI() {
+  const el = id => document.getElementById(id);
+  if (el('stTodayCount')) el('stTodayCount').textContent = _statsCache.count || '0';
+  if (el('stTopStatus'))  el('stTopStatus').textContent  = _statsCache.topStatus || '—';
+  if (el('stAvg'))        el('stAvg').textContent        = _statsCache.avg || '—';
+  if (el('stLastTime'))   el('stLastTime').textContent   = _statsCache.lastTime || '—';
+  /* عنوان بالعربي/إسباني */
+  const title = el('statsTitle');
+  if (title) title.textContent = (typeof lang !== 'undefined' && lang === 'es')
+    ? 'Estadísticas de hoy' : 'إحصائيات اليوم';
+}
+
+function toggleStatsPopup() {
+  const p = document.getElementById('statsPopup');
+  const r = document.getElementById('repPopup');
+  if (!p) return;
+  if (r) r.classList.remove('open');
+  p.classList.toggle('open');
+  if (p.classList.contains('open')) {
+    _updateStatsUI();
+    setTimeout(() => {
+      document.addEventListener('click', function _cls(e) {
+        if (!p.contains(e.target) && e.target.id !== 'statsBtn') {
+          p.classList.remove('open');
+          document.removeEventListener('click', _cls);
+        }
+      });
+    }, 50);
+  }
+}
+window.toggleStatsPopup = toggleStatsPopup;
+
+/* فتح/إغلاق popup */
+function toggleRepPopup() {
+  const p = $('repPopup');
+  const sp = $('statsPopup');
+  if (!p) return;
+  if (sp) sp.classList.remove('open');
+  p.classList.toggle('open');
+  /* إغلاق عند الضغط خارجه */
+  if (p.classList.contains('open')) {
+    setTimeout(() => {
+      document.addEventListener('click', function _close(e) {
+        if (!p.contains(e.target) && e.target.id !== 'repBtn') {
+          p.classList.remove('open');
+          document.removeEventListener('click', _close);
+        }
+      });
+    }, 50);
+  }
+}
+window.toggleRepPopup = toggleRepPopup;
+
+/* ═══ Decay Timer — عداد تنازلي للتحول التلقائي ═══ */
+function updateDecayTimer() {
+  const COLOR = { red:'#ff3355', orange:'#ff8f00', green:'#00d46e' };
+  const NEXT  = { red:'orange', orange:'green', green:null };
+  const HOLD  = { red: 120*60*1000, orange: 60*60*1000 };
+  const LABEL_AR = { entry:'دخول سبتة', exit:'خروج الفنيدق' };
+  const NEXT_AR  = { red:'← برتقالي', orange:'← أخضر' };
+  const NEXT_ES  = { red:'← naranja', orange:'← verde' };
+
+  let anyVisible = false;
+
+  ['entry','exit'].forEach(lane => {
+    const m    = TrafficState.status ? { status: TrafficState.status(lane) } : null;
+    if (!m) return;
+    const st   = m.status;
+    const mem  = TrafficState.debug ? TrafficState.debug(lane) : null;
+    const isE  = lane === 'entry';
+    const dotId  = isE ? 'dtDotE'  : 'dtDotX';
+    const lblId  = isE ? 'dtLblE'  : 'dtLblX';
+    const timeId = isE ? 'dtTimeE' : 'dtTimeX';
+    const nextId = isE ? 'dtNextE' : 'dtNextX';
+    const rowId  = isE ? 'dtRowEntry' : 'dtRowExit';
+
+    if (st === 'green' || !NEXT[st]) {
+      const row = $(rowId); if (row) row.style.display = 'none';
+      return;
+    }
+
+    /* احسب الوقت المتبقي */
+    const laneData = window._TrafficMem ? window._TrafficMem[lane] : null;
+    const statusSince = laneData?.statusSince || 0;
+    const holdMs = HOLD[st] || 0;
+    const elapsed = statusSince ? Date.now() - statusSince : 0;
+    const remaining = Math.max(0, holdMs - elapsed);
+
+    const row = $(rowId); if (row) row.style.display = 'flex';
+    anyVisible = true;
+
+    /* لون */
+    const dot = $(dotId); if (dot) dot.style.background = COLOR[st];
+
+    /* label */
+    const lbl = $(lblId);
+    if (lbl) lbl.textContent = lang === 'es'
+      ? (lane === 'entry' ? 'Entrada' : 'Salida')
+      : LABEL_AR[lane];
+
+    /* وقت */
+    const timeEl = $(timeId);
+    if (timeEl) {
+      if (remaining <= 0) {
+        timeEl.textContent = '00:00';
+      } else {
+        const h = Math.floor(remaining / 3600000);
+        const m2 = Math.floor((remaining % 3600000) / 60000);
+        const s = Math.floor((remaining % 60000) / 1000);
+        timeEl.textContent = h > 0
+          ? h + ':' + String(m2).padStart(2,'0') + ':' + String(s).padStart(2,'0')
+          : String(m2).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+      }
+    }
+
+    /* next */
+    const nextEl = $(nextId);
+    if (nextEl) nextEl.textContent = lang === 'es'
+      ? (NEXT_ES[st] || '')
+      : (NEXT_AR[st] || '');
+  });
+
+  const timer = $('decayTimer');
+  if (timer) timer.classList.toggle('hidden', !anyVisible);
 }
 
 function setTime() {
@@ -2809,6 +3291,7 @@ function shareStatus() {
 window.setLang       = setLang;
 window.setZone       = setZone;
 window.openSheet     = openSheet;
+window.toggleRepPopup = toggleRepPopup;
 window.onBD          = onBD;
 window.pickLane      = pickLane;
 window.pickSt        = pickSt;
