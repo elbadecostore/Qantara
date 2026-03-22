@@ -2506,24 +2506,7 @@ function shareStatus() {
 
 window.setLang       = setLang;
 
-// ══ عداد الزوار اليومي ══
-(function() {
-  try {
-    var today = new Date().toISOString().slice(0,10);
-    var visitRef = doc(_db, 'daily_visits', today);
-    getDoc(visitRef).then(function(snap) {
-      var current = snap.exists() ? (snap.data().count || 0) : 0;
-      setDoc(visitRef, { count: current + 1, date: today }, { merge: true });
-      var el = document.getElementById('visitCount');
-      if (el) el.textContent = (current + 1).toLocaleString();
-    }).catch(function(){});
-    onSnapshot(visitRef, function(snap) {
-      var el = document.getElementById('visitCount');
-      if (snap.exists() && el)
-        el.textContent = (snap.data().count || 0).toLocaleString();
-    });
-  } catch(e) {}
-})();
+
 window.setZone       = setZone;
 window.openSheet     = openSheet;
 window.toggleRepPopup = toggleRepPopup;
@@ -2573,6 +2556,23 @@ setLang(lang);
 (async () => {
 
   await TrafficState.boot();
+
+  // ══ عداد الزوار اليومي ══
+  try {
+    var _today = new Date().toISOString().slice(0,10);
+    var _visitRef = doc(_db, 'daily_visits', _today);
+    getDoc(_visitRef).then(function(snap) {
+      var _cur = snap.exists() ? (snap.data().count || 0) : 0;
+      setDoc(_visitRef, { count: _cur + 1, date: _today }, { merge: true });
+      var _el = document.getElementById('visitCount');
+      if (_el) _el.textContent = (_cur + 1).toLocaleString();
+    }).catch(function(){});
+    onSnapshot(_visitRef, function(snap) {
+      var _el = document.getElementById('visitCount');
+      if (snap.exists() && _el)
+        _el.textContent = (snap.data().count || 0).toLocaleString();
+    });
+  } catch(e) {}
 
   if (!sessionStorage.getItem('qnt_intro_done')) {
     sessionStorage.setItem('qnt_intro_done', '1');
