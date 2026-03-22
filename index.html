@@ -257,9 +257,9 @@ function toggleDetails() {
 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
     Facebook
   </a>
-<a href="mailto:qantara.live@gmail.com">
+<a href="/cdn-cgi/l/email-protection#0f7e6e617b6e7d6e216366796a4f68626e6663216c6062">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-qantara.live@gmail.com
+<span class="__cf_email__" data-cfemail="0677676872677467286a6f706346616b676f6a2865696b">[email&#160;protected]</span>
 </a>
 </div>
 <div class="footer"><span data-ar>بيانات مجتمعية · الفنيدق / سبتة · Beta v1</span><span data-es>Datos comunitarios · Fnideq / Ceuta · Beta v1</span></div>
@@ -273,7 +273,7 @@ qantara.live@gmail.com
 <div class="about-row"><span class="about-row-ico">👥</span><span><span data-ar>بيانات مجتمعية — يساهم فيها المستخدمون بتقاريرهم الحية.</span><span data-es>Datos comunitarios — los usuarios comparten reportes en tiempo real.</span></span></div>
 <div class="about-row"><span class="about-row-ico">🤖</span><span><span data-ar>يعتمد على تحليل الأنماط التاريخية + التقارير الحية لتوقع الازدحام.</span><span data-es>Analiza patrones históricos + reportes en vivo para predecir el tráfico.</span></span></div>
 <div class="about-row"><span class="about-row-ico">🔒</span><span><span data-ar>لا نجمع معلومات شخصية، فقط تقارير مجهولة.</span><span data-es>No recopilamos datos personales, solo reportes anónimos.</span></span></div>
-<div class="about-row"><span class="about-row-ico">📧</span><span><a href="mailto:qantara.live@gmail.com" style="color:var(--muted)">qantara.live@gmail.com</a></span></div>
+<div class="about-row"><span class="about-row-ico">📧</span><span><a href="/cdn-cgi/l/email-protection#ff8e9e918b9e8d9ed19396899abf98929e9693d19c9092" style="color:var(--muted)"><span class="__cf_email__" data-cfemail="ed9c8c83998c9f8cc381849b88ad8a808c8481c38e8280">[email&#160;protected]</span></a></span></div>
 <div class="about-divider"></div>
 <div style="text-align:center;font-size:10px;color:var(--muted);opacity:.5">Beta v1 · 2025</div>
 <button class="about-close" onclick="document.getElementById('aboutOverlay').classList.remove('open')"><span data-ar>إغلاق</span><span data-es>Cerrar</span></button>
@@ -298,7 +298,7 @@ qantara.live@gmail.com
 </div>
 </div>
 <div class="toast" id="toast"></div>
-<script type="module">
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp,
          doc, setDoc, getDoc, onSnapshot as onSnap }
@@ -1349,6 +1349,17 @@ function quickConfirm(lane) {
   const btn = $(btnId);
   if (btn) { btn.disabled=true; setTimeout(()=>{if($(btnId))$(btnId).disabled=false;},30000); }
   const status = TrafficState.status(lane);
+  // نزيد العداد في lanes_state مباشرة ليظهر لجميع المستخدمين
+  const laneRef = doc(_db, 'lanes_state', lane);
+  getDoc(laneRef).then(snap => {
+    const current = snap.exists() ? (snap.data().confirmCount || 0) : 0;
+    setDoc(laneRef, { confirmCount: current + 1, confirmTs: now }, { merge: true });
+    // تحديث الواجهة فوراً
+    const newCount = current + 1;
+    const repTxt = lang==='es' ? `👥 ${newCount} usuarios confirmaron el estado` : `👥 ${newCount} مستخدمون أكدوا الحالة`;
+    if (lane==='entry' && $('eRep')) $('eRep').textContent = repTxt;
+    if (lane==='exit'  && $('xRep')) $('xRep').textContent = repTxt;
+  }).catch(()=>{});
   fbAddReport(lane, status, 0.5)
     .then(()=>showToast(lang==='es'?'✅ Confirmado':'✅ تم التأكيد'))
     .catch(()=>showToast(lang==='es'?'⚠️ Sin conexión':'⚠️ خطأ في الاتصال'));
@@ -1430,6 +1441,13 @@ const TrafficState = (() => {
     Object.assign(mem[lane], d);
     if (!mem[lane].savedAt && d.savedAt) mem[lane].savedAt = d.savedAt;
     applyLane(lane, { status: d.status, count: d.count ?? 0, rel: d.rel ?? 0 });
+    // عرض عداد التأكيدات من lanes_state
+    const cc = d.confirmCount || 0;
+    if (cc > 0) {
+      const repTxt = lang==='es' ? `👥 ${cc} usuarios confirmaron el estado` : `👥 ${cc} مستخدمون أكدوا الحالة`;
+      if (lane==='entry' && $('eRep')) $('eRep').textContent = repTxt;
+      if (lane==='exit'  && $('xRep')) $('xRep').textContent = repTxt;
+    }
     const eS = mem.entry.status, xS = mem.exit.status;
     const dE = mem.entry.density, dX = mem.exit.density;
     if (typeof buildAI === 'function')
@@ -2556,18 +2574,4 @@ if ('serviceWorker' in navigator) {
 
 let _installPrompt = null;
 
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  _installPrompt = e;
-  const btn = document.getElementById('btnInstall');
-  if (btn) btn.classList.add('visible');
-});
-
-window.addEventListener('appinstalled', () => {
-  _installPrompt = null;
-  const btn = document.getElementById('btnInstall');
-  if (btn) btn.classList.remove('visible');
-});
-</script>
-</body>
-</html>
+window
