@@ -18,17 +18,9 @@
 </head>
 <body>
 <!-- Loading overlay — يختفي بعد أول snapshot -->
-<div id="appLoader" style="
-  position:fixed;inset:0;z-index:9999;
-  background:#0d1117;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:16px;
-  transition:opacity .4s ease;">
-<div style="width:44px;height:44px;border:3px solid rgba(255,255,255,.1);
-    border-top-color:#f59e0b;border-radius:50%;animation:spin .8s linear infinite"></div>
 <span style="color:rgba(255,255,255,.5);font-size:13px;font-family:system-ui" id="loaderTxt">جارٍ التحميل…</span>
 </div>
-<style>@keyframes spin{to{transform:rotate(360deg)}}
+<style>
   /* ══ بطاقة التوقع القادم ══ */
   .pred-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;position:relative;overflow:hidden;margin-bottom:0}
   .pred-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(139,92,246,.5),transparent)}
@@ -1365,15 +1357,7 @@ function quickConfirm(lane) {
     .catch(()=>showToast(lang==='es'?'⚠️ Sin conexión':'⚠️ خطأ في الاتصال'));
 }
 
-let _loaderHidden = false;
-function hideLoader() {
-  if (_loaderHidden) return;
-  _loaderHidden = true;
-  const el = document.getElementById('appLoader');
-  if (!el) return;
-  el.style.opacity = '0';
-  setTimeout(() => el.parentNode && el.parentNode.removeChild(el), 450);
-}
+
 
 const TrafficState = (() => {
 
@@ -1577,7 +1561,7 @@ async function boot() {
     render('entry', mem.entry);
     render('exit',  mem.exit);
 
-    hideLoader();
+    
 
     _booted = true;
     window._TrafficMem = mem;
@@ -1925,7 +1909,7 @@ function startListeners() {
       if (docs.length) _lastDataTs = now;
       setFbUI(true, snap.size);
       applyDocs(docs);
-      hideLoader();
+      
     }, err => { console.warn('[Q] onSnapshot:', err.code); setFbUI(false); });
   } catch(e) { console.warn('[Q] onSnapshot threw:', e.message); }
 
