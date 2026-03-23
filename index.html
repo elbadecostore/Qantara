@@ -100,7 +100,7 @@
 </div>
 </div>
 <div style="display:flex;align-items:center;gap:8px">
-<button id="repBtn" onclick="toggleRepPopup()">⭐ <span id="repPts">0</span></button>
+<div id="visitChip" style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:99px;padding:4px 10px;font-size:11px;font-weight:700;color:rgba(255,255,255,.5);">👁️ <span id="visitCount">—</span></div><button id="repBtn" onclick="toggleRepPopup()">⭐ <span id="repPts">0</span></button>
 <div class="live-pill" id="livePill"><div class="ldot"></div><span id="pillTxt">—</span></div>
 </div>
 </div>
@@ -257,9 +257,9 @@ function toggleDetails() {
 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
     Facebook
   </a>
-<a href="/cdn-cgi/l/email-protection#4736262933263526692b2e312207202a262e2b6924282a">
+<a href="/cdn-cgi/l/email-protection#addcccc3d9ccdfcc83c1c4dbc8edcac0ccc4c183cec2c0">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-<span class="__cf_email__" data-cfemail="a2d3c3ccd6c3d0c38ccecbd4c7e2c5cfc3cbce8cc1cdcf">[email&#160;protected]</span>
+<span class="__cf_email__" data-cfemail="483929263c293a296624213e2d082f25292124662b2725">[email&#160;protected]</span>
 </a>
 </div>
 <div class="footer"><span data-ar>بيانات مجتمعية · الفنيدق / سبتة · Beta v1</span><span data-es>Datos comunitarios · Fnideq / Ceuta · Beta v1</span></div>
@@ -273,7 +273,7 @@ function toggleDetails() {
 <div class="about-row"><span class="about-row-ico">👥</span><span><span data-ar>بيانات مجتمعية — يساهم فيها المستخدمون بتقاريرهم الحية.</span><span data-es>Datos comunitarios — los usuarios comparten reportes en tiempo real.</span></span></div>
 <div class="about-row"><span class="about-row-ico">🤖</span><span><span data-ar>يعتمد على تحليل الأنماط التاريخية + التقارير الحية لتوقع الازدحام.</span><span data-es>Analiza patrones históricos + reportes en vivo para predecir el tráfico.</span></span></div>
 <div class="about-row"><span class="about-row-ico">🔒</span><span><span data-ar>لا نجمع معلومات شخصية، فقط تقارير مجهولة.</span><span data-es>No recopilamos datos personales, solo reportes anónimos.</span></span></div>
-<div class="about-row"><span class="about-row-ico">📧</span><span><a href="/cdn-cgi/l/email-protection#0475656a706576652a686d7261446369656d682a676b69" style="color:var(--muted)"><span class="__cf_email__" data-cfemail="2756464953465546094b4e514267404a464e4b0944484a">[email&#160;protected]</span></a></span></div>
+<div class="about-row"><span class="about-row-ico">📧</span><span><a href="/cdn-cgi/l/email-protection#81f0e0eff5e0f3e0afede8f7e4c1e6ece0e8edafe2eeec" style="color:var(--muted)"><span class="__cf_email__" data-cfemail="b3c2d2ddc7d2c1d29ddfdac5d6f3d4ded2dadf9dd0dcde">[email&#160;protected]</span></a></span></div>
 <div class="about-divider"></div>
 <div style="text-align:center;font-size:10px;color:var(--muted);opacity:.5">Beta v1 · 2025</div>
 <button class="about-close" onclick="document.getElementById('aboutOverlay').classList.remove('open')"><span data-ar>إغلاق</span><span data-es>Cerrar</span></button>
@@ -2556,17 +2556,21 @@ if ('serviceWorker' in navigator) {
 
 let _installPrompt = null;
 
-// شاشة التشخيص
-(function(){
-  var box = document.createElement('div');
-  box.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#000;color:#0f0;font-size:10px;font-family:monospace;padding:6px;max-height:200px;overflow-y:auto;border-top:2px solid #0f0;';
-  document.body.appendChild(box);
-  function show(c,a){ var d=document.createElement('div'); d.style.color=c; d.textContent=Array.from(a).join(' '); box.appendChild(d); box.scrollTop=box.scrollHeight; }
-  var _l=console.log, _e=console.error, _w=console.warn;
-  console.log   = function(){ _l.apply(console,arguments); show('#0f0',arguments); };
-  console.error = function(){ _e.apply(console,arguments); show('#f55',arguments); };
-  console.warn  = function(){ _w.apply(console,arguments); show('#ff0',arguments); };
-  show('#0ff',['[DBG] جاهز — ننتظر Firebase...']);
+// عداد الزوار اليومي
+(async function(){
+  try {
+    var _t = new Date().toISOString().slice(0,10);
+    var _r = doc(_db, 'daily_visits', _t);
+    var s = await getDoc(_r);
+    var n = s.exists() ? (s.data().count||0) : 0;
+    await setDoc(_r, {count:n+1, date:_t}, {merge:true});
+    var e = document.getElementById('visitCount');
+    if(e) e.textContent = (n+1).toLocaleString();
+    onSnapshot(_r, function(s){
+      var e = document.getElementById('visitCount');
+      if(s.exists()&&e) e.textContent=(s.data().count||0).toLocaleString();
+    });
+  } catch(e){}
 })();
 
 window
