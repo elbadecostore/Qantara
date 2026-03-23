@@ -85,6 +85,7 @@
 <div id="intro-status"></div>
 <div id="intro-bwrap"><div id="intro-bfill"></div></div>
 </div>
+<div id="_dbgLog" style="position:fixed;bottom:0;left:0;right:0;z-index:99999;background:rgba(0,0,0,.9);color:#0f0;font-size:10px;font-family:monospace;padding:6px;max-height:180px;overflow-y:auto;display:none;"></div>
 <div id="app"><div class="shell">
 <div class="topbar">
 <div class="lang-pick" id="langPick">
@@ -1479,11 +1480,20 @@ const TrafficState = (() => {
 
 async function boot() {
     console.log('[Q] boot: reading Firestore...');
+    console.log('[Q] Firebase project:', _db.app.options.projectId);
+    console.log('[Q] lanes_state path entry:', lanesRef.entry.path);
 
-    const [sE, sX] = await Promise.all([
-      getDoc(lanesRef.entry).catch(() => null),
-      getDoc(lanesRef.exit).catch(()  => null)
-    ]);
+    let sE, sX;
+    try {
+      [sE, sX] = await Promise.all([
+        getDoc(lanesRef.entry).catch((e) => { console.error('[Q] getDoc entry error:', e.code, e.message); return null; }),
+        getDoc(lanesRef.exit).catch((e)  => { console.error('[Q] getDoc exit error:', e.code, e.message); return null; })
+      ]);
+      console.log('[Q] getDoc done — entry exists:', sE?.exists(), '| exit exists:', sX?.exists());
+    } catch(e) {
+      console.error('[Q] boot getDoc threw:', e.message);
+      sE = null; sX = null;
+    }
 
     let loadedFromFirestore = false;
     if (sE && sE.exists()) {
@@ -1895,7 +1905,9 @@ function updateDebug() {
 function startListeners() {
 
   try {
+    console.log('[Q] starting onSnapshot listener...');
     onSnapshot(reportsCol, snap => {
+      console.log('[Q] onSnapshot fired — docs:', snap.size);
       const now = Date.now(), docs = [];
       snap.forEach(d => {
         const f = d.data();
@@ -2485,6 +2497,26 @@ function shareStatus() {
 }
 
 window.setLang       = setLang;
+
+// عرض logs في الشاشة للهاتف
+(function(){
+  var _log = document.getElementById('_dbgLog');
+  if (!_log) return;
+  _log.style.display = 'block';
+  var _orig = console.log.bind(console);
+  var _err  = console.error.bind(console);
+  function _show(color, args) {
+    var line = document.createElement('div');
+    line.style.color = color;
+    line.textContent = Array.from(args).join(' ');
+    _log.appendChild(line);
+    _log.scrollTop = _log.scrollHeight;
+  }
+  console.log   = function(){ _orig.apply(console,arguments); _show('#0f0', arguments); };
+  console.error = function(){ _err.apply(console,arguments);  _show('#f55', arguments); };
+  console.warn  = function(){ _show('#ff0', arguments); };
+  console.log('[DBG] شاشة التشخيص جاهزة');
+})();
 window.setZone       = setZone;
 window.openSheet     = openSheet;
 window.toggleRepPopup = toggleRepPopup;
