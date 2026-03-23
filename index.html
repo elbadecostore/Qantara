@@ -100,7 +100,7 @@
 </div>
 </div>
 <div style="display:flex;align-items:center;gap:8px">
-<button id="repBtn" onclick="toggleRepPopup()">⭐ <span id="repPts">0</span></button>
+<div id="visitChip" style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:99px;padding:4px 10px;font-size:11px;font-weight:700;color:rgba(255,255,255,.5);">👁️ <span id="visitCount">—</span></div><button id="repBtn" onclick="toggleRepPopup()">⭐ <span id="repPts">0</span></button>
 <div class="live-pill" id="livePill"><div class="ldot"></div><span id="pillTxt">—</span></div>
 </div>
 </div>
@@ -257,9 +257,9 @@ function toggleDetails() {
 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
     Facebook
   </a>
-<a href="mailto:qantara.live@gmail.com">
+<a href="/cdn-cgi/l/email-protection#f081919e84918291de9c998695b0979d91999cde939f9d">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-qantara.live@gmail.com
+<span class="__cf_email__" data-cfemail="2b5a4a455f4a594a0547425d4e6b4c464a424705484446">[email&#160;protected]</span>
 </a>
 </div>
 <div class="footer"><span data-ar>بيانات مجتمعية · الفنيدق / سبتة · Beta v1</span><span data-es>Datos comunitarios · Fnideq / Ceuta · Beta v1</span></div>
@@ -273,7 +273,7 @@ qantara.live@gmail.com
 <div class="about-row"><span class="about-row-ico">👥</span><span><span data-ar>بيانات مجتمعية — يساهم فيها المستخدمون بتقاريرهم الحية.</span><span data-es>Datos comunitarios — los usuarios comparten reportes en tiempo real.</span></span></div>
 <div class="about-row"><span class="about-row-ico">🤖</span><span><span data-ar>يعتمد على تحليل الأنماط التاريخية + التقارير الحية لتوقع الازدحام.</span><span data-es>Analiza patrones históricos + reportes en vivo para predecir el tráfico.</span></span></div>
 <div class="about-row"><span class="about-row-ico">🔒</span><span><span data-ar>لا نجمع معلومات شخصية، فقط تقارير مجهولة.</span><span data-es>No recopilamos datos personales, solo reportes anónimos.</span></span></div>
-<div class="about-row"><span class="about-row-ico">📧</span><span><a href="mailto:qantara.live@gmail.com" style="color:var(--muted)">qantara.live@gmail.com</a></span></div>
+<div class="about-row"><span class="about-row-ico">📧</span><span><a href="/cdn-cgi/l/email-protection#acddcdc2d8cddecd82c0c5dac9eccbc1cdc5c082cfc3c1" style="color:var(--muted)"><span class="__cf_email__" data-cfemail="cebfafa0baafbcafe0a2a7b8ab8ea9a3afa7a2e0ada1a3">[email&#160;protected]</span></a></span></div>
 <div class="about-divider"></div>
 <div style="text-align:center;font-size:10px;color:var(--muted);opacity:.5">Beta v1 · 2025</div>
 <button class="about-close" onclick="document.getElementById('aboutOverlay').classList.remove('open')"><span data-ar>إغلاق</span><span data-es>Cerrar</span></button>
@@ -298,7 +298,7 @@ qantara.live@gmail.com
 </div>
 </div>
 <div class="toast" id="toast"></div>
-<script type="module">
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp,
          doc, setDoc, getDoc, onSnapshot as onSnap }
@@ -1562,6 +1562,21 @@ async function boot() {
     hideLoader();
 
     _booted = true;
+    // عداد الزوار اليومي
+    try {
+      var _t=new Date().toISOString().slice(0,10);
+      var _r=doc(_db,'daily_visits',_t);
+      getDoc(_r).then(function(s){
+        var n=s.exists()?(s.data().count||0):0;
+        setDoc(_r,{count:n+1,date:_t},{merge:true});
+        var e=document.getElementById('visitCount');
+        if(e)e.textContent=(n+1).toLocaleString();
+      }).catch(function(){});
+      onSnapshot(_r,function(s){
+        var e=document.getElementById('visitCount');
+        if(s.exists()&&e)e.textContent=(s.data().count||0).toLocaleString();
+      });
+    }catch(e){}
     window._TrafficMem = mem;
     console.log('[Q] boot complete — _booted=true');
 
@@ -2556,18 +2571,4 @@ if ('serviceWorker' in navigator) {
 
 let _installPrompt = null;
 
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  _installPrompt = e;
-  const btn = document.getElementById('btnInstall');
-  if (btn) btn.classList.add('visible');
-});
-
-window.addEventListener('appinstalled', () => {
-  _installPrompt = null;
-  const btn = document.getElementById('btnInstall');
-  if (btn) btn.classList.remove('visible');
-});
-</script>
-</body>
-</html>
+window
