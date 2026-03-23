@@ -100,7 +100,7 @@
 </div>
 </div>
 <div style="display:flex;align-items:center;gap:8px">
-<div id="visitChip" style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:99px;padding:4px 10px;font-size:11px;font-weight:700;color:rgba(255,255,255,.5);">👁️ <span id="visitCount">—</span></div><button id="repBtn" onclick="toggleRepPopup()">⭐ <span id="repPts">0</span></button>
+<button id="repBtn" onclick="toggleRepPopup()">⭐ <span id="repPts">0</span></button>
 <div class="live-pill" id="livePill"><div class="ldot"></div><span id="pillTxt">—</span></div>
 </div>
 </div>
@@ -1562,20 +1562,6 @@ async function boot() {
     hideLoader();
 
     _booted = true;
-    try {
-      var _t=new Date().toISOString().slice(0,10);
-      var _r=doc(_db,'daily_visits',_t);
-      getDoc(_r).then(function(s){
-        var n=s.exists()?(s.data().count||0):0;
-        setDoc(_r,{count:n+1,date:_t},{merge:true});
-        var e=document.getElementById('visitCount');
-        if(e)e.textContent=(n+1).toLocaleString();
-      }).catch(function(){});
-      onSnapshot(_r,function(s){
-        var e=document.getElementById('visitCount');
-        if(s.exists()&&e)e.textContent=(s.data().count||0).toLocaleString();
-      });
-    }catch(e){}
     window._TrafficMem = mem;
     console.log('[Q] boot complete — _booted=true');
 
