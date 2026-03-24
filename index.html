@@ -1898,6 +1898,12 @@ function startListeners() {
 
   try {
     onSnapshot(reportsCol, snap => {
+      // حفظ timestamp آخر تقرير
+      snap.forEach(d => {
+        const ts = d.data().tsMs;
+        if (ts && (!_lastReportTs || ts > _lastReportTs)) _lastReportTs = ts;
+      });
+      if (_lastReportTs) setTime(_lastReportTs);
       const now = Date.now(), docs = [];
       snap.forEach(d => {
         const f = d.data();
@@ -2220,8 +2226,12 @@ function updateDecayTimer() {
   if (timer) timer.classList.toggle('hidden', !anyVisible);
 }
 
-function setTime() {
-  $('stTime').textContent = new Date().toLocaleTimeString('ar-MA',{hour:'2-digit',minute:'2-digit'});
+var _lastReportTs = null;
+
+function setTime(ts) {
+  // إذا أُعطي timestamp استعمله، وإلا استعمل آخر تقرير، وإلا الوقت الحالي
+  var d = ts ? new Date(ts) : (_lastReportTs ? new Date(_lastReportTs) : new Date());
+  $('stTime').textContent = d.toLocaleTimeString('ar-MA',{hour:'2-digit',minute:'2-digit'});
 }
 
 function setBtn(ms) {
