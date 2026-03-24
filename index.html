@@ -1430,6 +1430,7 @@ const TrafficState = (() => {
     Object.assign(mem[lane], d);
     if (!mem[lane].savedAt && d.savedAt) mem[lane].savedAt = d.savedAt;
     applyLane(lane, { status: d.status, count: d.count ?? 0, rel: d.rel ?? 0 });
+    if (d.savedAt && d.savedAt > _lastReportTs) setTime(d.savedAt);
     const eS = mem.entry.status, xS = mem.exit.status;
     const dE = mem.entry.density, dX = mem.exit.density;
     if (typeof buildAI === 'function')
@@ -1898,12 +1899,6 @@ function startListeners() {
 
   try {
     onSnapshot(reportsCol, snap => {
-      // حفظ timestamp آخر تقرير
-      snap.forEach(d => {
-        const ts = d.data().tsMs;
-        if (ts && (!_lastReportTs || ts > _lastReportTs)) _lastReportTs = ts;
-      });
-      if (_lastReportTs) setTime(_lastReportTs);
       const now = Date.now(), docs = [];
       snap.forEach(d => {
         const f = d.data();
@@ -2226,11 +2221,10 @@ function updateDecayTimer() {
   if (timer) timer.classList.toggle('hidden', !anyVisible);
 }
 
-var _lastReportTs = null;
-
+var _lastReportTs = 0;
 function setTime(ts) {
-  // إذا أُعطي timestamp استعمله، وإلا استعمل آخر تقرير، وإلا الوقت الحالي
-  var d = ts ? new Date(ts) : (_lastReportTs ? new Date(_lastReportTs) : new Date());
+  if (ts) _lastReportTs = ts;
+  var d = _lastReportTs ? new Date(_lastReportTs) : new Date();
   $('stTime').textContent = d.toLocaleTimeString('ar-MA',{hour:'2-digit',minute:'2-digit'});
 }
 
