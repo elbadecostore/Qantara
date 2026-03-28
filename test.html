@@ -2544,6 +2544,8 @@ setLang(lang);
 
   await TrafficState.boot();
 
+  startListeners();
+
 })();
 
 if ('serviceWorker' in navigator) {
