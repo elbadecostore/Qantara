@@ -19,11 +19,7 @@
 <body>
 <!-- Loading overlay — يختفي بعد أول snapshot -->
 <div id="appLoader" style="
-  position:fixed;inset:0;z-index:9999;
-  background:#0d1117;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:16px;
-  transition:opacity .4s ease;">
+  display:none!important;">
 <div style="width:44px;height:44px;border:3px solid rgba(255,255,255,.1);
     border-top-color:#f59e0b;border-radius:50%;animation:spin .8s linear infinite"></div>
 <span style="color:rgba(255,255,255,.5);font-size:13px;font-family:system-ui" id="loaderTxt">جارٍ التحميل…</span>
@@ -257,9 +253,9 @@ function toggleDetails() {
 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
     Facebook
   </a>
-<a href="/cdn-cgi/l/email-protection#e594848b91849784cb898c9380a58288848c89cb868a88">
+<a href="/cdn-cgi/l/email-protection#6312020d170211024d0f0a150623040e020a0f4d000c0e">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-<span class="__cf_email__" data-cfemail="7302121d071201125d1f1a051633141e121a1f5d101c1e">[email&#160;protected]</span>
+<span class="__cf_email__" data-cfemail="aadbcbc4decbd8cb84c6c3dccfeacdc7cbc3c684c9c5c7">[email&#160;protected]</span>
 </a>
 </div>
 <div class="footer"><span data-ar>بيانات مجتمعية · الفنيدق / سبتة · Beta v1</span><span data-es>Datos comunitarios · Fnideq / Ceuta · Beta v1</span></div>
@@ -273,7 +269,7 @@ function toggleDetails() {
 <div class="about-row"><span class="about-row-ico">👥</span><span><span data-ar>بيانات مجتمعية — يساهم فيها المستخدمون بتقاريرهم الحية.</span><span data-es>Datos comunitarios — los usuarios comparten reportes en tiempo real.</span></span></div>
 <div class="about-row"><span class="about-row-ico">🤖</span><span><span data-ar>يعتمد على تحليل الأنماط التاريخية + التقارير الحية لتوقع الازدحام.</span><span data-es>Analiza patrones históricos + reportes en vivo para predecir el tráfico.</span></span></div>
 <div class="about-row"><span class="about-row-ico">🔒</span><span><span data-ar>لا نجمع معلومات شخصية، فقط تقارير مجهولة.</span><span data-es>No recopilamos datos personales, solo reportes anónimos.</span></span></div>
-<div class="about-row"><span class="about-row-ico">📧</span><span><a href="/cdn-cgi/l/email-protection#d0a1b1bea4b1a2b1febcb9a6b590b7bdb1b9bcfeb3bfbd" style="color:var(--muted)"><span class="__cf_email__" data-cfemail="b9c8d8d7cdd8cbd897d5d0cfdcf9ded4d8d0d597dad6d4">[email&#160;protected]</span></a></span></div>
+<div class="about-row"><span class="about-row-ico">📧</span><span><a href="/cdn-cgi/l/email-protection#b2c3d3dcc6d3c0d39cdedbc4d7f2d5dfd3dbde9cd1dddf" style="color:var(--muted)"><span class="__cf_email__" data-cfemail="3647575842574457185a5f405376515b575f5a1855595b">[email&#160;protected]</span></a></span></div>
 <div class="about-divider"></div>
 <div style="text-align:center;font-size:10px;color:var(--muted);opacity:.5">Beta v1 · 2025</div>
 <button class="about-close" onclick="document.getElementById('aboutOverlay').classList.remove('open')"><span data-ar>إغلاق</span><span data-es>Cerrar</span></button>
@@ -980,11 +976,11 @@ const Cool = {
 
 function fbAddReport(lane, status, weight) {
   const w = weight || 1.0;
+  console.log('[Q] fbAddReport →', lane, status, 'w:', w);
   return addDoc(reportsCol, {
     status, lane,
-    timestamp: serverTimestamp(),
-    tsMs:      Date.now(),
-    w:         w
+    tsMs: Date.now(),
+    w:    w
   })
     .then(() => {
 
@@ -1580,26 +1576,23 @@ setInterval(updateDecayTimer, 1000);
       if (document.hidden) return;
       try {
         const [sE, sX] = await Promise.all([
-          getDoc(lanesRef.entry),
-          getDoc(lanesRef.exit)
+          getDoc(lanesRef.entry).catch(() => null),
+          getDoc(lanesRef.exit).catch(() => null)
         ]);
-        ['entry','exit'].forEach((lane, i) => {
+        ['entry', 'exit'].forEach((lane, i) => {
           const snap = i === 0 ? sE : sX;
-          if (!snap.exists()) return;
+          if (!snap || !snap.exists()) return;
           const d = snap.data();
-          if (d.savedAt && mem[lane].savedAt && d.savedAt <= mem[lane].savedAt) {
-            console.log('[Q] watch ['+lane+'] skipped (savedAt not newer)');
-            return;
-          }
+          if (d.savedAt && mem[lane].savedAt && d.savedAt <= mem[lane].savedAt) return;
           if (d.status === mem[lane].status && d.cars && mem[lane].cars &&
               Math.abs(d.cars - mem[lane].cars) < 2) {
             mem[lane].savedAt = d.savedAt;
             return;
           }
-          console.log('[Q] watch ['+lane+'] ← REMOTE', d.status, '| cars:', d.cars);
+          console.log('[Q] poll ['+lane+'] ←', d.status);
           render(lane, d);
         });
-      } catch(e) { console.warn('[Q] _loadLanes error:', e.message); }
+      } catch(e) { console.warn('[Q] _loadLanes:', e.message); }
     }
     _loadLanes();
     setInterval(_loadLanes, 30000);
@@ -1906,8 +1899,9 @@ function startListeners() {
       applyDocs(docs);
       hideLoader();
     } catch(e) {
-      console.warn('[Q] loadReports error:', e.message);
+      console.warn('[Q] loadReports:', e.message);
       setFbUI(false);
+      hideLoader();
     }
   }
 
@@ -2539,15 +2533,17 @@ setLang(lang);
 
 (async () => {
 
-  await TrafficState.boot();
-
+  // الإنترو يشتغل فوراً بدون انتظار Firebase
   if (!sessionStorage.getItem('qnt_intro_done')) {
     sessionStorage.setItem('qnt_intro_done', '1');
     runIntro();
   } else {
-    const el = $('intro');
+    const el = document.getElementById('intro');
     if (el) el.remove();
   }
+
+  await TrafficState.boot();
+
 })();
 
 if ('serviceWorker' in navigator) {
