@@ -1,0 +1,2563 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0d14">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Qantara">
+<meta name="theme-color" content="#0a0d14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Qantara · قنطرة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>:root{--bg:#0a0d14;--surface:#141926;--card:#1a2032;--card2:#1f2640;--border:rgba(255,255,255,.10);--border2:rgba(255,255,255,.12);--text:#eef0fa;--muted:rgba(238,240,250,.45);--faint:rgba(238,240,250,.08);--green:#00d46e;--orange:#ff8f00;--red:#ff3355;--green-bg:rgba(0,212,110,.10);--orange-bg:rgba(255,143,0,.10);--red-bg:rgba(255,51,85,.10);--si:var(--orange);--sb:var(--orange-bg)}*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}html,body{height:100%;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}body{font-family:system-ui,-apple-system,'Noto Naskh Arabic',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden;font-size:14px}#intro{position:fixed;inset:0;z-index:9999;background:#0a0d14;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .4s ease}#intro.out{opacity:0;pointer-events:none}#intro-line{width:160px;height:2px;border-radius:99px;background:linear-gradient(90deg,transparent,#1a5fff,#00d46e,transparent);margin-bottom:22px;animation:i-slidein .5s cubic-bezier(.32,.72,0,1) both}#intro-logo-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;animation:i-popin .45s .1s cubic-bezier(.32,.72,0,1) both}#intro-logo-img{width:80px;height:80px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 2px rgba(255,255,255,.08),0 0 24px rgba(26,95,255,.4);animation:i-glow 2.5s .6s ease infinite}#intro-logo-img img{width:100%;height:100%;object-fit:cover}#intro-name{font-size:26px;font-weight:900;letter-spacing:-.02em;background:linear-gradient(135deg,#fff 40%,rgba(255,255,255,.35));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}#intro-name-es{font-size:11px;font-weight:700;letter-spacing:.18em;color:rgba(255,255,255,.25);margin-top:-4px}#intro-tagline{display:flex;align-items:center;gap:7px;margin-top:3px}#intro-tagline span{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.1em;text-transform:uppercase}.i-sep{width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,.2)}#intro-line2{width:50px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);margin-top:20px;animation:i-popin .45s .25s cubic-bezier(.32,.72,0,1) both}#intro-cities{display:flex;align-items:center;gap:12px;margin-top:14px;animation:i-popin .45s .35s cubic-bezier(.32,.72,0,1) both}.i-city{display:flex;flex-direction:column;align-items:center;gap:2px}.i-city .i-ar{font-size:12px;color:rgba(255,255,255,.5)}.i-city .i-es{font-size:9px;color:rgba(255,255,255,.2);letter-spacing:.08em;text-transform:uppercase}.i-arrow{font-size:12px;color:rgba(255,255,255,.15);margin:0 2px;padding-bottom:6px}#intro-dots{display:flex;align-items:center;gap:7px;margin-top:28px;animation:i-popin .45s .45s cubic-bezier(.32,.72,0,1) both}#intro-dots span{width:6px;height:6px;border-radius:50%;background:rgba(26,95,255,.5);animation:i-bounce 1.2s ease infinite}#intro-dots span:nth-child(1){animation-delay:0s}#intro-dots span:nth-child(2){animation-delay:.2s}#intro-dots span:nth-child(3){animation-delay:.4s}@keyframes i-slidein{from{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}@keyframes i-popin{from{opacity:0;transform:scale(.88) translateY(6px)}to{opacity:1;transform:scale(1) translateY(0)}}@keyframes i-glow{0%,100%{box-shadow:0 0 0 2px rgba(255,255,255,.08),0 0 16px rgba(26,95,255,.3)}50%{box-shadow:0 0 0 2px rgba(255,255,255,.12),0 0 28px rgba(26,95,255,.6)}}@keyframes i-bounce{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.2);background:rgba(26,95,255,.9)}}#intro-status{display:none}#intro-bwrap{display:none}#repBtn{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:99px;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:700;color:rgba(255,255,255,.8);transition:background .2s}#repBtn:hover{background:rgba(255,255,255,.1)}#repPts{font-size:12px;font-weight:800;color:#ffd700}#repPopup{position:fixed;top:60px;right:12px;z-index:8000;background:#141926;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px;min-width:200px;box-shadow:0 8px 32px rgba(0,0,0,.5);display:none;animation:i-popin .2s cubic-bezier(.32,.72,0,1)}#repPopup.open{display:block}.rep-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px}.rep-row:last-child{border-bottom:none}.rep-key{color:rgba(255,255,255,.4)}.rep-val{font-weight:700;color:rgba(255,255,255,.85)}#repLevel{font-size:13px;font-weight:800;color:#ffd700;text-align:center;margin-bottom:10px}#decayTimer{display:none!important}.dt-row{display:flex;align-items:center;justify-content:space-between;gap:8px}.dt-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}.dt-lbl{font-size:11px;color:rgba(255,255,255,.5);flex:1}.dt-time{font-size:13px;font-weight:700;font-family:'Sora',monospace;color:rgba(255,255,255,.85);letter-spacing:.04em}.dt-next{font-size:10px;color:rgba(255,255,255,.3)}#app{display:flex;flex-direction:column;align-items:center;padding:10px 12px 32px}.shell{width:100%;max-width:420px;display:flex;flex-direction:column;gap:12px}.topbar{display:flex;align-items:center;justify-content:space-between}.live-pill{display:flex;align-items:center;gap:6px;background:var(--sb);border:1px solid var(--si);border-radius:99px;padding:5px 13px;font-size:12px;font-weight:700;color:var(--si);transition:all .4s;white-space:nowrap}.ldot{width:7px;height:7px;border-radius:50%;background:var(--si);animation:blink 2s ease infinite}@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}.hdr{display:flex;flex-direction:column;align-items:center;text-align:center;padding:4px 0 6px;gap:3px}.hdr-brand{font-size:9px;letter-spacing:.35em;text-transform:uppercase;color:var(--muted);opacity:.7;font-weight:600}.hdr-title{font-size:28px;font-weight:900;letter-spacing:-.04em;line-height:1;background:linear-gradient(135deg,#ffffff 30%,rgba(255,255,255,.55));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}.hdr-sub{font-size:11px;color:var(--muted);letter-spacing:.04em;opacity:.75}.fb-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;font-size:9px;font-weight:700;transition:all .3s;width:fit-content;margin-top:3px}.fb-badge.on{background:rgba(0,212,110,.12);color:var(--green);border:1px solid rgba(0,212,110,.25)}.fb-badge.off{background:rgba(255,143,0,.10);color:var(--orange);border:1px solid rgba(255,143,0,.2)}.fb-dot{width:5px;height:5px;border-radius:50%;background:currentColor}.map-wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(0,0,0,.3);box-shadow:0 12px 40px rgba(0,0,0,.5);height:430px}#leafletMap{width:100%;height:100%}.map-ui{position:absolute;inset:0;pointer-events:none;z-index:1000}.gps-chip{position:absolute;top:10px;left:10px;background:rgba(20,25,38,.92);border-radius:8px;padding:5px 9px;display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;font-family:'Sora',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.4);border:1px solid var(--border2)}.gps-dot{width:7px;height:7px;border-radius:50%;background:#666;flex-shrink:0}.gps-dot.on{background:#4285f4;animation:blink 2s ease infinite}.gm-btns{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px;pointer-events:all}.gm-btn{width:34px;height:34px;border-radius:9px;background:rgba(20,25,38,.92);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;pointer-events:all;transition:transform .1s;box-shadow:0 2px 8px rgba(0,0,0,.3)}.gm-btn:active{transform:scale(.93)}.map-leg{position:absolute;bottom:10px;left:10px;background:rgba(20,25,38,.92);border-radius:9px;padding:7px 10px;display:flex;flex-direction:column;gap:5px;box-shadow:0 2px 8px rgba(0,0,0,.3);border:1px solid var(--border2)}.leg-r{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600}.leg-l{width:22px;height:4px;border-radius:2px;flex-shrink:0;transition:background .4s}.road-chip{position:absolute;bottom:10px;right:10px;background:rgba(20,25,38,.85);border:1px solid var(--border2);border-radius:7px;padding:4px 8px;font-size:9px;font-weight:700;color:var(--muted);font-family:'Sora',sans-serif;pointer-events:none;transition:opacity .3s}.lf-tip{border:none!important;font-family:'Sora',sans-serif!important;font-size:10px!important;font-weight:700!important;border-radius:8px!important;white-space:nowrap!important;padding:4px 10px!important}.lf-tip::before{display:none!important}.border-tip{background:rgba(255,143,0,.92)!important;color:#fff!important}.entry-tip{background:rgba(0,212,110,.92)!important;color:#fff!important}.exit-tip{background:rgba(255,51,85,.92)!important;color:#fff!important}.you-tip{background:rgba(66,133,244,.92)!important;color:#fff!important}.leaflet-control-attribution{font-size:9px!important;opacity:.45!important;background:rgba(10,13,20,.7)!important}.leaflet-control-attribution a{color:var(--muted)!important}.you-marker{width:22px;height:22px;position:relative;display:flex;align-items:center;justify-content:center}.you-dot{width:12px;height:12px;border-radius:50%;background:#4285f4;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5);position:relative;z-index:2}.you-ring{position:absolute;width:22px;height:22px;border-radius:50%;border:2px solid rgba(66,133,244,.5);animation:you-pulse 2s ease infinite;top:0;left:0}@keyframes you-pulse{0%{transform:scale(.6);opacity:.8}100%{transform:scale(1.6);opacity:0}}.zones{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.zone{background:var(--card);border:1.5px solid var(--border);border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,.28);padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;opacity:.45;transform:scale(.95)}.zone::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0}.zone.zg::before{background:var(--green)}.zone.zo::before{background:var(--orange)}.zone.zr::before{background:var(--red)}.zone.on{opacity:1;transform:scale(1.04)}.zone.on.zg{border-color:var(--green);background:var(--green-bg);box-shadow:0 4px 20px rgba(0,212,110,.25)}.zone.on.zo{border-color:var(--orange);background:var(--orange-bg);box-shadow:0 4px 20px rgba(255,143,0,.25)}.zone.on.zr{border-color:var(--red);background:var(--red-bg);box-shadow:0 4px 20px rgba(255,51,85,.25)}.z-ico{font-size:20px;transition:transform .3s}.zone.on .z-ico{transform:scale(1.15)}.z-name{font-size:11px;font-weight:700;text-align:center}.z-wait{font-size:9px;color:var(--muted);text-align:center}.z-ico{font-size:18px}.z-name{font-size:11px;font-weight:700;text-align:center}.z-wait{font-size:9px;color:var(--muted);text-align:center}.lanes{display:flex;flex-direction:column;gap:6px}.lc{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:10px 13px;display:flex;flex-direction:row;align-items:center;gap:8px;transition:border-color .4s;box-shadow:0 3px 14px rgba(0,0,0,.3)}.lc-top{display:flex;align-items:center;gap:5px;flex-shrink:0}.lc-dir{font-size:10px;font-weight:700;color:var(--muted)}.lc-arr{font-size:12px}.lc-st{font-size:11px;font-weight:700;white-space:nowrap;padding:3px 10px;border-radius:99px;background:rgba(128,128,128,.15);border:1px solid currentColor}.lc-wt{font-size:11px;font-weight:600;color:#c8d0e0;white-space:nowrap}.mbar{display:none}.mfill{height:100%;border-radius:99px;transition:width .7s cubic-bezier(.4,0,.2,1),background .4s}.ai-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 15px;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.35)}.ai-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,196,255,.5),transparent)}.ai-hd{display:flex;align-items:center;gap:10px}.ai-ico{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#1a5fff,#00c4ff);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}.ai-ttl{font-size:12px;font-weight:700}.ai-sub{font-size:10px;color:var(--muted)}.ai-body{display:flex;flex-direction:column;gap:8px}.ai-txt{font-size:13px;font-weight:600;color:var(--text);line-height:1.6}.ai-60{font-size:11.5px;font-weight:500;color:var(--muted);opacity:0.88;display:block;margin-top:4px;border-top:1px solid var(--border);padding-top:5px}.ai-tags{display:flex;gap:5px;flex-wrap:wrap}.ai-tag{background:var(--faint);border:1px solid var(--border);border-radius:99px;padding:3px 10px;font-size:10px;color:var(--muted)}.ai-tag.hot{background:rgba(255,143,0,.18);border-color:rgba(255,143,0,.38);color:var(--orange);font-weight:700}.ai-ico{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#1a5fff,#00c4ff);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}.ai-ttl{font-size:12px;font-weight:700}.ai-sub{font-size:10px;color:var(--muted)}.ai-txt{font-size:12px;line-height:1.5}.ai-tags{display:flex;gap:5px;flex-wrap:wrap}.ai-60{font-size:11.5px;font-weight:500;color:var(--muted);opacity:0.88;display:block;margin-top:4px;border-top:1px solid var(--border);padding-top:5px}.ai-tag{background:var(--faint);border:1px solid var(--border);border-radius:99px;padding:3px 10px;font-size:10px;color:var(--muted)}.ai-tag.hot{background:rgba(255,51,85,.08);border-color:rgba(255,51,85,.2);color:#ff7090}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.details-panel .stats .sc{padding:8px 5px}.details-panel .stats .sc-val{font-size:14px}.details-panel .stats .sc-ico{font-size:14px}.details-toggle{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:12px;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);user-select:none;transition:background .2s}.details-toggle:active{background:var(--border2)}.dtl-arrow{font-size:16px;font-weight:400;transition:transform .3s;display:inline-block}.dtl-arrow.open{transform:rotate(90deg)}.details-panel{display:none;flex-direction:column;gap:8px}.details-panel.open{display:flex}.sc{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:11px 7px;display:flex;flex-direction:column;gap:3px;align-items:center}.sc-ico{font-size:16px}.sc-val{font-size:16px;font-weight:800;letter-spacing:-.02em}.sc-lbl{font-size:9px;color:var(--muted);text-align:center;font-weight:600}.tl{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 15px;box-shadow:0 4px 20px rgba(0,0,0,.35)}.tl-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.tl-ttl{font-size:12px;font-weight:700}.tl-sub{font-size:10px;color:var(--muted)}.tl-bars{display:flex;align-items:flex-end;gap:3px;height:40px}.tl-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}.tl-bar{width:100%;border-radius:3px 3px 2px 2px;min-height:2px}.tl-hr{font-size:8px;color:var(--muted)}.btn-cta{width:100%;padding:17px 24px;border-radius:16px;border:none;background:linear-gradient(135deg,#1a5fff,#0099ff);color:#fff;font-family:'Sora',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:opacity .2s,transform .12s;position:relative;overflow:hidden;letter-spacing:.01em;box-shadow:0 4px 24px rgba(26,95,255,.45)}.btn-cta::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.18),transparent);pointer-events:none}.btn-cta:active{transform:scale(.97);box-shadow:0 2px 12px rgba(26,95,255,.3)}.btn-cta:disabled{opacity:.6;cursor:not-allowed;box-shadow:none}.btn-sub{display:block;font-size:11px;opacity:.85;margin-top:2px;font-weight:600}@keyframes btn-pulse{0%,100%{box-shadow:0 4px 24px rgba(26,95,255,.45)}50%{box-shadow:0 4px 32px rgba(26,95,255,.75)}}.btn-cta:not(:disabled){animation:btn-pulse 2.5s ease infinite}.footer{font-size:10px;color:var(--muted);text-align:center;padding:4px 0}.btn-install{display:none;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:8px;padding:12px 16px;border-radius:14px;border:1px solid rgba(26,95,255,.3);background:rgba(26,95,255,.08);color:rgba(100,149,255,.9);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit}.btn-install.visible{display:flex}.btn-install:active{background:rgba(26,95,255,.18);transform:scale(.98)}.footer-social{display:flex;align-items:center;justify-content:center;gap:16px;padding:8px 0 4px;opacity:.45}.footer-social a{color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:5px;font-size:11px;transition:opacity .2s}.footer-social a:hover{opacity:.8}.footer-social svg{flex-shrink:0}.about-btn{display:flex;align-items:center;justify-content:center;gap:6px;margin:10px auto 0;padding:8px 18px;border-radius:99px;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.35);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s}.about-overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}.about-overlay.open{opacity:1;pointer-events:all}.about-sheet{width:100%;max-width:420px;background:#141926;border-radius:24px 24px 0 0;padding:24px 20px 36px;display:flex;flex-direction:column;gap:16px;transform:translateY(100%);transition:transform .35s cubic-bezier(.32,.72,0,1)}.about-overlay.open .about-sheet{transform:translateY(0)}.about-name{font-size:22px;font-weight:900;text-align:center;background:linear-gradient(135deg,#fff 30%,rgba(255,255,255,.5));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}.about-tagline{font-size:12px;color:var(--muted);text-align:center;line-height:1.6}.about-divider{height:1px;background:var(--border);margin:4px 0}.about-row{display:flex;align-items:flex-start;gap:12px;font-size:12px;color:var(--muted);line-height:1.6}.about-row-ico{font-size:18px;flex-shrink:0;margin-top:1px}.about-close{width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px;transition:background .2s}.about-close:active{background:var(--card2)}.about-handle{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);margin:0 auto -8px}.backdrop{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.72);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .3s}.backdrop.open{opacity:1;pointer-events:all}.sheet{position:fixed;bottom:0;left:0;right:0;background:#141926;border-radius:22px 22px 0 0;border-top:1px solid var(--border);padding:0 16px calc(28px + env(safe-area-inset-bottom));z-index:61;transform:translateY(100%);transition:transform .42s cubic-bezier(.16,1,.3,1);max-width:480px;margin:0 auto}.backdrop.open .sheet{transform:translateY(0)}.grip{width:36px;height:4px;border-radius:99px;background:var(--faint);margin:13px auto 20px}.sh-ttl{font-size:16px;font-weight:800;margin-bottom:3px}.sh-sub{font-size:12px;color:var(--muted);margin-bottom:16px}.sh-ltog{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}.sh-lt{background:var(--surface);border:2px solid var(--border);border-radius:11px;padding:10px 6px;font-family:'Sora',sans-serif;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s;text-align:center}.sh-lt.on{border-color:#1a5fff;color:#6699ff;background:rgba(26,95,255,.08)}.opts{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}.opt{display:flex;align-items:center;gap:11px;padding:13px;border:2px solid var(--border);border-radius:13px;background:var(--surface);cursor:pointer;transition:all .18s}.opt.sg{border-color:var(--green);background:var(--green-bg)}.opt.so{border-color:var(--orange);background:var(--orange-bg)}.opt.sr{border-color:var(--red);background:var(--red-bg)}.opt-ic{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--faint);flex-shrink:0}.opt-b{flex:1}.opt-n{font-size:13px;font-weight:700}.opt-d{font-size:12px;font-weight:700;color:#c8d0e0;margin-top:3px}.opt-r{width:20px;height:20px;border-radius:50%;border:2px solid var(--faint);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;transition:all .2s}.opt.sg .opt-r{background:var(--green);border-color:var(--green)}.opt.so .opt-r{background:var(--orange);border-color:var(--orange)}.opt.sr .opt-r{background:var(--red);border-color:var(--red)}.btn-cf{width:100%;padding:15px;border-radius:13px;border:none;background:linear-gradient(135deg,#1a5fff,#00aaff);color:#fff;font-family:'Sora',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s}.btn-cf:disabled{opacity:.4;cursor:not-allowed}.toast{position:fixed;top:calc(16px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-130%);background:#1a2236;border:1px solid var(--border2);color:var(--text);padding:10px 20px;border-radius:99px;font-size:13px;font-weight:600;white-space:nowrap;z-index:90;transition:transform .4s cubic-bezier(.16,1,.3,1);pointer-events:none;backdrop-filter:blur(12px)}.toast.show{transform:translateX(-50%) translateY(0)}#dbgBar{display:none!important;background:rgba(0,0,0,.85);border:1px solid rgba(255,200,0,.3);border-radius:12px;margin:8px 16px 0;padding:10px 14px}#dbgBar.show{display:block}.dbg-row{display:flex;gap:8px;margin-bottom:4px}.dbg-row:last-child{margin-bottom:0}.dbg-lane{flex:1;background:rgba(255,255,255,.04);border-radius:8px;padding:6px 8px}.dbg-lane h4{font-size:10px;color:rgba(255,200,0,.7);margin:0 0 4px;font-family:monospace}.dbg-kv{display:flex;justify-content:space-between;margin:2px 0}.dbg-k{color:rgba(255,255,255,.45);font-size:10px;font-family:monospace}.dbg-v{color:#ffe066;font-size:10px;font-weight:700;font-family:monospace}#dbgToggle{display:none!important;margin:6px auto 0;background:rgba(255,200,0,.1);border:1px solid rgba(255,200,0,.25);color:rgba(255,200,0,.7);font-size:10px;font-family:monospace;padding:3px 12px;border-radius:20px;cursor:pointer}.lc-rep{font-size:10px;color:var(--muted);white-space:nowrap;flex-shrink:0}.btn-confirm-quick{padding:5px 12px;border-radius:8px;border:1px solid rgba(0,212,110,.35);background:rgba(0,212,110,.08);color:#00d46e;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;flex-shrink:0;white-space:nowrap}.btn-confirm-quick:active{background:rgba(0,212,110,.2)}.btn-confirm-quick:disabled{opacity:.35;cursor:default}.lang-pick{position:relative;display:inline-block}.lang-btn{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}.lang-btn:active{background:var(--card2)}.lang-dropdown{display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--card2);border:1px solid var(--border);border-radius:10px;overflow:hidden;z-index:900;min-width:130px;box-shadow:0 8px 24px rgba(0,0,0,.4)}.lang-pick.open .lang-dropdown{display:block}.lang-opt{display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text);transition:background .12s}.lang-opt:hover{background:var(--surface)}.lang-opt.on{color:var(--accent)}[data-ar]{display:none}[data-es]{display:none}body:not(.es) [data-ar]{display:inline!important}body.es [data-es]{display:inline!important}.lc-wait{font-size:11px;color:var(--muted);margin-top:3px;min-height:14px}</style>
+</head>
+<body>
+<!-- Loading overlay — يختفي بعد أول snapshot -->
+<div id="appLoader" style="
+  position:fixed;inset:0;z-index:9999;
+  background:#0d1117;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:16px;
+  transition:opacity .4s ease;">
+<div style="width:44px;height:44px;border:3px solid rgba(255,255,255,.1);
+    border-top-color:#f59e0b;border-radius:50%;animation:spin .8s linear infinite"></div>
+<span style="color:rgba(255,255,255,.5);font-size:13px;font-family:system-ui" id="loaderTxt">جارٍ التحميل…</span>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}
+  /* ══ بطاقة التوقع القادم ══ */
+  .pred-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;position:relative;overflow:hidden;margin-bottom:0}
+  .pred-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(139,92,246,.5),transparent)}
+  .pred-hd{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .pred-ico{font-size:20px;line-height:1}
+  .pred-ttl{font-size:12px;font-weight:800;color:var(--fg);letter-spacing:.04em;text-transform:uppercase}
+  .pred-sub{font-size:10px;color:var(--muted);margin-top:1px}
+  .pred-now{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.04);margin-bottom:8px}
+  .pred-now-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .pred-now-lbl{font-size:12px;font-weight:700;color:var(--muted)}
+  .pred-now-val{font-size:14px;font-weight:800;margin-right:auto}
+  .pred-conf{font-size:10px;color:var(--muted);margin-right:4px}
+  .pred-rows{display:flex;flex-direction:column;gap:5px}
+  .pred-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,.025)}
+  .pred-row-ico{font-size:13px;width:16px;text-align:center;flex-shrink:0}
+  .pred-row-lbl{font-size:11px;color:var(--muted);flex:1}
+  .pred-row-val{font-size:12px;font-weight:700}
+  .pred-row-bar{width:48px;height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;flex-shrink:0}
+  .pred-row-fill{height:100%;border-radius:2px;transition:width .4s}
+  .pred-src{font-size:9px;color:var(--muted);text-align:center;margin-top:8px;opacity:.6}
+
+  .btn-share{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:8px;padding:12px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:rgba(238,240,250,.5);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit;letter-spacing:.02em}
+  .btn-share:active{background:rgba(255,255,255,.08);color:rgba(238,240,250,.8);transform:scale(.98)}
+  .btn-share svg{flex-shrink:0;opacity:.6}
+</style>
+<div id="intro">
+<div id="intro-line"></div>
+<div id="intro-logo-wrap">
+<div id="intro-logo-img">
+<img src="data:image/png;base64,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" alt="Qantara">
+</div>
+<div id="intro-name">قنطرة</div>
+<div id="intro-name-es">QANTARA</div>
+<div id="intro-tagline">
+<span>المعبر الحدودي</span>
+<div class="i-sep"></div>
+<span>Paso de Ceuta</span>
+</div>
+</div>
+<div id="intro-line2"></div>
+<div id="intro-cities">
+<div class="i-city">
+<div class="i-ar">🇲🇦 الفنيدق</div>
+<div class="i-es">Fnideq</div>
+</div>
+<div class="i-arrow">⟷</div>
+<div class="i-city">
+<div class="i-ar">سبتة 🇪🇸</div>
+<div class="i-es">Ceuta</div>
+</div>
+</div>
+<div id="intro-dots">
+<span></span><span></span><span></span>
+</div>
+<div id="intro-status"></div>
+<div id="intro-bwrap"><div id="intro-bfill"></div></div>
+</div>
+<div id="app"><div class="shell">
+<div class="topbar">
+<div class="lang-pick" id="langPick">
+<button class="lang-btn" onclick="toggleLangPick()">
+<span id="langFlag">🇲🇦</span>
+<span id="langCode">AR</span>
+<span style="font-size:9px;opacity:.6">▼</span>
+</button>
+<div class="lang-dropdown" id="langDropdown">
+<div class="lang-opt on" id="lopt-ar" onclick="pickLang('ar')">🇲🇦 العربية</div>
+<div class="lang-opt"    id="lopt-es" onclick="pickLang('es')">🇪🇸 Español</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px">
+<button id="repBtn" onclick="toggleRepPopup()">⭐ <span id="repPts">0</span></button>
+<div class="live-pill" id="livePill"><div class="ldot"></div><span id="pillTxt">—</span></div>
+</div>
+</div>
+<div id="repPopup">
+<div id="repLevel">مبتدئ 🌱</div>
+<div class="rep-row"><span class="rep-key">⭐ النقاط</span><span class="rep-val" id="rpPts">0</span></div>
+<div class="rep-row"><span class="rep-key">📊 التقارير</span><span class="rep-val" id="rpCnt">0</span></div>
+<div class="rep-row"><span class="rep-key">🏅 المستوى</span><span class="rep-val" id="rpLvl">مبتدئ</span></div>
+</div>
+<div class="hdr">
+<div class="hdr-brand">Qantara · قنطرة</div>
+<div class="hdr-sub"><span data-ar>الفنيدق ⟷ سبتة</span><span data-es>Fnideq ⟷ Ceuta</span></div>
+<div class="fb-badge off" id="fbBadge"><div class="fb-dot"></div><span id="fbTxt">Firebase…</span></div>
+</div>
+<div class="map-wrap" id="mapWrap">
+<div id="leafletMap"></div>
+<div class="map-ui">
+<div class="gps-chip"><div class="gps-dot" id="gpsDot"></div><span id="gpsTxt"><span data-ar>GPS…</span><span data-es>GPS…</span></span></div>
+<div class="gm-btns"><button class="gm-btn" onclick="locateMe()">📍</button></div>
+<div class="map-leg">
+<div class="leg-r"><div class="leg-l" id="legEntry" style="background:#00d46e"></div><span data-ar>دخول سبتة</span><span data-es>Entrada</span></div>
+<div class="leg-r"><div class="leg-l" id="legExit"  style="background:#ff3355"></div><span data-ar>خروج الفنيدق</span><span data-es>Salida</span></div>
+</div>
+<div class="road-chip" id="roadChip">OSM</div>
+</div>
+</div>
+<div id="decayTimer" class="hidden">
+<div class="dt-row" id="dtRowEntry">
+<div class="dt-dot" id="dtDotE"></div>
+<span class="dt-lbl" id="dtLblE"></span>
+<span class="dt-time" id="dtTimeE"></span>
+<span class="dt-next" id="dtNextE"></span>
+</div>
+<div class="dt-row" id="dtRowExit">
+<div class="dt-dot" id="dtDotX"></div>
+<span class="dt-lbl" id="dtLblX"></span>
+<span class="dt-time" id="dtTimeX"></span>
+<span class="dt-next" id="dtNextX"></span>
+</div>
+</div>
+<!-- ══ بطاقة توقع الازدحام (مدمجة) ══ -->
+<div class="pred-card" id="predCard">
+<div class="pred-hd">
+<div class="pred-ico">📊</div>
+<div>
+<div class="pred-ttl"><span data-ar>توقع الازدحام</span><span data-es>Previsión de tráfico</span></div>
+<div class="pred-sub"><span data-ar>تحليل + أنماط + تقارير حية</span><span data-es>Análisis + patrones + reportes</span></div>
+</div>
+</div>
+<div class="pred-now" id="predNow">
+<div class="pred-now-dot" id="predNowDot" style="background:#00d46e"></div>
+<span class="pred-now-lbl"><span data-ar>الآن:</span><span data-es>Ahora:</span></span>
+<span class="pred-now-val" id="predNowVal">—</span>
+<span class="pred-conf" id="predNowConf"></span>
+</div>
+<div class="ai-txt" id="aiTxt" style="font-size:11px;color:var(--muted);line-height:1.5"></div>
+<div class="ai-tags" id="aiTags" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+<div class="pred-rows">
+<div class="pred-row"><span class="pred-row-ico">⏱️</span><span class="pred-row-lbl"><span data-ar>30 دقيقة</span><span data-es>30 min</span></span><span class="pred-row-val" id="pred30Val">—</span><div class="pred-row-bar"><div class="pred-row-fill" id="pred30Bar" style="width:0%;background:#00d46e"></div></div></div>
+<div class="pred-row"><span class="pred-row-ico">🕐</span><span class="pred-row-lbl"><span data-ar>ساعة</span><span data-es>1h</span></span><span class="pred-row-val" id="pred60Val">—</span><div class="pred-row-bar"><div class="pred-row-fill" id="pred60Bar" style="width:0%;background:#00d46e"></div></div></div>
+<div class="pred-row"><span class="pred-row-ico">🌅</span><span class="pred-row-lbl"><span data-ar>ساعتين</span><span data-es>2h</span></span><span class="pred-row-val" id="pred120Val">—</span><div class="pred-row-bar"><div class="pred-row-fill" id="pred120Bar" style="width:0%;background:#00d46e"></div></div></div>
+</div>
+<div class="pred-src" id="predSrc"></div>
+</div>
+<div class="ai-card" style="display:none" aria-hidden="true"></div>
+<div class="lanes">
+<div class="lc" id="lc-e">
+<div class="lc-top"><span class="lc-arr">⬆️</span><div class="lc-dir"><span data-ar>دخول سبتة</span><span data-es>Entrada</span></div></div>
+<div style="flex:1;min-width:0">
+<div style="display:flex;align-items:center;gap:6px">
+<span class="lc-st" id="eSt">—</span>
+<span class="lc-wt" id="eWt">—</span>
+</div>
+<span id="eRep" class="lc-rep"></span>
+</div>
+<div class="mbar"><div class="mfill" id="eBar"></div></div>
+<button class="btn-confirm-quick" id="qcE" onclick="quickConfirm('entry')"><span data-ar>تأكيد</span><span data-es>OK</span></button>
+</div>
+<div class="lc" id="lc-x">
+<div class="lc-top"><span class="lc-arr">⬇️</span><div class="lc-dir"><span data-ar>خروج الفنيدق</span><span data-es>Salida</span></div></div>
+<div style="flex:1;min-width:0">
+<div style="display:flex;align-items:center;gap:6px">
+<span class="lc-st" id="xSt">—</span>
+<span class="lc-wt" id="xWt">—</span>
+</div>
+<span id="xRep" class="lc-rep"></span>
+</div>
+<div class="mbar"><div class="mfill" id="xBar"></div></div>
+<button class="btn-confirm-quick" id="qcX" onclick="quickConfirm('exit')"><span data-ar>تأكيد</span><span data-es>OK</span></button>
+</div>
+</div>
+<div class="zones">
+<div class="zone zg"    id="z-green"  onclick="setZone('green')"><div class="z-ico">🟢</div><div class="z-name"><span data-ar>عادي</span><span data-es>Fluido</span></div><div class="z-wait"><span data-ar>30–60 د</span><span data-es>30–60 min</span></div></div>
+<div class="zone zo on" id="z-orange" onclick="setZone('orange')"><div class="z-ico">🟠</div><div class="z-name"><span data-ar>متوسط</span><span data-es>Moderado</span></div><div class="z-wait"><span data-ar>1–2 ساعة</span><span data-es>1–2 h</span></div></div>
+<div class="zone zr"    id="z-red"    onclick="setZone('red')"><div class="z-ico">🔴</div><div class="z-name"><span data-ar>ازدحام شديد</span><span data-es>Atasco</span></div><div class="z-wait"><span data-ar>2–4 ساعة</span><span data-es>2–4 h</span></div></div>
+</div>
+<div class="details-toggle" onclick="toggleDetails()">
+<span data-ar>📊 تفاصيل الإحصائيات</span><span data-es>📊 Detalles</span>
+<span class="dtl-arrow" id="dtlArrow">›</span>
+</div>
+<script>
+function toggleDetails() {
+  var panel = document.getElementById('detailsPanel');
+  var arrow = document.getElementById('dtlArrow');
+  var open  = panel.classList.toggle('open');
+  arrow.classList.toggle('open', open);
+}
+</script>
+<div class="details-panel" id="detailsPanel">
+<div class="stats">
+<div class="sc"><div class="sc-ico">📊</div><div class="sc-val" id="stRep">—</div><div class="sc-lbl"><span data-ar>تقرير/2س</span><span data-es>inf./2h</span></div></div>
+<div class="sc"><div class="sc-ico">🎯</div><div class="sc-val" id="stRel">—%</div><div class="sc-lbl"><span data-ar>موثوقية</span><span data-es>Fiabilidad</span></div></div>
+<div class="sc"><div class="sc-ico">🕐</div><div class="sc-val" id="stTime">—</div><div class="sc-lbl"><span data-ar>آخر تحديث</span><span data-es>Última act.</span></div></div>
+</div>
+<div class="tl">
+<div class="tl-hd"><div class="tl-ttl"><span data-ar>📈 نمط الازدحام اليومي</span><span data-es>📈 Patrón diario</span></div><div class="tl-sub"><span data-ar>تقدير · دخول</span><span data-es>Estimación · Entrada</span></div></div>
+<div class="tl-bars" id="tlBars"></div>
+</div>
+</div>
+<!-- ── DEBUG BAR — للاختبار فقط ── -->
+<div id="dbgBar">
+<div class="dbg-row">
+<div class="dbg-lane">
+<h4>⬆️ Entry (دخول)</h4>
+<div class="dbg-kv"><span class="dbg-k">Cars</span><span class="dbg-v" id="dbgECars">—</span></div>
+<div class="dbg-kv"><span class="dbg-k">Density</span><span class="dbg-v" id="dbgEDens">—</span></div>
+<div class="dbg-kv"><span class="dbg-k">Wait</span><span class="dbg-v" id="dbgEWait">—</span></div>
+<div class="dbg-kv"><span class="dbg-k">Status</span><span class="dbg-v" id="dbgESt">—</span></div>
+<div class="dbg-kv"><span class="dbg-k">Buf</span><span class="dbg-v" id="dbgEBuf">—</span></div>
+</div>
+<div class="dbg-lane">
+<h4>⬇️ Exit (خروج)</h4>
+<div class="dbg-kv"><span class="dbg-k">Cars</span><span class="dbg-v" id="dbgXCars">—</span></div>
+<div class="dbg-kv"><span class="dbg-k">Density</span><span class="dbg-v" id="dbgXDens">—</span></div>
+<div class="dbg-kv"><span class="dbg-k">Wait</span><span class="dbg-v" id="dbgXWait">—</span></div>
+<div class="dbg-kv"><span class="dbg-k">Status</span><span class="dbg-v" id="dbgXSt">—</span></div>
+<div class="dbg-kv"><span class="dbg-k">Buf</span><span class="dbg-v" id="dbgXBuf">—</span></div>
+</div>
+</div>
+</div>
+<button id="dbgToggle" onclick="toggleDebug()">🔬 DEBUG</button>
+<button class="btn-cta" id="btnCta" onclick="openSheet()">
+<span data-ar>📍 تحديث الحالة</span><span data-es>📍 Actualizar estado</span>
+</button>
+<button class="btn-share" onclick="shareStatus()">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+<span data-ar>شارك حالة المعبر مع أصدقائك</span><span data-es>Comparte el estado del paso</span>
+</button>
+<button class="btn-install" id="btnInstall" onclick="installApp()">
+  📲 <span data-ar>تثبيت التطبيق</span><span data-es>Instalar app</span>
+</button>
+<div class="footer-social">
+<a href="https://www.facebook.com/share/1DfKfRLTN5/" target="_blank" rel="noopener">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+    Facebook
+  </a>
+<a href="/cdn-cgi/l/email-protection#e594848b91849784cb898c9380a58288848c89cb868a88">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+<span class="__cf_email__" data-cfemail="7302121d071201125d1f1a051633141e121a1f5d101c1e">[email&#160;protected]</span>
+</a>
+</div>
+<div class="footer"><span data-ar>بيانات مجتمعية · الفنيدق / سبتة · Beta v1</span><span data-es>Datos comunitarios · Fnideq / Ceuta · Beta v1</span></div>
+<button class="about-btn" onclick="document.getElementById('aboutOverlay').classList.add('open')"><span data-ar>ℹ️ عن التطبيق</span><span data-es>ℹ️ Sobre la app</span></button>
+<div class="about-overlay" id="aboutOverlay" onclick="if(event.target===this)this.classList.remove('open')">
+<div class="about-sheet">
+<div class="about-handle"></div>
+<div class="about-name">Qantara · قنطرة</div>
+<div class="about-tagline"><span data-ar>نظام مراقبة ازدحام معبر باب سبتة في الوقت الفعلي</span><span data-es>Sistema de monitoreo de tráfico en tiempo real</span></div>
+<div class="about-divider"></div>
+<div class="about-row"><span class="about-row-ico">👥</span><span><span data-ar>بيانات مجتمعية — يساهم فيها المستخدمون بتقاريرهم الحية.</span><span data-es>Datos comunitarios — los usuarios comparten reportes en tiempo real.</span></span></div>
+<div class="about-row"><span class="about-row-ico">🤖</span><span><span data-ar>يعتمد على تحليل الأنماط التاريخية + التقارير الحية لتوقع الازدحام.</span><span data-es>Analiza patrones históricos + reportes en vivo para predecir el tráfico.</span></span></div>
+<div class="about-row"><span class="about-row-ico">🔒</span><span><span data-ar>لا نجمع معلومات شخصية، فقط تقارير مجهولة.</span><span data-es>No recopilamos datos personales, solo reportes anónimos.</span></span></div>
+<div class="about-row"><span class="about-row-ico">📧</span><span><a href="/cdn-cgi/l/email-protection#d0a1b1bea4b1a2b1febcb9a6b590b7bdb1b9bcfeb3bfbd" style="color:var(--muted)"><span class="__cf_email__" data-cfemail="b9c8d8d7cdd8cbd897d5d0cfdcf9ded4d8d0d597dad6d4">[email&#160;protected]</span></a></span></div>
+<div class="about-divider"></div>
+<div style="text-align:center;font-size:10px;color:var(--muted);opacity:.5">Beta v1 · 2025</div>
+<button class="about-close" onclick="document.getElementById('aboutOverlay').classList.remove('open')"><span data-ar>إغلاق</span><span data-es>Cerrar</span></button>
+</div>
+</div>
+</div></div>
+<div class="backdrop" id="backdrop" onclick="onBD(event)">
+<div class="sheet">
+<div class="grip"></div>
+<div class="sh-ttl"><span data-ar>تحديث حالة المعبر</span><span data-es>Actualizar paso</span></div>
+<div class="sh-sub"><span data-ar>أي اتجاه تريد الإبلاغ عنه؟</span><span data-es>¿Qué dirección reportas?</span></div>
+<div class="sh-ltog">
+<button class="sh-lt on" id="lt-e" onclick="pickLane('entry')"><span data-ar>⬆️ دخول سبتة</span><span data-es>⬆️ Entrada</span></button>
+<button class="sh-lt"    id="lt-x" onclick="pickLane('exit')"><span data-ar>⬇️ خروج الفنيدق</span><span data-es>⬇️ Salida</span></button>
+</div>
+<div class="opts">
+<div class="opt" id="opt-g" onclick="pickSt('green')"><div class="opt-ic">🟢</div><div class="opt-b"><div class="opt-n"><span data-ar>حركة عادية</span><span data-es>Fluido</span></div><div class="opt-d"><span data-ar>⏱ 30 – 60 دقيقة</span><span data-es>⏱ 30 – 60 min</span></div></div><div class="opt-r" id="r-g"></div></div>
+<div class="opt" id="opt-o" onclick="pickSt('orange')"><div class="opt-ic">🟠</div><div class="opt-b"><div class="opt-n"><span data-ar>ازدحام متوسط</span><span data-es>Moderado</span></div><div class="opt-d"><span data-ar>⏱ 1 – 2 ساعة</span><span data-es>⏱ 1 – 2 horas</span></div></div><div class="opt-r" id="r-o"></div></div>
+<div class="opt" id="opt-r" onclick="pickSt('red')"><div class="opt-ic">🔴</div><div class="opt-b"><div class="opt-n"><span data-ar>ازدحام شديد</span><span data-es>Atasco severo</span></div><div class="opt-d"><span data-ar>⏱ 2 – 4 ساعات</span><span data-es>⏱ 2 – 4 horas</span></div></div><div class="opt-r" id="r-r"></div></div>
+</div>
+<button class="btn-cf" id="btnCf" disabled onclick="submit()"><span data-ar>إرسال التقرير</span><span data-es>Enviar informe</span></button>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getFirestore, collection, addDoc, getDocs, onSnapshot, serverTimestamp,
+         doc, setDoc, getDoc, onSnapshot as onSnap }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+const _app = initializeApp({
+  apiKey:'AIzaSyCxVDBRV20xCo8sYmlnKt67ggh8HY3KxF8',
+  authDomain:'qantara-live.firebaseapp.com',
+  projectId:'qantara-live',
+  storageBucket:'qantara-live.firebasestorage.app',
+  messagingSenderId:'219692468615',
+  appId:'1:219692468615:web:4598dd00cb99afa38a6b22'
+});
+const _db        = getFirestore(_app);
+const reportsCol = collection(_db, 'reports');
+const historyCol  = collection(_db, 'lane_reports_history');
+const lanesRef   = {
+  entry: doc(_db, 'lanes_state', 'entry'),
+  exit:  doc(_db, 'lanes_state', 'exit')
+};
+const $ = id => document.getElementById(id);
+
+const COOL_KEY        = 'qnt_v11_cool';
+const COOLDOWN        = 60 * 1000;
+const WIN_MS          = 15 * 60 * 1000;
+const USER_LOCK_MS     = 10 * 60 * 1000;
+const MIN_HOLD_MS = { red: 120*60*1000, orange: 60*60*1000, green: 0 };
+const OVERRIDE_COUNT = 3; 
+const RECENT_MS       = 20 * 60 * 1000;
+const TEST_MODE       = false;
+const DECAY_HALF_LIFE = Infinity;
+
+const TrustEngine = (() => {
+  const LS_KEY    = 'qnt_trust_v1';
+  const MAX_REPS  = 20;           
+  const FLIP_WIN  = 5 * 60 * 1000; 
+
+  let _memReps  = [];
+  let _memScore = 1.0;
+
+  function load() {
+    return { reps: _memReps, score: _memScore };
+  }
+
+  function save(data) {
+    _memReps  = data.reps;
+    _memScore = data.score;
+
+    try { localStorage.setItem(LS_KEY, JSON.stringify({ score: data.score })); } catch {}
+  }
+
+  function calcScore(reps) {
+    if (reps.length < 2) return 1.0;
+
+    const last5  = reps.slice(0, 5);
+    let flips    = 0;
+    const STATUS_VAL = { green: 0, orange: 1, red: 2 };
+    for (let i = 1; i < last5.length; i++) {
+      if (Math.abs(STATUS_VAL[last5[i-1].status] - STATUS_VAL[last5[i].status]) === 2)
+        flips++; 
+    }
+
+    const consistent = last5.filter((r, i) =>
+      i === 0 || r.status === last5[i-1].status
+    ).length;
+
+    let score = 1.0 + (consistent - 1) * 0.075 - flips * 0.15;
+    return Math.max(0.7, Math.min(1.3, Math.round(score * 100) / 100));
+  }
+
+  function isFlapping(reps, newStatus) {
+    if (reps.length < 2) return false;
+    const now   = Date.now();
+    const r0    = reps[0]; 
+    const r1    = reps[1]; 
+    const STATUS_VAL = { green: 0, orange: 1, red: 2 };
+
+    if ((now - r1.ts) > FLIP_WIN) return false;
+
+    const v0 = STATUS_VAL[r0.status];
+    const v1 = STATUS_VAL[r1.status];
+    const vN = STATUS_VAL[newStatus];
+    const isExtremeFlip = Math.abs(v0 - v1) === 2 && vN === v1;
+    return isExtremeFlip;
+  }
+
+  function record(status) {
+    const data    = load();
+    const flapping = isFlapping(data.reps, status);
+
+    if (flapping) {
+
+      data.score = Math.max(0.7, data.score - 0.1);
+      save(data);
+      console.log('[Q] Trust: flapping detected, weight reduced to', data.score);
+      return { weight: 0.5, ignored: true }; 
+    }
+
+    data.reps.unshift({ status, ts: Date.now() });
+    if (data.reps.length > MAX_REPS) data.reps.pop();
+
+    data.score = calcScore(data.reps);
+    save(data);
+
+    console.log('[Q] Trust: score=', data.score, 'reps=', data.reps.length);
+    return { weight: data.score, ignored: false };
+  }
+
+  function getWeight() {
+    return load().score;
+  }
+
+  function getStats() {
+    const d = load();
+    return { score: d.score, reps: d.reps.length };
+  }
+
+  return { record, getWeight, getStats, isFlapping: (s) => isFlapping(load().reps, s) };
+})();
+const HOURLY    = [0,0,0,0,0,0,1,2,2,1,1,2,2,1,1,1,2,2,2,1,1,0,0,0];
+
+const Predictor = (() => {
+
+  const hist = { entry: [], exit: [] };
+  const MAX_HIST = 12;
+
+  const lastRealChangeTs = { entry: 0, exit: 0 };
+  let   prevDocsCount    = { entry: -1, exit: -1 };
+
+  const lastNotif = {
+    entry: { key: null, ts: 0 },
+    exit:  { key: null, ts: 0 }
+  };
+  const NOTIF_COOLDOWN = 8 * 60 * 1000;
+
+  const PEAK_HOURS = {
+    entry: [[7,10],[11,14],[16,20]],
+    exit:  [[8,11],[12,15],[17,21]]
+  };
+
+  function isPeak(lane, h) {
+    return PEAK_HOURS[lane].some(([a,b]) => h >= a && h < b);
+  }
+
+  const STATUS_VAL = { green: 0, orange: 1, red: 2 };
+  const VAL_STATUS = ['green','orange','red'];
+
+  function record(lane, status, docsCount) {
+    const prev    = hist[lane][0];
+    const changed = !prev || prev.status !== status;
+    const countChanged = docsCount !== undefined && docsCount !== prevDocsCount[lane];
+
+    if (changed || countChanged) {
+      lastRealChangeTs[lane] = Date.now();
+      if (docsCount !== undefined) prevDocsCount[lane] = docsCount;
+    }
+
+    if (changed) {
+      hist[lane].unshift({ status, val: STATUS_VAL[status], ts: Date.now() });
+      if (hist[lane].length > MAX_HIST) hist[lane].pop();
+    }
+  }
+
+  function predict(lane, density) {
+
+    if (!RouteCache.fetched) return null;
+
+    const h   = new Date().getHours();
+    const h20 = (h + 1) % 24;
+    const h40 = (h + 2) % 24;
+
+    const nowPattern  = HOURLY[h];
+    const soonPattern = HOURLY[h20];
+
+    const recent = hist[lane].slice(0, 4);
+    let trend = 0;
+    if (recent.length >= 2) {
+      const avg_new = recent.slice(0, 2).reduce((s,r) => s + r.val, 0) / 2;
+      const avg_old = recent.slice(2, 4).length
+        ? recent.slice(2, 4).reduce((s,r) => s + r.val, 0) / recent.slice(2,4).length
+        : avg_new;
+      trend = avg_new - avg_old;
+    }
+
+    const enteringPeak = !isPeak(lane, h) && isPeak(lane, h20);
+    const leavingPeak  =  isPeak(lane, h) && !isPeak(lane, h40);
+
+    const currentVal = recent.length ? recent[0].val : nowPattern;
+
+    const d         = density !== undefined ? density : 0.5;
+    const wHourly   = 0.6 * (1 - d * 0.5);  
+    const wTrend    = 0.5 * (1 + d * 0.6);  
+
+    const userTrust = (typeof TrustEngine !== 'undefined') ? TrustEngine.getWeight() : 1.0;
+
+    let predicted = currentVal
+      + (soonPattern - nowPattern) * wHourly
+      + trend * wTrend * userTrust
+      + (enteringPeak ?  0.7 : 0)
+      + (leavingPeak  ? -0.5 : 0);
+
+    predicted = Math.max(0, Math.min(2, Math.round(predicted)));
+
+    return {
+      status:       VAL_STATUS[predicted],
+      val:          predicted,
+      trend:        trend > 0.2 ? 'up' : trend < -0.2 ? 'down' : 'stable',
+      enteringPeak,
+      leavingPeak,
+      horizon:      20,
+      wHourly:      Math.round(wHourly*100)/100,
+      wTrend:       Math.round(wTrend*100)/100
+    };
+  }
+
+  function predict60(lane, density) {
+    if (!RouteCache.fetched) return null;
+
+    const h   = new Date().getHours();
+    const h60 = (h + 1) % 24;   
+    const h80 = (h + 2) % 24;   
+
+    const nowPattern = HOURLY[h];
+    const farPattern = HOURLY[h60];
+
+    const recent = hist[lane].slice(0, 6);
+    let trend = 0;
+    if (recent.length >= 2) {
+      const half = Math.ceil(recent.length / 2);
+      const avg_new = recent.slice(0, half).reduce((s,r) => s+r.val, 0) / half;
+      const avg_old = recent.slice(half).reduce((s,r) => s+r.val, 0) / (recent.length-half);
+      trend = avg_new - avg_old;
+    }
+
+    const enteringPeak60 = !isPeak(lane, h60) && isPeak(lane, h80);
+    const leavingPeak60  =  isPeak(lane, h60) && !isPeak(lane, h80);
+    const inPeak60       =  isPeak(lane, h60);
+
+    const currentVal = recent.length ? recent[0].val : nowPattern;
+    const d = density !== undefined ? density : 0.5;
+
+    const wH60 = 0.75 * (1 - d * 0.35);
+    const wT60 = 0.35 * (1 + d * 0.4);
+    const userTrust = (typeof TrustEngine !== 'undefined') ? TrustEngine.getWeight() : 1.0;
+
+    let predicted60 = currentVal
+      + (farPattern - nowPattern) * wH60
+      + trend * wT60 * userTrust
+      + (enteringPeak60 ?  0.8 : 0)
+      + (leavingPeak60  ? -0.6 : 0)
+      + (inPeak60       ?  0.3 : 0);
+
+    const lastRepTs  = lastRealChangeTs[lane] || (recent.length ? recent[0].ts : 0);
+    const ageMs      = lastRepTs ? (Date.now() - lastRepTs) : Infinity;
+    const ageMin     = ageMs / 60000;
+    let   decayFactor;
+
+    const DECAY_START = 10;   
+    const DECAY_END   = 40;   
+    if      (ageMin < DECAY_START) decayFactor = 1.0;
+    else if (ageMin > DECAY_END)   decayFactor = 0.0;
+    else {
+      const t = (ageMin - DECAY_START) / (DECAY_END - DECAY_START); 
+      decayFactor = 1 - (3*t*t - 2*t*t*t);   
+    }
+
+    const blended60 = predicted60 * decayFactor + farPattern * (1 - decayFactor);
+    predicted60 = Math.max(0, Math.min(2, Math.round(blended60)));
+
+    const consistency = recent.length >= 3
+      ? 1 - (recent.slice(0,3).reduce((s,r,i,a) =>
+          s + (i>0 ? Math.abs(r.val - a[i-1].val) : 0), 0) / (2 * recent.length))
+      : 0.5;
+
+    const rawConf       = (d * 0.45 + consistency * 0.40 + Math.min(recent.length/6, 1) * 0.15) * 0.85;
+    const smoothDensity = 1 / (1 + Math.exp(-6 * (d - 0.5)));   
+    const decayConf     = 0.7 + 0.3 * decayFactor;              
+    const finalConf     = rawConf * (0.85 + 0.3 * smoothDensity) * decayConf;
+    const confidence    = Math.round(Math.max(30, Math.min(82, finalConf * 100)));
+
+    return {
+      status:     VAL_STATUS[predicted60],
+      val:        predicted60,
+      confidence,
+      inPeak60,
+      horizon:    60
+    };
+  }
+
+  function notify(lane, pred, currentStatus) {
+
+    if (!gpsPos) return;
+    if (!inBounds(gpsPos.latitude, gpsPos.longitude)) return;
+
+    if (!pred) return;
+
+    const now = Date.now();
+    const key = lane + ':' + pred.status + ':' + pred.trend;
+    const ln  = lastNotif[lane];
+
+    if (ln.key === key && (now - ln.ts) < NOTIF_COOLDOWN) return;
+
+    const isAR = (typeof lang !== 'undefined' ? lang : 'ar') === 'ar';
+    const lbl  = isAR
+      ? (lane==='entry' ? 'الدخول' : 'الخروج')
+      : (lane==='entry' ? 'Entrada' : 'Salida');
+
+    let msg = null;
+
+    if (pred.trend === 'up' && pred.val > STATUS_VAL[currentStatus]) {
+      msg = isAR
+        ? `⚠️ ${lbl}: الازدحام سيزداد خلال 20 دقيقة`
+        : `⚠️ ${lbl}: Tráfico aumentará en 20 min`;
+    }
+
+    else if (pred.status === 'green' && currentStatus !== 'green') {
+      msg = isAR
+        ? `✅ ${lbl}: وقت مناسب للعبور قريباً`
+        : `✅ ${lbl}: Buen momento para cruzar pronto`;
+    }
+
+    else if (pred.enteringPeak && pred.val >= 1) {
+      msg = isAR
+        ? `🕐 ${lbl}: ذروة ازدحام قادمة — تحرك الآن أو انتظر`
+        : `🕐 ${lbl}: Punta de tráfico próxima — muévete ahora`;
+    }
+
+    else if (currentStatus === 'red' && pred.trend !== 'down') {
+      msg = isAR
+        ? `🚨 ${lbl}: 2 – 4 ساعات انتظار`
+        : `🚨 ${lbl}: 2 – 4 horas de espera`;
+    }
+
+    if (msg) {
+      showToast(msg);
+      ln.key = key;
+      ln.ts  = now;
+      console.log('[Q] Notif [' + lane + ']:', msg);
+    }
+  }
+
+  return { record, predict, predict60, notify, getHist: lane => hist[lane], getLastChange: lane => lastRealChangeTs[lane] };
+})();
+
+const CongestionPredictor30 = (() => {
+
+  const PATTERN_WEEKDAY  = [0,0,0,0,0,0,1,2,2,1,1,1,2,2,1,1,2,2,2,1,1,0,0,0]; 
+  const PATTERN_FRIDAY   = [0,0,0,0,0,0,1,2,2,1,1,2,2,2,2,1,2,2,2,1,0,0,0,0]; 
+  const PATTERN_WEEKEND  = [0,0,0,0,0,1,2,2,2,2,2,2,1,1,1,2,2,2,2,1,1,0,0,0]; 
+
+  function getPattern() {
+    const d = new Date().getDay(); 
+    if (d === 5) return PATTERN_FRIDAY;
+    if (d === 6 || d === 0) return PATTERN_WEEKEND;
+    return PATTERN_WEEKDAY;
+  }
+
+  function predictAt(lane, minutesAhead) {
+    const now  = new Date();
+    const ms   = now.getTime() + minutesAhead * 60000;
+    const fut  = new Date(ms);
+    const hFut = fut.getHours();
+    const dFut = fut.getDay();
+
+    let pattern;
+    if (dFut === 5) pattern = PATTERN_FRIDAY;
+    else if (dFut === 6 || dFut === 0) pattern = PATTERN_WEEKEND;
+    else pattern = PATTERN_WEEKDAY;
+
+    return pattern[hFut]; 
+  }
+
+  function currentLevel() {
+    const h = new Date().getHours();
+    return getPattern()[h];
+  }
+
+  function predict30(lane, liveStatus, reportCount) {
+    const h       = new Date().getHours();
+    const pattern = getPattern();
+    const nowLvl  = pattern[h];
+
+    const lvl15 = predictAt(lane, 15);
+    const lvl30 = predictAt(lane, 30);
+    const lvl45 = predictAt(lane, 45);
+
+    const liveVal   = liveStatus === 'red' ? 2 : liveStatus === 'orange' ? 1 : 0;
+
+    const confidence = reportCount >= 5 ? 'high'
+                     : reportCount >= 2 ? 'medium'
+                     : 'low';
+
+    const risingTo30  = lvl30 > nowLvl && lvl30 >= 2;
+    const risingTo15  = lvl15 > nowLvl && lvl15 >= 2;
+    const peakAt30    = lvl30 >= 2 && nowLvl < 2;
+    const peakSoon    = risingTo15 || risingTo30 || peakAt30;
+
+    const dropping    = lvl30 < nowLvl && liveVal >= 1;
+
+    const sustained   = liveVal >= 2 && lvl30 >= 2 && lvl45 >= 2;
+
+    let alert = false, level = 'none', minutesAway = null;
+    let msg_ar = null, msg_es = null;
+
+    if (risingTo15) {
+      alert = true; level = 'high'; minutesAway = 15;
+      msg_ar = `⚠️ ${lane==='entry'?'دخول':'خروج'}: ازدحام شديد خلال 15 دقيقة`;
+      msg_es = `⚠️ ${lane==='entry'?'Entrada':'Salida'}: Atasco en 15 min`;
+    } else if (peakAt30) {
+      alert = true; level = 'medium'; minutesAway = 30;
+      msg_ar = `🕐 ${lane==='entry'?'دخول':'خروج'}: ذروة متوقعة خلال 30 دقيقة`;
+      msg_es = `🕐 ${lane==='entry'?'Entrada':'Salida'}: Punta en ~30 min`;
+    } else if (sustained) {
+      alert = true; level = 'high'; minutesAway = 0;
+      msg_ar = `🚨 ${lane==='entry'?'دخول':'خروج'}: ازدحام شديد مستمر`;
+      msg_es = `🚨 ${lane==='entry'?'Entrada':'Salida'}: Atasco intenso continúa`;
+    } else if (dropping) {
+      level = 'good'; minutesAway = 30;
+      msg_ar = `✅ ${lane==='entry'?'دخول':'خروج'}: الازدحام سينخفض خلال 30 دقيقة`;
+      msg_es = `✅ ${lane==='entry'?'Entrada':'Salida'}: Mejora en ~30 min`;
+    }
+
+    return { alert, level, minutesAway, msg_ar, msg_es, confidence,
+             lvlNow: nowLvl, lvl15, lvl30 };
+  }
+
+  return { predict30, predictAt, currentLevel };
+})();
+
+function getWaitText(status) {
+  const cfg = ST[status] ?? ST.green;
+  const w = lang==='es' ? cfg.wes : cfg.war;
+  return '⏱ ' + w;
+}
+const ST = {
+  green:  {ar:'عادي',        es:'Fluido',   en:'Fluent',   war:'30 – 60 دقيقة',   wes:'30 – 60 min', wen:'30 – 60 min',  color:'#00d46e', bg:'rgba(0,212,110,.10)',  fill:15},
+  orange: {ar:'متوسط',       es:'Moderado', en:'Moderate', war:'1 – 2 ساعة',       wes:'1 – 2 horas', wen:'1 – 2 hours', color:'#ff8f00', bg:'rgba(255,143,0,.10)',  fill:55},
+  red:    {ar:'ازدحام شديد', es:'Atasco',   en:'Heavy',    war:'2 – 4 ساعات',      wes:'2 – 4 horas', wen:'2 – 4 hours',   color:'#ff3355', bg:'rgba(255,51,85,.10)', fill:90}
+};
+
+const MAP_BOUNDS = {
+  south: 35.864,
+  north: 35.876,
+  west:  -5.350,
+  east:  -5.340
+};
+const BOUNDS = {north:35.877538, south:35.861263, west:-5.351656, east:-5.339000}; 
+const CENTER  = [35.8693, -5.3445];
+const REPORT_RADIUS_KM = 15; 
+
+function distKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLon = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function nearBorder(lat, lon) {
+  return distKm(lat, lon, CENTER[0], CENTER[1]) <= REPORT_RADIUS_KM;
+}
+const ZOOM_DEF = 15, ZOOM_MIN = 14, ZOOM_MAX = 19;
+
+const FALLBACK_ENTRY = [
+  [35.86430, -5.34560],
+  [35.86520, -5.34510],
+  [35.86610, -5.34470],
+  [35.86710, -5.34430],
+  [35.86820, -5.34400],
+  [35.86940, -5.34370],
+  [35.87060, -5.34340],
+  [35.87180, -5.34310],
+  [35.87310, -5.34270],
+  [35.87420, -5.34240]
+];
+
+const EXIT_ROUTE = [
+  [35.8719793, -5.3441690],  
+  [35.8721500, -5.3440200],  
+  [35.8723000, -5.3438900],  
+  [35.8725125, -5.3437656],  
+  [35.8726800, -5.3436300],  
+  [35.8728000, -5.3435200],  
+  [35.8729375, -5.3434531],  
+  [35.8731000, -5.3433000],  
+  [35.8733000, -5.3431200],  
+  [35.8735000, -5.3429100],  
+  [35.8737875, -5.3427031],  
+  [35.8740000, -5.3425000],  
+  [35.8742000, -5.3423000]   
+];
+const FALLBACK_EXIT = EXIT_ROUTE;
+
+const CUSTOMS_MA = [35.8689674, -5.3448999];   
+const CUSTOMS_ES = [35.8719793, -5.3441690];   
+
+const CONGESTION_END = {
+  entry: {
+    green:  [35.8678743, -5.3450783],
+    orange: [35.8670342, -5.3450840],
+    red:    [35.8656304, -5.3449871]
+  },
+  exit: {
+    green:  [35.8725125, -5.3437656],
+    orange: [35.8729375, -5.3434531],
+    red:    [35.8737875, -5.3427031]
+  }
+};
+
+const ETAEngine = (() => {
+
+  const CAR_LEN = 5.0;
+
+  const QUEUE_M = {
+    entry: { green: 123, orange: 216, red: 371 },
+    exit:  { green:  70, orange: 125, red: 241 }
+  };
+
+  const THROUGHPUT = {
+    green:  3.5,   
+    orange: 1.8,   
+    red:    0.7    
+  };
+
+  function timeModifier() {
+    const h = new Date().getHours();
+    if ((h >= 7 && h < 10) || (h >= 17 && h < 21)) return 0.85; 
+    if (h >= 0 && h < 6)                             return 1.10; 
+    return 1.0;                                                    
+  }
+
+  function calc(lane, status, density) {
+    const dist       = QUEUE_M[lane][status] || QUEUE_M[lane].green;
+    const queueCars  = dist / CAR_LEN;
+    const baseETA    = queueCars / (THROUGHPUT[status] * timeModifier());
+
+    const d          = (density !== undefined && density >= 0) ? density : 0.5;
+    const densityMod = 1 + 0.20 - d * 0.32;   
+
+    const eta = Math.round(baseETA * densityMod);
+
+    const MIN_ETA = { green: 5,  orange: 15, red: 45  };
+    const MAX_ETA = { green: 25, orange: 60, red: 150 };
+    return Math.max(MIN_ETA[status], Math.min(MAX_ETA[status], eta));
+  }
+
+  function format(lane, status, density, isAR) {
+    const eta   = calc(lane, status, density);
+    const icon  = '⏳';
+    const lbl   = isAR
+      ? (lane==='entry' ? 'دخول' : 'خروج')
+      : (lane==='entry' ? 'Entrada' : 'Salida');
+    const approx = isAR ? 'دقيقة تقريباً' : 'min aprox.';
+    return `${icon} ${lbl}: ${eta} ${approx}`;
+  }
+
+  return { calc, format };
+})();
+
+function findClosestIndex(point, routeCoords) {
+  let best = 0, bestDist = Infinity;
+  const [pLat, pLon] = point;
+  routeCoords.forEach(([rLat, rLon], i) => {
+    const d = (rLat - pLat) ** 2 + (rLon - pLon) ** 2;
+    if (d < bestDist) { bestDist = d; best = i; }
+  });
+  return best;
+}
+
+function sliceRoute(coords, from, to) {
+  if (from <= to) return coords.slice(from, to + 1);
+  return coords.slice(to, from + 1).reverse();
+}
+
+const RouteCache = {
+  entry:   null,   
+  exit:    null,
+  idxMA:   null,   
+  idxES:   null,   
+  fetched: false
+};
+
+async function fetchOSRMRoute(waypoints) {
+
+  const coords = waypoints.map(([lo,la]) => lo+','+la).join(';');
+  const url = 'https://router.project-osrm.org/route/v1/driving/'
+            + coords
+            + '?overview=full&geometries=geojson&steps=false';
+  const res  = await fetch(url, {signal: AbortSignal.timeout(6000)});
+  if (!res.ok) throw new Error('OSRM HTTP ' + res.status);
+  const data = await res.json();
+  if (!data.routes || !data.routes[0]) throw new Error('OSRM no route');
+
+  return data.routes[0].geometry.coordinates.map(([lo,la]) => [la, lo]);
+}
+
+async function loadRoutes() {
+  if (RouteCache.fetched) return;   
+  RouteCache.fetched = true;
+
+  $('roadChip').textContent = '⏳ OSM';
+
+  const wpEntry = [
+    [-5.3449871, 35.8656304],  
+    [-5.3450783, 35.8678743],  
+    [-5.3448999, 35.8689674],  
+    [-5.3441690, 35.8719793],  
+    [-5.3424608, 35.8740905]   
+  ];
+
+  const wpExit = [
+    [-5.3441690, 35.8719793],  
+    [-5.3437656, 35.8725125],  
+    [-5.3434531, 35.8729375],  
+    [-5.3427031, 35.8737875],  
+    [-5.3420000, 35.8745000]   
+  ];
+
+  try {
+
+    const [entryCoords] = await Promise.all([
+      fetchOSRMRoute(wpEntry)
+    ]);
+    const exitCoords = EXIT_ROUTE;  
+    RouteCache.entry = entryCoords;
+
+    RouteCache.exit  = EXIT_ROUTE;
+
+    RouteCache.idxMA = findClosestIndex(CUSTOMS_MA, entryCoords);
+    RouteCache.idxES = 0;
+    console.log('[Q] OSRM entry loaded:', entryCoords.length, 'pts | idxMA:', RouteCache.idxMA,
+                '| exit: using EXIT_ROUTE (fixed, starts at ES gate)');
+
+    $('roadChip').textContent = '✓ OSM';
+    console.log('[Q] OSRM loaded — entry:', entryCoords.length,
+                'pts | idxMA:', RouteCache.idxMA,
+                '| exit:', exitCoords.length,
+                'pts | idxES:', RouteCache.idxES);
+  } catch (e) {
+
+    RouteCache.entry = FALLBACK_ENTRY;
+    RouteCache.exit  = EXIT_ROUTE;  
+    RouteCache.idxMA = findClosestIndex(CUSTOMS_MA, FALLBACK_ENTRY);
+    RouteCache.idxES = 0;
+    $('roadChip').textContent = '○ OSM';
+    console.warn('[Q] OSRM failed, using fallback:', e.message);
+  }
+
+  Map.applyRoutes();
+}
+
+const PROJECT = 'qantara-live';
+const API_KEY  = 'AIzaSyCxVDBRV20xCo8sYmlnKt67ggh8HY3KxF8';
+const REST_URL = 'https://firestore.googleapis.com/v1/projects/'
+               + PROJECT + '/databases/(default)/documents/reports';
+
+async function fetchReports() {
+  try {
+    const res  = await fetch(REST_URL + '?key=' + API_KEY + '&pageSize=300');
+    if (!res.ok) return null;
+    const json = await res.json();
+    const now  = Date.now();
+    return (json.documents||[]).map(doc => {
+      const f = doc.fields||{};
+      return {
+        lane:   (f.lane   && f.lane.stringValue)   || '',
+        status: (f.status && f.status.stringValue) || '',
+        ts:     parseInt((f.tsMs  && f.tsMs.integerValue)  || '0'),
+        w:      parseFloat((f.w   && (f.w.doubleValue || f.w.integerValue)) || '1')
+      };
+    }).filter(r => r.lane && r.status && r.ts && (now - r.ts) <= WIN_MS);
+  } catch(e) { console.warn('[Q] REST:', e.message); return null; }
+}
+
+const Cool = {
+  get(){ try{ return Math.max(0, COOLDOWN-(Date.now()-parseInt(localStorage.getItem(COOL_KEY)||'0'))); }catch(e){ return 0; } },
+  set(){ try{ localStorage.setItem(COOL_KEY, String(Date.now())); }catch(e){} }
+};
+
+function fbAddReport(lane, status, weight) {
+  const w = weight || 1.0;
+  return addDoc(reportsCol, {
+    status, lane,
+    timestamp: serverTimestamp(),
+    tsMs:      Date.now(),
+    w:         w
+  })
+    .then(() => {
+
+      const _histStatus = {green:'normal', orange:'medium', red:'heavy'};
+      addDoc(historyCol, {
+        timestamp: serverTimestamp(),
+        lane:      lane,
+        status:    _histStatus[status] || status
+      }).catch(() => {});
+      Cool.set();
+      setFbUI(true);
+
+      const _tick = setInterval(() => {
+        const rem = Cool.get();
+        if (rem <= 0) {
+          clearInterval(_tick);
+          console.log('[Q] BUTTON ENABLED AGAIN', Date.now());
+          setBtn(0);
+        } else {
+          setBtn(rem);
+        }
+      }, 250);
+      setBtn(Cool.get()); 
+      return true;
+    })
+    .catch(err => {
+      console.error('[Q] fbAddReport error:', err);
+      setFbUI(false);
+
+      console.log('[Q] BUTTON ENABLED AGAIN (error)', Date.now());
+      setBtn(0);
+      return false;
+    });
+}
+
+const Map = {
+  _map:        null,
+  _entryLine:  null,
+  _exitLine:   null,
+  _borderLine: null,
+  _youMark:    null,
+  eS: 'green',
+  xS: 'green',
+
+  init() {
+    const s = document.createElement('script');
+    s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    s.onload = () => this._build();
+    s.onerror = () => console.error('[Q] Leaflet failed to load');
+    document.head.appendChild(s);
+  },
+
+  _build() {
+    const L = window.L;
+
+    this._map = L.map('leafletMap', {
+      center:             CENTER,
+      zoom:               ZOOM_DEF,
+      minZoom:            ZOOM_MIN,
+      maxZoom:            ZOOM_MAX,
+      maxBounds:          [[MAP_BOUNDS.south, MAP_BOUNDS.west],
+                           [MAP_BOUNDS.north, MAP_BOUNDS.east]],
+      maxBoundsViscosity: 1.0,   
+      zoomControl:        false,
+      attributionControl: true
+    });
+
+    this._map.fitBounds([
+      [MAP_BOUNDS.south, MAP_BOUNDS.west],
+      [MAP_BOUNDS.north, MAP_BOUNDS.east]
+    ], { animate: false, padding: [0, 0] });
+
+    const lockedZoom = this._map.getZoom();
+    this._map.setMinZoom(lockedZoom);
+    console.log('[Q] Map locked at minZoom:', lockedZoom);
+
+    this._map.on('zoomend', () => {
+      if (this._map.getZoom() < lockedZoom)
+        this._map.setZoom(lockedZoom, { animate: false });
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+      maxZoom: 19
+    }).addTo(this._map);
+
+    const bLat = 35.8718;
+    this._borderLine = L.polyline(
+      [[bLat, BOUNDS.west+0.004], [bLat, BOUNDS.east-0.003]],
+      {color:'#ff8f00', weight:2.5, dashArray:'8 5', opacity:0.85}
+    ).addTo(this._map)
+     .bindTooltip(lang==='es'?'Frontera MA/ES':'الحدود MA/ES',
+       {permanent:true, direction:'right', className:'lf-tip border-tip'});
+
+    this._entryLine = L.polyline(FALLBACK_ENTRY, {
+      color:     this._color(this.eS),
+      weight:    9,
+      lineCap:   'round',
+      lineJoin:  'round',
+      opacity:   0.88
+    }).addTo(this._map)
+      .bindTooltip('', {sticky:true, className:'lf-tip entry-tip'});
+
+    this._exitLine = L.polyline(FALLBACK_EXIT, {
+      color:    this._color(this.xS),
+      weight:   9,
+      lineCap:  'round',
+      lineJoin: 'round',
+      opacity:  0.88
+    }).addTo(this._map)
+      .bindTooltip('', {sticky:true, className:'lf-tip exit-tip'});
+
+    const maIcon = L.divIcon({
+      className: '',
+      html: '<div style="background:#cc2200;width:10px;height:10px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5)"></div>',
+      iconSize: [10,10], iconAnchor: [5,5]
+    });
+    const esIcon = L.divIcon({
+      className: '',
+      html: '<div style="background:#c8a800;width:10px;height:10px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5)"></div>',
+      iconSize: [10,10], iconAnchor: [5,5]
+    });
+    L.marker(CUSTOMS_MA, {icon:maIcon}).addTo(this._map)
+      .bindTooltip(lang==='es'?'🛃 Aduana MA':'🛃 جمارك المغرب',
+        {permanent:false, direction:'right', className:'lf-tip border-tip'});
+    L.marker(CUSTOMS_ES, {icon:esIcon}).addTo(this._map)
+      .bindTooltip(lang==='es'?'🛃 Aduana ES':'🛃 جمارك إسبانيا',
+        {permanent:false, direction:'right', className:'lf-tip entry-tip'});
+
+    const youIcon = L.divIcon({
+      className: '',
+      html: '<div class="you-marker"><div class="you-dot"></div><div class="you-ring"></div></div>',
+      iconSize: [22,22], iconAnchor: [11,11]
+    });
+    this._youMark = L.marker(CENTER, {icon:youIcon, opacity:0}).addTo(this._map);
+
+    this._updateTooltips();
+    console.log('[Q] Map built with fallback routes');
+
+    loadRoutes();   
+  },
+
+  applyRoutes() {
+    if (!this._entryLine || !RouteCache.entry) return;
+
+    this._drawCongestion('entry', this.eS);
+    this._drawCongestion('exit',  this.xS);
+    console.log('[Q] Polylines updated — idxMA:', RouteCache.idxMA, '| idxES:', RouteCache.idxES);
+  },
+
+  _drawCongestion(lane, status) {
+    const isEntry = lane === 'entry';
+    const line    = isEntry ? this._entryLine : this._exitLine;
+    if (!line) return;
+
+    const RATIO = { green: 0.25, orange: 0.55, red: 0.85 };
+    const ratio = RATIO[status] || 0.25;
+
+    if (isEntry) {
+
+      const coords = RouteCache.entry;
+      if (!coords || coords.length < 2) return;
+
+      const endPt  = CONGESTION_END.entry[status];
+      const iStart = findClosestIndex(CUSTOMS_MA, coords);
+      const iEnd   = findClosestIndex(endPt, coords);
+
+      const lo = Math.min(iStart, iEnd);
+      const hi = Math.max(iStart, iEnd);
+      const seg = coords.slice(lo, hi + 1).reverse(); 
+
+      line.setLatLngs(seg.length >= 2 ? seg : [CUSTOMS_MA, endPt]);
+      console.log('[Q] entry', status, '| iStart:', iStart, '→ iEnd:', iEnd,
+                  '| seg:', seg.length, '| endPt:', endPt[0].toFixed(5));
+
+    } else {
+
+      const coords = RouteCache.exit;
+      if (!coords || coords.length < 2) {
+        const ends = { green:[35.8725125,-5.3437656], orange:[35.8729375,-5.3434531], red:[35.8737875,-5.3427031] };
+        line.setLatLngs([CUSTOMS_ES, ends[status]]);
+      } else {
+        const steps = Math.max(2, Math.round(coords.length * ratio));
+        line.setLatLngs(coords.slice(0, steps));
+        console.log('[Q] exit', status, '| steps:', steps, '/',
+          coords.length, '| start:', coords[0][0].toFixed(5),
+          '| end:', coords[steps-1][0].toFixed(5));
+      }
+    }
+
+    line.setStyle({ color: this._color(status), weight: 9 });
+  },
+  _color(s) { return s==='green'?'#00d46e' : s==='orange'?'#ff8f00' : '#ff3355'; },
+
+  _updateTooltips() {
+    if (!this._entryLine) return;
+    const eL = ST[this.eS], xL = ST[this.xS];
+    this._entryLine.setTooltipContent(
+      (lang==='es'?'↑ Entrada · ':'↑ دخول · ') + (lang==='es'?eL.es:eL.ar)
+    );
+    this._exitLine.setTooltipContent(
+      (lang==='es'?'↓ Salida · ':'↓ خروج · ') + (lang==='es'?xL.es:xL.ar)
+    );
+  },
+
+  setEntryStatus(s) {
+    this.eS = s;
+
+    if (RouteCache.fetched && RouteCache.entry) {
+      this._drawCongestion('entry', s);
+    } else if (this._entryLine) {
+      this._entryLine.setStyle({ color: this._color(s) });
+    }
+    const le = $('legEntry'); if (le) le.style.background = this._color(s);
+    this._updateTooltips();
+  },
+
+  setExitStatus(s) {
+    this.xS = s;
+    if (RouteCache.fetched && RouteCache.exit) {
+      this._drawCongestion('exit', s);
+    } else if (this._exitLine) {
+      this._exitLine.setStyle({ color: this._color(s) });
+    }
+    const lx = $('legExit'); if (lx) lx.style.background = this._color(s);
+    this._updateTooltips();
+  },
+
+  updateGPS(lat, lon) {
+    if (!this._map) return;
+
+    const clampedLat = Math.max(MAP_BOUNDS.south, Math.min(MAP_BOUNDS.north, lat));
+    const clampedLon = Math.max(MAP_BOUNDS.west,  Math.min(MAP_BOUNDS.east,  lon));
+    this._youMark.setLatLng([lat, lon]).setOpacity(1);
+    if (!this._youMark.getTooltip())
+      this._youMark.bindTooltip(lang==='es'?'📍 Tú aquí':'📍 أنت هنا',
+        {permanent:true, direction:'top', className:'lf-tip you-tip'});
+
+    if (inBounds(lat, lon) && !this._map.getBounds().contains([lat, lon]))
+      this._map.panTo([clampedLat, clampedLon], {animate:true});
+  },
+
+  start() {}
+};
+
+let _listenerActive = false, _lastDataTs = 0;
+const LIVE_WINDOW = 2 * 60 * 1000;
+
+function setFbUI(on, n) {
+  if (on !== undefined) _listenerActive = on;
+  const live = _listenerActive && (Date.now() - _lastDataTs) < LIVE_WINDOW;
+  $('fbBadge').className = 'fb-badge ' + (live ? 'on' : 'off');
+  $('fbTxt').textContent = live
+    ? '🔥 Live' + (n !== undefined ? ' · ' + n + ' doc' : '')
+    : '⚠️ Reconnecting…';
+}
+
+function toggleLangPick() {
+  const p = $('langPick');
+  if (p) p.classList.toggle('open');
+  setTimeout(() => {
+    document.addEventListener('click', function _close(e) {
+      if (!$('langPick')?.contains(e.target)) {
+        if ($('langPick')) $('langPick').classList.remove('open');
+      }
+      document.removeEventListener('click', _close);
+    });
+  }, 0);
+}
+
+function pickLang(l) {
+  if ($('langPick')) $('langPick').classList.remove('open');
+  const flags = {ar:'🇲🇦', es:'🇪🇸'};
+  const codes  = {ar:'AR',  es:'ES'};
+  if ($('langFlag')) $('langFlag').textContent = flags[l] || flags.ar;
+  if ($('langCode')) $('langCode').textContent = codes[l] || codes.ar;
+  ['ar','es'].forEach(x => {
+    if ($('lopt-'+x)) $('lopt-'+x).classList.toggle('on', x===l);
+  });
+  setLang(l);
+}
+
+function setLang(l) {
+  lang = l;
+  document.body.classList.toggle('es', l === 'es');
+  document.documentElement.setAttribute('dir', l === 'es' ? 'ltr' : 'rtl');
+  document.documentElement.setAttribute('lang', l === 'es' ? 'es' : 'ar');
+  Map._updateTooltips();
+  _refreshLangUI();
+}
+
+function _refreshLangUI() {
+  if (!TrafficState) return;
+  ['entry','exit'].forEach(function(lane) {
+    const s   = TrafficState.status(lane);
+    const cfg = ST[s] ?? ST.green;
+    const lbl  = lang==='es'?cfg.es:cfg.ar;
+    const dirL = lang==='es'?'Entrada: ':'دخول: ';
+    const mem = TrafficState.debug ? TrafficState.debug(lane) : null;
+    const cnt = mem ? (mem.count || 0) : 0;
+    const repTxt = cnt > 0 ? (lang==='es' ? `👥 ${cnt} usuarios confirmaron el estado` : `👥 ${cnt} مستخدمون أكدوا الحالة`) : '';
+    if (lane === 'entry') {
+      $('eSt').textContent = lbl;  $('eSt').style.color = cfg.color;
+      $('eWt').textContent = getWaitText(s);
+      if ($('pillTxt')) $('pillTxt').textContent = dirL + lbl;
+      if ($('eRep')) $('eRep').textContent = repTxt;
+    } else {
+      $('xSt').textContent = lbl;  $('xSt').style.color = cfg.color;
+      if ($('xRep')) $('xRep').textContent = repTxt;
+      $('xWt').textContent = getWaitText(s);
+    }
+  });
+  if (typeof buildAI === 'function') {
+    const eS=TrafficState.status('entry'), xS=TrafficState.status('exit');
+    const dE=TrafficState.density('entry'), dX=TrafficState.density('exit');
+    buildAI(eS,xS,0,
+      Predictor.predict('entry',dE), Predictor.predict('exit',dX), dE, dX,
+      Predictor.predict60('entry',dE), Predictor.predict60('exit',dX));
+  }
+  if (typeof updatePredCard === 'function')
+    updatePredCard(TrafficState.status('entry'), TrafficState.status('exit'), 0);
+}
+
+function setZone(s) {
+  ['green','orange','red'].forEach(z => {
+    $('z-' + z).className = 'zone z' + z[0] + (z === s ? ' on' : '');
+  });
+}
+
+function applyLane(lane, {status, count, rel}) {
+  console.log('[Q] applyLane ['+lane+'] status='+status+' count='+count, new Error().stack.split('\n')[2]);
+  const cfg  = ST[status] ?? ST.green;
+  const lbl  = lang==='es'?cfg.es:cfg.ar;
+  if (lane === 'entry') {
+    $('eSt').textContent = lbl;  $('eSt').style.color = cfg.color;
+    $('eWt').textContent = getWaitText(status);
+    $('eBar').style.cssText = 'width:' + cfg.fill + '%;background:' + cfg.color;
+    $('lc-e').style.borderColor = cfg.color;
+    document.documentElement.style.setProperty('--si', cfg.color);
+    document.documentElement.style.setProperty('--sb', cfg.bg);
+    $('pillTxt').textContent = (lang==='es'?'Entrada: ':'دخول: ') + lbl;
+    $('stRep').textContent = (count > 0) ? count : '—';
+    $('stRel').textContent = (count > 0) ? Math.round((rel ?? 0) * 100) + '%' : '—';
+    Map.setEntryStatus(status);
+    if($('eRep'))$('eRep').textContent=count>0?(lang==='es'?`👥 ${count} usuarios confirmaron el estado`:`👥 ${count} مستخدمون أكدوا الحالة`):'';
+  } else {
+    $('xSt').textContent = lbl;  $('xSt').style.color = cfg.color;
+    $('xWt').textContent = getWaitText(status);
+    $('xBar').style.cssText = 'width:' + cfg.fill + '%;background:' + cfg.color;
+    $('lc-x').style.borderColor = cfg.color;
+    Map.setExitStatus(status);
+    if($('xRep'))$('xRep').textContent=count>0?(lang==='es'?`👥 ${count} usuarios confirmaron el estado`:`👥 ${count} مستخدمون أكدوا الحالة`):'';
+  }
+}
+
+const _qcCool = { entry:0, exit:0 };
+function quickConfirm(lane) {
+  const now = Date.now();
+  if (now < _qcCool[lane]) return;
+  _qcCool[lane] = now + 30000;
+  const btnId = lane==='entry'?'qcE':'qcX';
+  const btn = $(btnId);
+  if (btn) { btn.disabled=true; setTimeout(()=>{if($(btnId))$(btnId).disabled=false;},30000); }
+  const status = TrafficState.status(lane);
+  fbAddReport(lane, status, 0.5)
+    .then(()=>showToast(lang==='es'?'✅ Confirmado':'✅ تم التأكيد'))
+    .catch(()=>showToast(lang==='es'?'⚠️ Sin conexión':'⚠️ خطأ في الاتصال'));
+}
+
+let _loaderHidden = false;
+function hideLoader() {
+  if (_loaderHidden) return;
+  _loaderHidden = true;
+  const el = document.getElementById('appLoader');
+  if (!el) return;
+  el.style.opacity = '0';
+  setTimeout(() => el.parentNode && el.parentNode.removeChild(el), 450);
+}
+
+const TrafficState = (() => {
+
+  const MAX_CARS  = 100;
+  const PROC_MIN  = 3.0;
+  const CARS_INIT = { green: 20, orange: 55, red: 85 };
+
+  const mem = {
+    entry: { status:'green', cars:20, density:0.2, waitMin:6.7, count:0, rel:0, lastTs:0, savedAt:0, statusSince:0 },
+    exit:  { status:'green', cars:20, density:0.2, waitMin:6.7, count:0, rel:0, lastTs:0, savedAt:0, statusSince:0 }
+  };
+
+  let _booted    = false;   
+  let _bootReady = false;   
+  const _wlock   = { entry:false, exit:false };   
+  const _pending = { entry:null,  exit:null  };   
+  const _seen      = { entry:new Set(), exit:new Set() };
+  const _userLockTs = { entry:0, exit:0 };
+
+  function physics(cars) {
+    return { density: cars / MAX_CARS, waitMin: cars / PROC_MIN };
+  }
+  function isPeak() {
+    const h = new Date().getHours();
+    return (h >= 7 && h < 10) || (h >= 17 && h < 21);
+  }
+  function classify(cars) {
+    const { density, waitMin } = physics(cars);
+    const thr = isPeak() ? 0.60 : 0.70;
+    if (density >= thr  || waitMin > 25) return 'red';
+    if (density >= 0.40 || waitMin > 10) return 'orange';
+    return 'green';
+  }
+  function safeStep(cur, next) {
+    if (cur === 'red'   && next === 'green') return 'orange';
+    if (cur === 'green' && next === 'red')   return 'orange';
+    return next;
+  }
+
+  function safeStepHold(lane, next, incomingCount) {
+    const cur = mem[lane].status;
+    const stepped = safeStep(cur, next);
+    if (stepped === cur) return cur; 
+
+    const STATUS_RANK = { green:0, orange:1, red:2 };
+    const improving = STATUS_RANK[stepped] < STATUS_RANK[cur];
+    if (!improving) return stepped; 
+
+    const since = mem[lane].statusSince || 0;
+    const held  = Date.now() - since;
+    const minHold = MIN_HOLD_MS[cur] || 0;
+    if (held >= minHold) return stepped; 
+
+    if ((incomingCount || 0) >= OVERRIDE_COUNT) return stepped;
+
+    return cur; 
+  }
+
+  function render(lane, d) {
+
+    if (!_bootReady) {
+      console.warn('[Q] render() blocked — bootReady=false, lane:', lane);
+      return;
+    }
+    Object.assign(mem[lane], d);
+    if (!mem[lane].savedAt && d.savedAt) mem[lane].savedAt = d.savedAt;
+    applyLane(lane, { status: d.status, count: d.count ?? 0, rel: d.rel ?? 0 });
+    const eS = mem.entry.status, xS = mem.exit.status;
+    const dE = mem.entry.density, dX = mem.exit.density;
+    if (typeof buildAI === 'function')
+      buildAI(eS, xS, mem[lane].rel ?? 0,
+        Predictor.predict('entry', dE), Predictor.predict('exit', dX),
+        dE, dX,
+        Predictor.predict60('entry', dE), Predictor.predict60('exit', dX));
+    if (typeof updatePredCard === 'function')
+      updatePredCard(eS, xS, mem[lane].rel ?? 0);
+  }
+
+  async function write(lane, patch) {
+
+    if (_wlock[lane]) {
+      _pending[lane] = patch;
+      return;
+    }
+    _wlock[lane] = true;
+    _pending[lane] = null;
+
+    const now = Date.now();
+    try {
+      await setDoc(lanesRef[lane], {
+        status:      patch.status,
+        cars:        Math.round(patch.cars   ?? mem[lane].cars),
+        density:     +((patch.density ?? mem[lane].density).toFixed(3)),
+        waitMin:     +((patch.waitMin ?? mem[lane].waitMin).toFixed(1)),
+        count:       patch.count  ?? mem[lane].count,
+        rel:         patch.rel    ?? mem[lane].rel,
+        lastTs:      patch.lastTs ?? mem[lane].lastTs,
+        statusSince: patch.statusSince ?? mem[lane].statusSince ?? now,
+        savedAt:     now
+      }, { merge: true });
+
+      mem[lane].savedAt = now;
+      if (patch.lastTs) mem[lane].lastTs = patch.lastTs;
+    } catch(e) {
+      console.warn('[Q] write [' + lane + ']:', e.message);
+    } finally {
+      _wlock[lane] = false;
+
+      if (_pending[lane]) {
+        const next = _pending[lane];
+        _pending[lane] = null;
+        write(lane, next);
+      }
+    }
+  }
+
+async function boot() {
+    console.log('[Q] boot: reading Firestore...');
+
+    const [sE, sX] = await Promise.all([
+      getDoc(lanesRef.entry).catch(() => null),
+      getDoc(lanesRef.exit).catch(()  => null)
+    ]);
+
+    let loadedFromFirestore = false;
+    if (sE && sE.exists()) {
+      const d = sE.data();
+      Object.assign(mem.entry, d);
+      try { localStorage.setItem('qnt_lane_entry', JSON.stringify(d)); } catch(e) {}
+      console.log('[Q] boot entry loaded:', d.status, '| cars:', d.cars,
+        '| savedAt:', new Date(d.savedAt || 0).toLocaleTimeString());
+      loadedFromFirestore = true;
+    }
+    if (sX && sX.exists()) {
+      const d = sX.data();
+      Object.assign(mem.exit, d);
+      try { localStorage.setItem('qnt_lane_exit', JSON.stringify(d)); } catch(e) {}
+      console.log('[Q] boot exit loaded:', d.status, '| cars:', d.cars);
+      loadedFromFirestore = true;
+    }
+
+    if (!loadedFromFirestore) {
+      try {
+        const ce = localStorage.getItem('qnt_lane_entry');
+        const cx = localStorage.getItem('qnt_lane_exit');
+        if (ce) { Object.assign(mem.entry, JSON.parse(ce)); console.log('[Q] boot entry ← localStorage (offline)'); }
+        if (cx) { Object.assign(mem.exit,  JSON.parse(cx)); console.log('[Q] boot exit  ← localStorage (offline)'); }
+      } catch(e) {}
+    }
+
+    _bootReady = true;
+    console.log('[Q] bootReady=true');
+
+    ['entry','exit'].forEach(lane => {
+      const m = mem[lane];
+      if (!m.lastTs || !m.statusSince || m.status === 'green') return;
+      const elapsedMin = (Date.now() - m.lastTs) / 60000;
+      const heldMin    = (Date.now() - m.statusSince) / 60000;
+      console.log('[Q] boot decay check ['+lane+'] elapsed:', Math.round(elapsedMin)+'min held:', Math.round(heldMin)+'min status:', m.status);
+
+      if (elapsedMin < 5) return;
+      let decayed = m.cars;
+      const steps = Math.floor(elapsedMin / 5);
+      if (elapsedMin >= 30) {
+        const s3 = Math.floor((elapsedMin - 30) / 5) + 1;
+        decayed = Math.max(0, m.cars * Math.pow(0.90,2) * Math.pow(0.88,3) * Math.pow(0.80,s3));
+      } else if (elapsedMin >= 15) {
+        const s2 = Math.floor((elapsedMin - 15) / 5) + 1;
+        decayed = Math.max(0, m.cars * Math.pow(0.90,2) * Math.pow(0.88,s2));
+      } else {
+        decayed = Math.max(0, m.cars * Math.pow(0.90, steps));
+      }
+      const next = classify(decayed);
+
+      const STATUS_RANK = { green:0, orange:1, red:2 };
+      const improving = STATUS_RANK[next] < STATUS_RANK[m.status];
+      let safe = next;
+      if (improving) {
+        const minHold = MIN_HOLD_MS[m.status] || 0;
+        if (heldMin * 60000 < minHold) safe = m.status; 
+      }
+      if (safe !== m.status) {
+        const { density, waitMin } = physics(decayed);
+        const now = Date.now();
+        const patch = { status: safe, cars: decayed, density, waitMin,
+                        count: m.count, rel: m.rel, lastTs: m.lastTs,
+                        statusSince: now, savedAt: now };
+        console.log('[Q] boot decay ['+lane+']', m.status, '→', safe);
+        Object.assign(mem[lane], patch);
+        write(lane, patch);
+      }
+    });
+
+    render('entry', mem.entry);
+    render('exit',  mem.exit);
+
+    hideLoader();
+
+    _booted = true;
+    window._TrafficMem = mem;
+    console.log('[Q] boot complete — _booted=true');
+
+    _watch();
+    startListeners();
+
+    setBtn(Cool.get());
+    loadReputation();
+    setInterval(() => setFbUI(), 30000);
+    setInterval(updateDebug, 1000);
+setInterval(updateDecayTimer, 1000);
+  }
+
+  function _watch() {
+    async function _loadLanes() {
+      if (document.hidden) return;
+      try {
+        const [sE, sX] = await Promise.all([
+          getDoc(lanesRef.entry),
+          getDoc(lanesRef.exit)
+        ]);
+        ['entry','exit'].forEach((lane, i) => {
+          const snap = i === 0 ? sE : sX;
+          if (!snap.exists()) return;
+          const d = snap.data();
+          if (d.savedAt && mem[lane].savedAt && d.savedAt <= mem[lane].savedAt) {
+            console.log('[Q] watch ['+lane+'] skipped (savedAt not newer)');
+            return;
+          }
+          if (d.status === mem[lane].status && d.cars && mem[lane].cars &&
+              Math.abs(d.cars - mem[lane].cars) < 2) {
+            mem[lane].savedAt = d.savedAt;
+            return;
+          }
+          console.log('[Q] watch ['+lane+'] ← REMOTE', d.status, '| cars:', d.cars);
+          render(lane, d);
+        });
+      } catch(e) { console.warn('[Q] _loadLanes error:', e.message); }
+    }
+    _loadLanes();
+    setInterval(_loadLanes, 30000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) _loadLanes(); });
+  }
+
+  function ingest(lane, reports, meta) {
+    if (!_booted || !reports.length) return;
+
+    const laneLastTs   = mem[lane].lastTs || 0;
+    const freshReports = reports.filter(r => r.ts > laneLastTs);
+    if (!freshReports.length) {
+      console.log('[Q] ingest ['+lane+'] skipped — no reports newer than lastTs');
+      return;
+    }
+
+    const unseen = freshReports.filter(r => !_seen[lane].has(r.ts));
+    if (!unseen.length) return;
+    unseen.forEach(r => _seen[lane].add(r.ts));
+    if (_seen[lane].size > 300)
+      _seen[lane] = new Set([..._seen[lane]].slice(-150));
+
+    const now      = Date.now();
+    const pool     = freshReports.slice(0, 10);
+    const sc       = { green: 0, orange: 0, red: 0 };
+    let   totalW   = 0;
+    let   sumCars  = 0;
+
+    pool.forEach(r => {
+      const ageMin    = (now - r.ts) / 60000;
+      const timeDecay = ageMin < 10 ? 1.0
+                      : ageMin < 30 ? 1 - (ageMin - 10) / 20
+                      : 0.1;
+      const w = (r.w || 1.0) * timeDecay;
+      sc[r.status] = (sc[r.status] || 0) + w;
+      sumCars      += (CARS_INIT[r.status] ?? 20) * w;
+      totalW       += w;
+    });
+
+    if (totalW === 0) return;
+
+    const avgCars    = Math.round(sumCars / totalW);
+    const { density, waitMin } = physics(avgCars);
+    const rawStatus  = Object.keys(sc).sort((a, b) => sc[b] - sc[a])[0];
+
+    const MIN_REPORTS = 3;
+    const totalVotes  = sc.green + sc.orange + sc.red;
+    const winnerRatio = sc[rawStatus] / totalVotes;
+    const currentSt   = mem[lane].status;
+
+    if (pool.length < MIN_REPORTS && rawStatus !== currentSt) {
+      console.log('[Q] ingest ['+lane+'] stability hold — only', pool.length,
+        'reports, need', MIN_REPORTS, 'to change from', currentSt, 'to', rawStatus);
+
+      render(lane, { ...mem[lane],
+        count: meta?.count ?? pool.length,
+        rel:   meta?.rel   ?? Math.min(1, pool.length / 8),
+        density });
+      return;
+    }
+
+    if (winnerRatio < 0.55 && rawStatus !== currentSt) {
+      console.log('[Q] ingest ['+lane+'] low confidence', (winnerRatio*100).toFixed(0)+'%',
+        '— keeping', currentSt);
+      return;
+    }
+
+    const safe           = safeStep(currentSt, rawStatus);
+    const newestReportTs = freshReports[0].ts;
+    const patch          = {
+      status:  safe,
+      cars:    avgCars, density, waitMin,
+      count:   meta?.count ?? pool.length,
+      rel:     meta?.rel   ?? Math.min(1, pool.length / 8),
+      lastTs:  newestReportTs,
+      savedAt: now
+    };
+    console.log('[Q] ingest ['+lane+']', pool.map(r=>r.status).join(','),
+      '→', safe, '| cars:', avgCars, '| conf:', (winnerRatio*100).toFixed(0)+'%',
+      '| pool:', pool.length);
+    render(lane, patch);
+    write(lane, patch);
+  }
+
+  function userReport(lane, status, meta) {
+    if (!_booted) return;
+    const cars = CARS_INIT[status] ?? 20;
+    const { density, waitMin } = physics(cars);
+    const inCount = meta?.count ?? mem[lane].count ?? 0;
+    const safe  = safeStepHold(lane, status, inCount);
+    const now   = Date.now();
+    const patch = { status: safe, cars, density, waitMin,
+                    count: inCount,
+                    rel:   meta?.rel ?? mem[lane].rel ?? 0,
+                    lastTs: now,
+                    statusSince: safe !== mem[lane].status ? now : (mem[lane].statusSince||now),
+                    savedAt: now };
+    console.log('[Q] userReport [' + lane + '] →', safe, '| cars:', cars);
+    _seen[lane].add(now); 
+    _userLockTs[lane] = now;
+    render(lane, patch);
+    write(lane, patch);
+  }
+
+  function tick(lane) {
+    if (!_booted) return;
+    const m = mem[lane];
+
+    if (!m.lastTs || m.cars <= 0) return;
+
+    const elapsed = (Date.now() - m.lastTs) / 60000;
+    if (elapsed < 5) return;
+    if ((Date.now()-(_userLockTs[lane]||0)) < USER_LOCK_MS) return;
+    const steps   = Math.floor(elapsed / 5);
+    if (steps < 1) return;
+    let decayed;
+    if (elapsed >= 30) {
+      const s3 = Math.floor((elapsed - 30) / 5) + 1;
+      decayed = Math.max(0, m.cars * Math.pow(0.90,2) * Math.pow(0.88,3) * Math.pow(0.80,s3));
+    } else if (elapsed >= 15) {
+      const s2 = Math.floor((elapsed - 15) / 5) + 1;
+      decayed = Math.max(0, m.cars * Math.pow(0.90,2) * Math.pow(0.88,s2));
+    } else {
+      decayed = Math.max(0, m.cars * Math.pow(0.90, steps));
+    }
+    const next    = classify(decayed);
+    const safe    = safeStepHold(lane, next, m.count);
+    if (safe === m.status && Math.abs(decayed - m.cars) < 2) return;
+    const { density, waitMin } = physics(decayed);
+    const nowTs = Date.now();
+    const patch = { status: safe, cars: decayed, density, waitMin,
+                    count: m.count, rel: m.rel,
+                    lastTs: m.lastTs,
+                    statusSince: safe !== m.status ? nowTs : (m.statusSince||nowTs),
+                    savedAt: nowTs };
+    console.log('[Q] tick [' + lane + ']', m.status, '→', safe,
+      '| cars:', Math.round(m.cars), '→', Math.round(decayed));
+    render(lane, patch);
+    write(lane, patch);
+  }
+
+  return {
+    boot, ingest, userReport, tick,
+    status:  lane => mem[lane]?.status  ?? 'green',
+    density: lane => mem[lane]?.density ?? 0.2,
+    debug: lane => {
+      const m = mem[lane]; if (!m) return null;
+      const { density, waitMin } = physics(m.cars);
+      return { cars: Math.round(m.cars), density: (density*100).toFixed(1)+'%',
+               wait: waitMin.toFixed(1)+' min', status: m.status, buf: '—' };
+    }
+  };
+})();
+
+setInterval(() => TrafficState.tick('entry'), 5 * 60 * 1000);
+setInterval(() => TrafficState.tick('exit'),  5 * 60 * 1000);
+
+setInterval(function() {
+  if (typeof updatePredCard !== 'function') return;
+  if (!TrafficState) return;
+  const eS = TrafficState.status('entry');
+  const xS = TrafficState.status('exit');
+  updatePredCard(eS, xS, 0);
+}, 60 * 1000);
+
+const _devLang = (navigator.language || navigator.userLanguage || 'ar').toLowerCase();
+let cacheEntry = [], cacheExit = [], lang = _devLang.startsWith('es') ? 'es' : 'ar';
+
+function calcStatus(reps) {
+  if (!reps.length) return { status:'green', count:0, rel:0, density:0 };
+  const now = Date.now(), sc = { green:0, orange:0, red:0 };
+  const recentCount = reps.filter(r => (now - r.ts) < RECENT_MS).length;
+  const density = Math.min(1, recentCount / 5);
+  reps.forEach(r => {
+    const timeW  = (now - r.ts) < RECENT_MS ? 2 : 1;
+    const trustW = r.w || 1.0;
+    sc[r.status] = (sc[r.status] || 0) + timeW * trustW;
+  });
+  const finalStatus = Object.keys(sc).sort((a,b) => sc[b] - sc[a])[0];
+  return { status: finalStatus, count: reps.length,
+           rel: Math.min(1, reps.length / 8), density };
+}
+
+const _alertCool = { entry: { key: null, ts: 0 }, exit: { key: null, ts: 0 } };
+const ALERT_COOL_MS = 8 * 60 * 1000;
+
+function applyDocs(docs) {
+  const entry = [], exit_ = [];
+  docs.forEach(r => {
+    if      (r.lane === 'entry') entry.push(r);
+    else if (r.lane === 'exit')  exit_.push(r);
+  });
+  entry.sort((a,b) => b.ts - a.ts);
+  exit_.sort((a,b) => b.ts - a.ts);
+  cacheEntry = entry;
+  cacheExit  = exit_;
+  const de = calcStatus(entry), dx = calcStatus(exit_);
+  if (entry.length) TrafficState.ingest('entry', entry, { count:de.count, rel:de.rel });
+  if (exit_.length) TrafficState.ingest('exit',  exit_, { count:dx.count, rel:dx.rel });
+  Predictor.record('entry', de.status, entry.length);
+  Predictor.record('exit',  dx.status, exit_.length);
+
+  _checkAlert('entry', de.status, de.count);
+  _checkAlert('exit',  dx.status, dx.count);
+
+  setTime(); setBtn(Cool.get());
+}
+
+function _checkAlert(lane, liveStatus, reportCount) {
+  const pred = CongestionPredictor30.predict30(lane, liveStatus, reportCount);
+  if (!pred.alert || !pred.msg_ar) return;
+
+  const now = Date.now();
+  const ac  = _alertCool[lane];
+  const key = lane + ':' + pred.level + ':' + pred.minutesAway;
+
+  if (ac.key === key && (now - ac.ts) < ALERT_COOL_MS) return;
+
+  ac.key = key;
+  ac.ts  = now;
+  showToast(lang === 'es' ? pred.msg_es : pred.msg_ar);
+  console.log('[Q] Alert30 ['+lane+']:', pred.level, '| in', pred.minutesAway, 'min');
+}
+
+function submit() {
+  if (!_st) return;
+  $('backdrop').classList.remove('open');
+
+  const rem = Cool.get();
+  if (rem > 0) {
+    showToast(lang === 'es'
+      ? `⏳ Espera ${Math.ceil(rem/1000)}s antes de enviar`
+      : `⏳ انتظر ${Math.ceil(rem/1000)} ثانية قبل إرسال تقرير جديد`);
+    setBtn(rem);
+    return;
+  }
+  const trust = TrustEngine.record(_st);
+  if (trust.ignored) {
+    showToast(lang === 'es'
+      ? '⚠️ Reporte inconsistente, ignorado'
+      : '⚠️ تقرير متناقض، تم تجاهله');
+    setBtn(Cool.get());
+    return;
+  }
+  const nr = { lane:_lane, status:_st, ts:Date.now(), w:trust.weight };
+  if (_lane === 'entry') cacheEntry = [nr, ...cacheEntry].slice(0, 50);
+  else                   cacheExit  = [nr, ...cacheExit].slice(0, 50);
+  const cs = calcStatus(_lane === 'entry' ? cacheEntry : cacheExit);
+  TrafficState.userReport(_lane, _st, { count: cs.count, rel: cs.rel });
+  setTime();
+
+  Cool.set();
+  setBtn(Cool.get());
+  const _ctick = setInterval(() => {
+    const rem = Cool.get();
+    if (rem <= 0) { clearInterval(_ctick); setBtn(0); }
+    else { setBtn(rem); }
+  }, 250);
+  showToast(lang === 'es' ? '✅ ¡Actualizado!' : '✅ تم التحديث!');
+  addRepPoint();
+  fbAddReport(_lane, _st, trust.weight).catch(() => {
+    showToast(lang === 'es' ? '⚠️ Sin conexión' : '⚠️ خطأ في الاتصال');
+  });
+}
+
+function toggleDebug() {
+  const bar = document.getElementById('dbgBar');
+  const btn = document.getElementById('dbgToggle');
+  if (!bar) return;
+  const show = bar.classList.toggle('show');
+  btn.textContent = show ? '🔬 DEBUG ▲' : '🔬 DEBUG';
+  if (show) updateDebug();
+}
+function updateDebug() {
+  const bar = document.getElementById('dbgBar');
+  if (!bar || !bar.classList.contains('show')) return;
+  ['entry', 'exit'].forEach(lane => {
+    const p = lane === 'entry' ? 'E' : 'X';
+    const d = TrafficState.debug(lane);
+    if (!d) return;
+    const set = (id, val) => { const el = $(id); if (el) el.textContent = val; };
+    set('dbg'+p+'Cars', d.cars);
+    set('dbg'+p+'Dens', d.density);
+    set('dbg'+p+'Wait', d.wait);
+    set('dbg'+p+'St',   d.status);
+    set('dbg'+p+'Buf',  d.buf);
+  });
+}
+
+function startListeners() {
+
+  async function _loadReports() {
+    if (document.hidden) return;
+    try {
+      const snap = await getDocs(reportsCol);
+      const now = Date.now(), docs = [];
+      snap.forEach(d => {
+        const f = d.data();
+        if (f.lane && f.status && f.tsMs && (now - f.tsMs) <= WIN_MS)
+          docs.push({ lane:f.lane, status:f.status, ts:f.tsMs, w:f.w });
+      });
+      if (docs.length) _lastDataTs = now;
+      setFbUI(true, snap.size);
+      applyDocs(docs);
+      hideLoader();
+    } catch(e) {
+      console.warn('[Q] loadReports error:', e.message);
+      setFbUI(false);
+    }
+  }
+
+  _loadReports();
+  setInterval(_loadReports, 30000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) _loadReports(); });
+
+}
+
+function buildTL() {
+  const h = new Date().getHours(), bars = $('tlBars');
+  bars.innerHTML = '';
+  for (let i=0; i<8; i++) {
+    const hi = (h-7+i+24)%24, v = HOURLY[hi];
+    const ht  = [10,50,90][v], col = ['#00d46e','#ff8f00','#ff3355'][v];
+    const el  = document.createElement('div');
+    el.className = 'tl-wrap';
+    el.innerHTML = '<div class="tl-bar" style="height:'+ht+'%;background:'+col+';opacity:'+(i>0?.4:1)+'"></div>'
+                 + '<div class="tl-hr">'+String(hi).padStart(2,'0')+'h</div>';
+    bars.appendChild(el);
+  }
+}
+
+function buildAI(eS, xS, rel, pEntry, pExit, densityE, densityX, p60E, p60X) {
+  const h=new Date().getHours(), ar=[], es=[], tags=[];
+  const isAR=lang!=='es';
+  const STA  = {green:{ar:'عادي',es:'fluido'}, orange:{ar:'متوسط',es:'moderado'}, red:{ar:'شديد',es:'atasco'}};
+
+  const dE = densityE !== undefined ? densityE : 0.5;
+  const dX = densityX !== undefined ? densityX : 0.5;
+  ar.push(ETAEngine.format('entry', eS, dE, true));
+  es.push(ETAEngine.format('entry', eS, dE, false));
+  ar.push(ETAEngine.format('exit',  xS, dX, true));
+  es.push(ETAEngine.format('exit',  xS, dX, false));
+
+  if(eS==='red')   { tags.push({ar:'دخول احمر', es:'Entrada roja', hot:true});  }
+  if(eS==='orange'){ tags.push({ar:'متوسط',     es:'Moderado',     hot:false}); }
+  if(xS==='red')   { tags.push({ar:'خروج احمر', es:'Salida roja',  hot:true});  }
+
+  const reportCount = Math.round((rel || 0) * 8);
+  const p30E = CongestionPredictor30.predict30('entry', eS, reportCount);
+  const p30X = CongestionPredictor30.predict30('exit',  xS, reportCount);
+
+  if (p30E.alert && p30E.msg_ar) {
+    ar.push(p30E.msg_ar); es.push(p30E.msg_es);
+    if (p30E.level === 'high')   tags.push({ar:'تحذير دخول', es:'Alerta Ent.', hot:true});
+    if (p30E.level === 'medium') tags.push({ar:'تنبيه دخول', es:'Aviso Ent.',  hot:false});
+  } else if (p30E.msg_ar && p30E.level === 'good') {
+    ar.push(p30E.msg_ar); es.push(p30E.msg_es);
+  }
+  if (p30X.alert && p30X.msg_ar) {
+    ar.push(p30X.msg_ar); es.push(p30X.msg_es);
+    if (p30X.level === 'high')   tags.push({ar:'تحذير خروج', es:'Alerta Sal.', hot:true});
+  }
+
+  if (pEntry) {
+    const ic = pEntry.trend==='up'?'📈':pEntry.trend==='down'?'📉':'➡️';
+    ar.push(ic+' دخول/20د: '+STA[pEntry.status].ar+' ('+ST[pEntry.status].war+')');
+    es.push(ic+' Entrada/20min: '+STA[pEntry.status].es+' ('+ST[pEntry.status].wes+')');
+    if(pEntry.enteringPeak){ ar.push('⏰ ذروة قادمة — تحرك الآن'); es.push('⏰ Punta próxima — sal ya'); tags.push({ar:'ذروة قادمة',es:'Punta próx.',hot:true}); }
+    if(pEntry.trend==='down'&&eS!=='green'){ ar.push('✅ سيخف قريباً'); es.push('✅ Bajará pronto'); tags.push({ar:'يخف',es:'Bajando',hot:false}); }
+  }
+  if (pExit) {
+    const ic = pExit.trend==='up'?'📈':pExit.trend==='down'?'📉':'➡️';
+    ar.push(ic+' خروج/20د: '+STA[pExit.status].ar+' ('+ST[pExit.status].war+')');
+    es.push(ic+' Salida/20min: '+STA[pExit.status].es+' ('+ST[pExit.status].wes+')');
+  }
+
+  const STA60 = {green:{ar:'🟢 عادي',es:'🟢 fluido'}, orange:{ar:'🟠 متوسط',es:'🟠 moderado'}, red:{ar:'🔴 شديد',es:'🔴 atasco'}};
+  if (p60E) {
+    const conf = p60E.confidence;
+    ar.push(`🔮 دخول/60د: ${STA60[p60E.status].ar} — ${ST[p60E.status].war} (${conf}%)`);
+    es.push(`🔮 Entrada/60min: ${STA60[p60E.status].es} — ${ST[p60E.status].wes} (${conf}%}`);
+  }
+  if (p60X) {
+    const conf = p60X.confidence;
+    ar.push(`🔮 خروج/60د: ${STA60[p60X.status].ar} — ${ST[p60X.status].war} (${conf}%)`);
+    es.push(`🔮 Salida/60min: ${STA60[p60X.status].es} — ${ST[p60X.status].wes} (${conf}%)`);
+  }
+
+  if(h>=7&&h<=9)  { tags.push({ar:'ذروة AM',es:'Punta AM',hot:true}); }
+  if(h>=16&&h<=19){ tags.push({ar:'ذروة PM',es:'Punta PM',hot:true}); }
+  if(h<6||h>=22)  { ar.push('✅ أفضل وقت'); es.push('✅ Mejor momento'); tags.push({ar:'هادئ',es:'Tranquilo',hot:false}); }
+  if(rel<0.3)     { ar.push('⚠️ بيانات محدودة'); es.push('⚠️ Datos limitados'); tags.push({ar:'بيانات محدودة',es:'Datos insuf.',hot:false}); }
+  if(!ar.length)  { ar.push('📊 الوضع مستقر'); es.push('📊 Situación estable'); }
+
+  const lines=(isAR?ar:es);
+  $('aiTxt').innerHTML =
+    lines.slice(0,2).join('<br>') +
+    (lines[2] ? '<br><span class="ai-60">'+lines.slice(2,4).join('<br>')+'</span>' : '');
+  $('aiTags').innerHTML  = tags.slice(0,3).map(t =>
+    '<span class="ai-tag '+(t.hot?'hot':'')+'">'+(isAR?t.ar:t.es)+'</span>'
+  ).join('');
+}
+
+function updatePredCard(liveStatusEntry, liveStatusExit, rel) {
+  const $ = id => document.getElementById(id);
+  if (!$('predCard')) return;
+
+  const isAR=lang!=='es';
+
+  const LVL = {
+    0: { ar:'🟢 عادي',   es:'🟢 Fluido',    color:'#00d46e', fill: 33 },
+    1: { ar:'🟠 متوسط',  es:'🟠 Moderado',  color:'#f59e0b', fill: 66 },
+    2: { ar:'🔴 شديد',   es:'🔴 Atasco',    color:'#ff3355', fill:100 }
+  };
+
+  const ST_VAL = { green:0, orange:1, red:2 };
+  const liveE  = ST_VAL[liveStatusEntry] ?? 0;
+  const liveX  = ST_VAL[liveStatusExit]  ?? 0;
+  const liveAvg = Math.round((liveE + liveX) / 2);
+
+  const at30  = Math.round((CongestionPredictor30.predictAt('entry', 30)  + CongestionPredictor30.predictAt('exit', 30))  / 2);
+  const at60  = Math.round((CongestionPredictor30.predictAt('entry', 60)  + CongestionPredictor30.predictAt('exit', 60))  / 2);
+  const at120 = Math.round((CongestionPredictor30.predictAt('entry', 120) + CongestionPredictor30.predictAt('exit', 120)) / 2);
+
+  const blend30  = rel > 0.3 ? Math.round(liveAvg * 0.5 + at30  * 0.5)
+                              : at30;
+  const blend60  = rel > 0.3 ? Math.round(liveAvg * 0.3 + at60  * 0.7)
+                              : at60;
+  const blend120 = at120; 
+
+  const clamp = v => Math.max(0, Math.min(2, v));
+
+  const dataQuality = rel > 0.5 ? (isAR ? '📡 بيانات حية + أنماط تاريخية' : '📡 Datos en vivo + patrones')
+                    : rel > 0.1 ? (isAR ? '📊 أنماط تاريخية + تقارير محدودة' : '📊 Patrones + datos parciales')
+                    :              (isAR ? '📈 أنماط تاريخية فقط' : '📈 Solo patrones históricos');
+
+  const nowLvl = LVL[clamp(liveAvg)];
+  $('predNowDot').style.background = nowLvl.color;
+  $('predNowVal').textContent = isAR ? nowLvl.ar : nowLvl.es;
+  $('predNowVal').style.color = nowLvl.color;
+  $('predNowConf').textContent = rel > 0.3 ? (isAR ? `(${Math.round(rel*100)}% ثقة)` : `(${Math.round(rel*100)}% conf.)`) : '';
+
+  const set = (id, barId, lvl) => {
+    const L = LVL[clamp(lvl)];
+    const el = $(id), bar = $(barId);
+    if (!el || !bar) return;
+    el.textContent  = isAR ? L.ar : L.es;
+    el.style.color  = L.color;
+    bar.style.width = L.fill + '%';
+    bar.style.background = L.color;
+  };
+
+  set('pred30Val',  'pred30Bar',  blend30);
+  set('pred60Val',  'pred60Bar',  blend60);
+  set('pred120Val', 'pred120Bar', blend120);
+
+  $('predSrc').textContent = dataQuality;
+}
+
+const REP_LEVELS = [
+  { min:0,  max:10,  ar:'مبتدئ',          es:'Principiante', icon:'🌱' },
+  { min:10, max:30,  ar:'مساهم',           es:'Colaborador',  icon:'🤝' },
+  { min:30, max:80,  ar:'مساهم موثوق',    es:'Confiable',    icon:'⭐' },
+  { min:80, max:Infinity, ar:'مراقب الطريق', es:'Vigilante', icon:'🛡️' }
+];
+
+function getRepLevel(pts) {
+  return REP_LEVELS.find(l => pts >= l.min && pts < l.max) || REP_LEVELS[0];
+}
+
+function getDeviceId() {
+  let id = localStorage.getItem('qnt_device_id');
+  if (!id) {
+    id = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
+    localStorage.setItem('qnt_device_id', id);
+  }
+  return id;
+}
+
+let _repData = { points: 0, reportsCount: 0 };
+
+function _loadRepLocal() {
+  try {
+    const d = localStorage.getItem('qnt_rep');
+    if (d) _repData = JSON.parse(d);
+  } catch(e) {}
+}
+
+function _saveRepLocal() {
+  try { localStorage.setItem('qnt_rep', JSON.stringify(_repData)); } catch(e) {}
+}
+
+function _updateRepUI() {
+  const pts = _repData.points || 0;
+  const lvl = getRepLevel(pts);
+  const isES = (typeof lang !== 'undefined' ? lang : 'ar') === 'es';
+  const lvlName = isES ? lvl.es : lvl.ar;
+
+  const repPts = $('repPts'); if (repPts) repPts.textContent = pts;
+  const rpPts  = $('rpPts');  if (rpPts)  rpPts.textContent  = pts;
+  const rpCnt  = $('rpCnt');  if (rpCnt)  rpCnt.textContent  = _repData.reportsCount || 0;
+  const rpLvl  = $('rpLvl');  if (rpLvl)  rpLvl.textContent  = lvlName;
+  const repLvl = $('repLevel'); if (repLvl) repLvl.textContent = lvl.icon + ' ' + lvlName;
+}
+
+async function loadReputation() {
+  _loadRepLocal();
+  _updateRepUI();
+  try {
+    const devId = getDeviceId();
+    const ref = doc(_db, 'users', devId);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const d = snap.data();
+      _repData.points       = d.points       || 0;
+      _repData.reportsCount = d.reportsCount || 0;
+      _saveRepLocal();
+      _updateRepUI();
+    }
+  } catch(e) { console.warn('[Rep] load failed:', e.message); }
+}
+
+async function addRepPoint() {
+  _repData.points       = (_repData.points || 0) + 1;
+  _repData.reportsCount = (_repData.reportsCount || 0) + 1;
+  _saveRepLocal();
+  _updateRepUI();
+  try {
+    const devId = getDeviceId();
+    const ref = doc(_db, 'users', devId);
+    await setDoc(ref, {
+      points:       _repData.points,
+      reportsCount: _repData.reportsCount,
+      level:        getRepLevel(_repData.points).ar,
+      lastReport:   serverTimestamp()
+    }, { merge: true });
+  } catch(e) { console.warn('[Rep] save failed:', e.message); }
+}
+
+function toggleRepPopup() {
+  const p = $('repPopup');
+  if (!p) return;
+  p.classList.toggle('open');
+
+  if (p.classList.contains('open')) {
+    setTimeout(() => {
+      document.addEventListener('click', function _close(e) {
+        if (!p.contains(e.target) && e.target.id !== 'repBtn') {
+          p.classList.remove('open');
+          document.removeEventListener('click', _close);
+        }
+      });
+    }, 50);
+  }
+}
+window.toggleRepPopup = toggleRepPopup;
+
+function updateDecayTimer() {
+  const COLOR = { red:'#ff3355', orange:'#ff8f00', green:'#00d46e' };
+  const NEXT  = { red:'orange', orange:'green', green:null };
+  const HOLD  = { red: 120*60*1000, orange: 60*60*1000 };
+  const LABEL_AR = { entry:'دخول سبتة', exit:'خروج الفنيدق' };
+  const NEXT_AR  = { red:'← برتقالي', orange:'← أخضر' };
+  const NEXT_ES  = { red:'← naranja', orange:'← verde' };
+
+  let anyVisible = false;
+
+  ['entry','exit'].forEach(lane => {
+    const m    = TrafficState.status ? { status: TrafficState.status(lane) } : null;
+    if (!m) return;
+    const st   = m.status;
+    const mem  = TrafficState.debug ? TrafficState.debug(lane) : null;
+    const isE  = lane === 'entry';
+    const dotId  = isE ? 'dtDotE'  : 'dtDotX';
+    const lblId  = isE ? 'dtLblE'  : 'dtLblX';
+    const timeId = isE ? 'dtTimeE' : 'dtTimeX';
+    const nextId = isE ? 'dtNextE' : 'dtNextX';
+    const rowId  = isE ? 'dtRowEntry' : 'dtRowExit';
+
+    if (st === 'green' || !NEXT[st]) {
+      const row = $(rowId); if (row) row.style.display = 'none';
+      return;
+    }
+
+    const laneData = window._TrafficMem ? window._TrafficMem[lane] : null;
+    const statusSince = laneData?.statusSince || 0;
+    const holdMs = HOLD[st] || 0;
+    const elapsed = statusSince ? Date.now() - statusSince : 0;
+    const remaining = Math.max(0, holdMs - elapsed);
+
+    const row = $(rowId); if (row) row.style.display = 'flex';
+    anyVisible = true;
+
+    const dot = $(dotId); if (dot) dot.style.background = COLOR[st];
+
+    const lbl = $(lblId);
+    if (lbl) lbl.textContent = lang === 'es'
+      ? (lane === 'entry' ? 'Entrada' : 'Salida')
+      : LABEL_AR[lane];
+
+    const timeEl = $(timeId);
+    if (timeEl) {
+      if (remaining <= 0) {
+        timeEl.textContent = '00:00';
+      } else {
+        const h = Math.floor(remaining / 3600000);
+        const m2 = Math.floor((remaining % 3600000) / 60000);
+        const s = Math.floor((remaining % 60000) / 1000);
+        timeEl.textContent = h > 0
+          ? h + ':' + String(m2).padStart(2,'0') + ':' + String(s).padStart(2,'0')
+          : String(m2).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+      }
+    }
+
+    const nextEl = $(nextId);
+    if (nextEl) nextEl.textContent = lang === 'es'
+      ? (NEXT_ES[st] || '')
+      : (NEXT_AR[st] || '');
+  });
+
+  const timer = $('decayTimer');
+  if (timer) timer.classList.toggle('hidden', !anyVisible);
+}
+
+function setTime() {
+  $('stTime').textContent = new Date().toLocaleTimeString('ar-MA',{hour:'2-digit',minute:'2-digit'});
+}
+
+function setBtn(ms) {
+  const btn = $('btnCta');
+  if (ms > 0) {
+    btn.disabled = true;
+    const s = Math.ceil(ms / 1000);
+    btn.innerHTML = '<span data-ar>📍 تحديث الحالة</span><span data-es>📍 Actualizar</span>'
+                  + '<span class="btn-sub">' + s + 's</span>';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = '<span data-ar>📍 تحديث الحالة</span><span data-es>📍 Actualizar estado</span>';
+  }
+}
+
+function showToast(msg) {
+  const t=$('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+let gpsPos = null;
+
+function minDistToRoute(lat, lon, route) {
+  let best = Infinity;
+  route.forEach(([rl, rlo]) => {
+    const d = (lat-rl)**2 + (lon-rlo)**2;
+    if (d < best) best = d;
+  });
+  return best;
+}
+
+function inBounds(lat, lon) {
+  return lat >= MAP_BOUNDS.south && lat <= MAP_BOUNDS.north
+      && lon >= MAP_BOUNDS.west  && lon <= MAP_BOUNDS.east;
+}
+
+function detectLane(lat, lon) {
+  const entryRoute = RouteCache.entry || FALLBACK_ENTRY;
+  const exitRoute  = RouteCache.exit  || EXIT_ROUTE;
+  const dEntry = minDistToRoute(lat, lon, entryRoute);
+  const dExit  = minDistToRoute(lat, lon, exitRoute);
+  return dEntry <= dExit ? 'entry' : 'exit';
+}
+
+function initGPS() {
+  if (!navigator.geolocation) { setGpsUI('unavailable'); return; }
+  setGpsUI('searching');
+  navigator.geolocation.watchPosition(
+    pos => {
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      gpsPos = pos.coords;
+
+      if (!inBounds(lat, lon)) {
+
+        setGpsUI('out');
+        showToast(lang==='es'
+          ? '❌ Estás fuera del paso fronterizo'
+          : '❌ أنت خارج نطاق المعبر');
+        return;
+      }
+
+      setGpsUI('active');
+      Map.updateGPS(lat, lon);
+
+      const lane = detectLane(lat, lon);
+      const laneMsg = lang==='es'
+        ? (lane==='entry' ? '📍 Estás en la cola de entrada' : '📍 Estás en la cola de salida')
+        : (lane==='entry' ? '📍 أنت في طابور الدخول'         : '📍 أنت في طابور الخروج');
+      setGpsUI('active', laneMsg);
+    },
+    () => setGpsUI('unavailable'),
+    {enableHighAccuracy:true, maximumAge:15000}
+  );
+}
+
+function setGpsUI(s, laneLabel) {
+  const msgs = {
+    searching:   {ar:'جاري التحديد…',           es:'Localizando…'},
+    active:      {ar: laneLabel || 'موقعك محدد ✓', es: laneLabel || 'Ubicación activa ✓'},
+    unavailable: {ar:'GPS غير متاح',             es:'GPS no disponible'},
+    out:         {ar:'خارج نطاق المعبر',         es:'Fuera del paso'}
+  };
+  const dotColor = s==='active'?'#4285f4': s==='searching'?'#ff8f00': s==='out'?'#ff3355':'#666';
+  $('gpsDot').className = 'gps-dot'+(s==='active'?' on':'');
+  $('gpsDot').style.background = dotColor;
+  const m = msgs[s] || msgs.unavailable;
+  $('gpsTxt').innerHTML = '<span data-ar>'+m.ar+'</span><span data-es>'+m.es+'</span>';
+  if (lang==='es') $('gpsTxt').querySelectorAll('[data-ar]').forEach(e=>e.style.display='none');
+  else             $('gpsTxt').querySelectorAll('[data-es]').forEach(e=>e.style.display='none');
+}
+
+let _lane = 'entry', _st = null;
+function openSheet() {
+  if (Cool.get()>0) {
+    const s = Math.ceil(Cool.get()/1000);
+    showToast(lang==='es'
+      ? '⏳ Espera ' + s + 's antes de enviar otro reporte'
+      : '⏳ يرجى الانتظار ' + s + ' ثانية قبل إرسال تقرير جديد');
+    return;
+  }
+
+  if (gpsPos) {
+    if (!nearBorder(gpsPos.latitude, gpsPos.longitude)) {
+      showToast(lang==='es'
+        ? '📍 Debes estar cerca del paso fronterizo'
+        : '📍 يجب أن تكون في منطقة سبتة أو الفنيدق');
+      return;
+    }
+  }
+  _st  = null;
+  _lane = 'entry';   
+  $('lt-e').classList.add('on');
+  $('lt-x').classList.remove('on');
+  ['g','o','r'].forEach(k => { $('opt-'+k).className='opt'; $('r-'+k).textContent=''; });
+  $('btnCf').disabled = true;
+  $('backdrop').classList.add('open');
+}
+function onBD(e) { if (e.target===$('backdrop')) $('backdrop').classList.remove('open'); }
+function pickLane(l) {
+  _lane = l;
+  $('lt-e').classList.toggle('on', l==='entry');
+  $('lt-x').classList.toggle('on', l==='exit');
+}
+function pickSt(k) {
+  _st = k;
+  const m={green:'g',orange:'o',red:'r'}, cl={green:'sg',orange:'so',red:'sr'};
+  ['g','o','r'].forEach(id => { $('opt-'+id).className='opt'; $('r-'+id).textContent=''; });
+  $('opt-'+m[k]).className = 'opt '+cl[k];
+  $('r-'+m[k]).textContent = '✓';
+  $('btnCf').disabled = false;
+}
+function runIntro() {
+  setTimeout(() => {
+    const el = document.getElementById('intro');
+    if (el) { el.classList.add('out'); setTimeout(() => el.remove(), 450); }
+  }, 2000);
+}
+
+function toggleDetails() {
+  const panel = $('detailsPanel'), arrow = $('dtlArrow');
+  const open  = panel.classList.toggle('open');
+  arrow.classList.toggle('open', open);
+}
+
+buildTL(); setTime(); 
+
+function shareStatus() {
+  const eSt = ((document.getElementById('eSt')||{}).textContent||'—').trim();
+  const xSt = ((document.getElementById('xSt')||{}).textContent||'—').trim();
+  const eWt = ((document.getElementById('eWt')||{}).textContent||'—').trim();
+  const isAR = (typeof lang !== 'undefined') ? lang !== 'es' : true;
+
+  const SITE = 'https://elbadecostore.github.io/Qantara/';
+  const now  = new Date().toLocaleTimeString(isAR?'ar-MA':'es-ES',{hour:'2-digit',minute:'2-digit'});
+  const msg  = isAR
+    ? '🌉 قنطرة — معبر باب سبتة\n━━━━━━━━━━━━━━━━\n⬆️ دخول سبتة: '+eSt+'\n⬇️ خروج الفنيدق: '+xSt+'\n⏱️ وقت الانتظار: '+eWt+'\n🕐 آخر تحديث: '+now+'\n━━━━━━━━━━━━━━━━\n📲 تابع الحالة مباشرة: '+SITE
+    : '🌉 Qantara — Paso de Ceuta\n━━━━━━━━━━━━━━━━\n⬆️ Entrada Ceuta: '+eSt+'\n⬇️ Salida Fnideq: '+xSt+'\n⏱️ Espera: '+eWt+'\n🕐 Actualizado: '+now+'\n━━━━━━━━━━━━━━━━\n📲 Seguir en directo: '+SITE;
+
+  function safeCopy(text, cb) {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(cb).catch(function(){ execCopy(text); cb(); });
+    } else { execCopy(text); cb(); }
+  }
+  function execCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+  }
+
+  var ex = document.getElementById('_shareOverlay');
+  if (ex) ex.remove();
+
+  var ov = document.createElement('div');
+  ov.id = '_shareOverlay';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.65);display:flex;align-items:flex-end;justify-content:center';
+
+  var sh = document.createElement('div');
+  sh.style.cssText = 'background:#1a1f2e;border-radius:20px 20px 0 0;padding:20px 16px 40px;width:100%;max-width:480px;display:flex;flex-direction:column;gap:10px';
+
+  var ttl = document.createElement('div');
+  ttl.style.cssText = 'font-size:12px;font-weight:700;color:rgba(255,255,255,.4);text-align:center;margin-bottom:4px;letter-spacing:.06em;text-transform:uppercase';
+  ttl.textContent = isAR ? 'مشاركة عبر' : 'Compartir vía';
+
+  var BS = 'display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;border:none;background:rgba(255,255,255,.07);color:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;width:100%';
+
+  function btn(ico, lbl, sub, fn) {
+    var b = document.createElement('button');
+    b.style.cssText = BS;
+    var subHtml = sub ? '<span style="font-size:10px;color:rgba(255,255,255,.4);display:block;font-weight:400;margin-top:1px">'+sub+'</span>' : '';
+    b.innerHTML = '<span style="font-size:22px;width:28px;text-align:center;flex-shrink:0">'+ico+'</span><span style="text-align:right;flex:1"><span style="display:block">'+lbl+'</span>'+subHtml+'</span>';
+    b.onclick = function(e){ e.stopPropagation(); ov.remove(); fn(); };
+    return b;
+  }
+
+  var wa = btn('🟢','WhatsApp','', function(){
+    window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+  });
+
+  var ig = btn('🟣','Instagram', isAR?'ينسخ النص ثم يفتح Instagram':'Copia texto y abre Instagram', function(){
+    safeCopy(msg, function(){
+      showToast && showToast(isAR ? '✅ تم النسخ — افتح Instagram والصقه' : '✅ Copiado — pégalo en Instagram');
+      setTimeout(function(){ window.open('https://www.instagram.com/','_blank'); }, 900);
+    });
+  });
+
+  var fb = btn('🔵','Facebook', isAR?'انسخ النص ثم الصقه في منشور جديد':'Copia y pega en una nueva publicación', function(){
+    safeCopy(msg, function(){
+
+      var conf = document.createElement('div');
+      conf.style.cssText = 'position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:20px';
+      var box = document.createElement('div');
+      box.style.cssText = 'background:#1a1f2e;border-radius:16px;padding:20px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px';
+
+      var h = document.createElement('div');
+      h.style.cssText = 'font-size:15px;font-weight:700;color:#fff;text-align:center';
+      h.textContent = isAR ? '📋 تم نسخ النص!' : '📋 ¡Texto copiado!';
+
+      var p = document.createElement('div');
+      p.style.cssText = 'font-size:12px;color:rgba(255,255,255,.6);text-align:center;line-height:1.6';
+      p.textContent = isAR
+        ? 'افتح Facebook واضغط على "ما الذي يدور في ذهنك؟" ثم الصق النص'
+        : 'Abre Facebook, toca "¿Qué estás pensando?" y pega el texto';
+
+      var preview = document.createElement('div');
+      preview.style.cssText = 'background:rgba(255,255,255,.05);border-radius:10px;padding:12px;font-size:11px;color:rgba(255,255,255,.5);line-height:1.7;white-space:pre-wrap;direction:rtl;text-align:right';
+      preview.textContent = msg;
+
+      var openFb = document.createElement('button');
+      openFb.style.cssText = 'padding:13px;border-radius:12px;border:none;background:#1877f2;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;width:100%';
+      openFb.textContent = isAR ? '🔵 افتح Facebook' : '🔵 Abrir Facebook';
+      openFb.onclick = function(){ conf.remove(); window.open('https://www.facebook.com/','_blank'); };
+
+      var cl = document.createElement('button');
+      cl.style.cssText = 'padding:10px;border:none;background:transparent;color:rgba(255,255,255,.3);font-size:13px;cursor:pointer;font-family:inherit;width:100%';
+      cl.textContent = isAR ? 'إغلاق' : 'Cerrar';
+      cl.onclick = function(){ conf.remove(); };
+
+      box.append(h, p, preview, openFb, cl);
+      conf.appendChild(box);
+      conf.onclick = function(e){ if(e.target===conf) conf.remove(); };
+      document.body.appendChild(conf);
+    });
+  });
+
+  var cp = btn('📋', isAR?'نسخ النص':'Copiar texto', '', function(){
+    safeCopy(msg, function(){
+      showToast && showToast(isAR?'✅ تم نسخ النص':'✅ Texto copiado');
+    });
+  });
+
+  var cn = document.createElement('button');
+  cn.style.cssText = 'padding:12px;border:none;background:transparent;color:rgba(255,255,255,.3);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;margin-top:2px';
+  cn.textContent = isAR?'إلغاء':'Cancelar';
+  cn.onclick = function(){ ov.remove(); };
+
+  sh.append(ttl, wa, ig, fb, cp, cn);
+  ov.appendChild(sh);
+  ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+  document.body.appendChild(ov);
+}
+
+window.setLang       = setLang;
+window.setZone       = setZone;
+window.openSheet     = openSheet;
+window.toggleRepPopup = toggleRepPopup;
+window.onBD          = onBD;
+window.pickLane      = pickLane;
+window.pickSt        = pickSt;
+window.submit        = submit;
+window.toggleDetails = toggleDetails;
+window.toggleDebug   = toggleDebug;
+window.shareStatus   = shareStatus;
+window.quickConfirm  = quickConfirm;
+window.toggleLangPick = toggleLangPick;
+window.pickLang       = pickLang;
+window.locateMe      = () => {
+  setGpsUI('searching');
+  showToast(lang === 'es' ? '📍 Localizando…' : '📍 جاري التحديد…');
+  if (!navigator.geolocation) { setGpsUI('unavailable'); return; }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      gpsPos = pos.coords;
+      if (!inBounds(lat, lon)) {
+        setGpsUI('out');
+        showToast(lang === 'es'
+          ? '❌ Estás fuera del paso fronterizo'
+          : '❌ أنت خارج نطاق المعبر');
+        return;
+      }
+      setGpsUI('active');
+      Map.updateGPS(lat, lon);
+      const lane    = detectLane(lat, lon);
+      const laneMsg = lang === 'es'
+        ? (lane === 'entry' ? '📍 Estás en la cola de entrada' : '📍 Estás en la cola de salida')
+        : (lane === 'entry' ? '📍 أنت في طابور الدخول' : '📍 أنت في طابور الخروج');
+      setGpsUI('active', laneMsg);
+      showToast(laneMsg);
+    },
+    () => { setGpsUI('unavailable'); showToast(lang === 'es' ? 'GPS no disponible' : 'GPS غير متاح'); },
+    { enableHighAccuracy:true, timeout:8000 }
+  );
+};
+
+Map.init();
+initGPS();
+setLang(lang);
+
+(async () => {
+
+  await TrafficState.boot();
+
+  if (!sessionStorage.getItem('qnt_intro_done')) {
+    sessionStorage.setItem('qnt_intro_done', '1');
+    runIntro();
+  } else {
+    const el = $('intro');
+    if (el) el.remove();
+  }
+})();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/Qantara/service-worker.js')
+      .then(r => console.log('[SW] registered', r.scope))
+      .catch(e => console.warn('[SW] failed', e));
+  });
+}
+
+let _installPrompt = null;
+
+window
