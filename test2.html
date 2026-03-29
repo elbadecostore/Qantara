@@ -2568,27 +2568,42 @@ let _installPrompt = null;
 (function() {
   try {
     const PRESENCE_MS = 90000; // 90 ثانية
-    const _uid = 'u_' + Math.random().toString(36).slice(2, 10);
+    // UID ثابت طوال الجلسة
+    let _uid = sessionStorage.getItem('qnt_uid');
+    if (!_uid) {
+      _uid = 'u_' + Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10);
+      sessionStorage.setItem('qnt_uid', _uid);
+    }
+    console.log('[ONLINE] my UID:', _uid);
     const _presRef = doc(_db, 'online_users', _uid);
 
     async function _ping() {
       if (document.hidden) return;
       try {
         await setDoc(_presRef, { ts: Date.now() }, { merge: true });
-      } catch(e) {}
+        console.log('[ONLINE] ping saved — doc ID:', _uid);
+      } catch(e) { console.error('[ONLINE] ping error:', e.message); }
     }
 
     async function _countOnline() {
       try {
+        console.log('[ONLINE] calling getDocs online_users...');
         const snap = await getDocs(collection(_db, 'online_users'));
+        console.log('[ONLINE] total docs in collection:', snap.size);
         const now = Date.now();
         let count = 0;
         snap.forEach(d => {
-          if (d.data().ts && (now - d.data().ts) < PRESENCE_MS) count++;
+          const ts = d.data().ts;
+          const age = ts ? Math.round((now - ts)/1000) : null;
+          console.log('[ONLINE] doc:', d.id, '| ts age:', age, 's | active:', ts && (now-ts) < PRESENCE_MS);
+          if (ts && (now - ts) < PRESENCE_MS) count++;
         });
+        console.log('[ONLINE] active count:', count);
         const el = document.getElementById('onlineCount');
         if (el) el.textContent = count;
-      } catch(e) {}
+      } catch(e) {
+        console.error('[ONLINE] _countOnline error:', e.code, e.message);
+      }
     }
 
     // ping عند الدخول وكل 60 ثانية
