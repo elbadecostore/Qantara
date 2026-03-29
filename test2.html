@@ -1584,39 +1584,31 @@ setInterval(updateDecayTimer, 1000);
   }
 
   function _watch() {
-    ['entry', 'exit'].forEach(lane => {
-
-      let _firstSnap = true;
-      onSnap(lanesRef[lane], snap => {
-        if (!snap.exists()) return;
-        const d = snap.data();
-
-        if (_firstSnap) {
-          _firstSnap = false;
-
-          if (d.savedAt && mem[lane].savedAt && d.savedAt === mem[lane].savedAt) {
-            console.log('[Q] watch ['+lane+'] first snap = boot data, skip render');
+    async function _loadLanes() {
+      if (document.hidden) return;
+      try {
+        const [sE, sX] = await Promise.all([
+          getDoc(lanesRef.entry).catch(() => null),
+          getDoc(lanesRef.exit).catch(() => null)
+        ]);
+        ['entry', 'exit'].forEach((lane, i) => {
+          const snap = i === 0 ? sE : sX;
+          if (!snap || !snap.exists()) return;
+          const d = snap.data();
+          if (d.savedAt && mem[lane].savedAt && d.savedAt <= mem[lane].savedAt) return;
+          if (d.status === mem[lane].status && d.cars && mem[lane].cars &&
+              Math.abs(d.cars - mem[lane].cars) < 2) {
+            mem[lane].savedAt = d.savedAt;
             return;
           }
-        }
-
-        if (d.savedAt && mem[lane].savedAt && d.savedAt <= mem[lane].savedAt) {
-          console.log('[Q] watch ['+lane+'] skipped (savedAt not newer)');
-          return;
-        }
-
-        if (d.status === mem[lane].status && d.cars && mem[lane].cars &&
-            Math.abs(d.cars - mem[lane].cars) < 2) {
-          mem[lane].savedAt = d.savedAt;
-          console.log('[Q] watch ['+lane+'] same status, mem updated only');
-          return;
-        }
-
-        console.log('[Q] watch ['+lane+'] ← REMOTE', d.status, '| cars:', d.cars,
-          '| savedAt:', new Date(d.savedAt||0).toLocaleTimeString());
-        render(lane, d);
-      }, e => console.warn('[Q] watch ['+lane+']:', e.message));
-    });
+          console.log('[Q] poll ['+lane+'] ←', d.status);
+          render(lane, d);
+        });
+      } catch(e) { console.warn('[Q] _loadLanes:', e.message); }
+    }
+    _loadLanes();
+    setInterval(_loadLanes, 30000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) _loadLanes(); });
   }
 
   function ingest(lane, reports, meta) {
@@ -1904,8 +1896,10 @@ function updateDebug() {
 
 function startListeners() {
 
-  try {
-    onSnapshot(reportsCol, snap => {
+  async function _loadReports() {
+    if (document.hidden) return;
+    try {
+      const snap = await getDocs(reportsCol);
       const now = Date.now(), docs = [];
       snap.forEach(d => {
         const f = d.data();
@@ -1916,8 +1910,16 @@ function startListeners() {
       setFbUI(true, snap.size);
       applyDocs(docs);
       hideLoader();
-    }, err => { console.warn('[Q] onSnapshot:', err.code); setFbUI(false); });
-  } catch(e) { console.warn('[Q] onSnapshot threw:', e.message); }
+    } catch(e) {
+      console.warn('[Q] loadReports:', e.message);
+      setFbUI(false);
+      hideLoader();
+    }
+  }
+
+  _loadReports();
+  setInterval(_loadReports, 30000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) _loadReports(); });
 
 }
 
@@ -2585,24 +2587,29 @@ let _installPrompt = null;
       } catch(e) { console.error('[ONLINE] ping error:', e.message); }
     }
 
+    let _onlineCache = { count: null, ts: 0 };
+    const ONLINE_CACHE_MS = 60000;
+
     async function _countOnline() {
+      const now = Date.now();
+      // استعمل الكاش إذا لم تمر 60 ثانية
+      if (_onlineCache.count !== null && (now - _onlineCache.ts) < ONLINE_CACHE_MS) {
+        const el = document.getElementById('onlineCount');
+        if (el) el.textContent = _onlineCache.count;
+        return;
+      }
       try {
-        console.log('[ONLINE] calling getDocs online_users...');
         const snap = await getDocs(collection(_db, 'online_users'));
-        console.log('[ONLINE] total docs in collection:', snap.size);
-        const now = Date.now();
         let count = 0;
         snap.forEach(d => {
           const ts = d.data().ts;
-          const age = ts ? Math.round((now - ts)/1000) : null;
-          console.log('[ONLINE] doc:', d.id, '| ts age:', age, 's | active:', ts && (now-ts) < PRESENCE_MS);
           if (ts && (now - ts) < PRESENCE_MS) count++;
         });
-        console.log('[ONLINE] active count:', count);
+        _onlineCache = { count, ts: now };
         const el = document.getElementById('onlineCount');
         if (el) el.textContent = count;
       } catch(e) {
-        console.error('[ONLINE] _countOnline error:', e.code, e.message);
+        console.error('[ONLINE] _countOnline error:', e.message);
       }
     }
 
