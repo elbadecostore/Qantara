@@ -108,7 +108,7 @@
 </div>
 </div>
 <div style="display:flex;align-items:center;gap:8px">
-<button id="repBtn" onclick="toggleRepPopup()">⭐ <span id="repPts">0</span></button>
+<div id="onlineChip" style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:99px;padding:4px 10px;font-size:11px;font-weight:700;color:rgba(255,255,255,.5);">👥 <span id="onlineCount">—</span></div><button id="repBtn" onclick="toggleRepPopup()">⭐ <span id="repPts">0</span></button>
 <div class="live-pill" id="livePill"><div class="ldot"></div><span id="pillTxt">—</span></div>
 </div>
 </div>
@@ -308,7 +308,7 @@ function toggleDetails() {
 <div class="toast" id="toast"></div>
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp,
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, onSnapshot, serverTimestamp,
          doc, setDoc, getDoc, onSnapshot as onSnap }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
@@ -2563,6 +2563,52 @@ if ('serviceWorker' in navigator) {
 }
 
 let _installPrompt = null;
+
+// ══ Online Presence — خفيف جداً ══
+(function() {
+  try {
+    const PRESENCE_MS = 90000; // 90 ثانية
+    const _uid = 'u_' + Math.random().toString(36).slice(2, 10);
+    const _presRef = doc(_db, 'online_users', _uid);
+
+    async function _ping() {
+      if (document.hidden) return;
+      try {
+        await setDoc(_presRef, { ts: Date.now() }, { merge: true });
+      } catch(e) {}
+    }
+
+    async function _countOnline() {
+      try {
+        const snap = await getDocs(collection(_db, 'online_users'));
+        const now = Date.now();
+        let count = 0;
+        snap.forEach(d => {
+          if (d.data().ts && (now - d.data().ts) < PRESENCE_MS) count++;
+        });
+        const el = document.getElementById('onlineCount');
+        if (el) el.textContent = count;
+      } catch(e) {}
+    }
+
+    // ping عند الدخول وكل 60 ثانية
+    _ping();
+    setInterval(_ping, 60000);
+
+    // عد كل 60 ثانية
+    _countOnline();
+    setInterval(_countOnline, 60000);
+
+    // حذف presence عند الخروج
+    window.addEventListener('beforeunload', () => {
+      try { deleteDoc(_presRef); } catch(e) {}
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) { _ping(); _countOnline(); }
+    });
+  } catch(e) {}
+})();
 
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
