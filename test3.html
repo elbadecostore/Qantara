@@ -2568,6 +2568,7 @@ setLang(lang);
           serviceWorkerRegistration: swReg
         });
         if (_token) {
+          console.log('[FCM] TOKEN:', _token);
           await setDoc(doc(_db, 'fcm_tokens', _token.slice(-20)), {
             token: _token,
             ts: Date.now(),
