@@ -2569,6 +2569,11 @@ setLang(lang);
         });
         if (_token) {
           console.log('[FCM] TOKEN:', _token);
+          // عرض token في الشاشة
+          var _td = document.createElement('div');
+          _td.style.cssText = 'position:fixed;bottom:80px;left:10px;right:10px;background:#141926;border:1px solid #1a5fff;border-radius:12px;padding:12px;z-index:9999;font-size:10px;color:#fff;word-break:break-all;';
+          _td.innerHTML = '<b style="color:#1a5fff">FCM Token:</b><br>' + _token + '<br><button onclick="navigator.clipboard.writeText(\''+_token+'\').then(()=>alert(\'Copied!\'))" style="margin-top:8px;padding:4px 12px;background:#1a5fff;border:none;border-radius:6px;color:#fff;cursor:pointer">Copy</button><button onclick="this.parentNode.remove()" style="margin-top:8px;margin-right:8px;padding:4px 12px;background:#333;border:none;border-radius:6px;color:#fff;cursor:pointer">Close</button>';
+          document.body.appendChild(_td);
           await setDoc(doc(_db, 'fcm_tokens', _token.slice(-20)), {
             token: _token,
             ts: Date.now(),
