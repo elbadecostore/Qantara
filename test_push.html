@@ -1430,6 +1430,13 @@ const TrafficState = (() => {
   }
 
   function render(lane, d) {
+    // إشعار ذكي عند تغير الحالة
+    try {
+      if (!window._prevStatus) window._prevStatus = {};
+      const prev = window._prevStatus[lane];
+      if (prev && prev !== d.status) SmartNotif.notify(d.status);
+      window._prevStatus[lane] = d.status;
+    } catch(e) {}
 
     if (!_bootReady) {
       console.warn('[Q] render() blocked — bootReady=false, lane:', lane);
@@ -2530,6 +2537,79 @@ async function toggleNotifications() {
   _updateNotifBtn();
 }
 window.toggleNotifications = toggleNotifications;
+
+// ══ نظام الإشعارات الذكي ══
+const SmartNotif = (() => {
+  const COOLDOWN_MS = 5 * 60 * 1000; // 5 دقائق
+  let _lastNotifTs = 0;
+  let _changeCount = 0;
+  let _changeTimer = null;
+
+  const MESSAGES = {
+    ar: {
+      red:    { text: '🚨 ازدحام شديد الآن — تجنب التوجه للمعبر', priority: 'high' },
+      orange: { text: '⚠️ حركة بطيئة حالياً في المعبر', priority: 'medium' },
+      green:  { text: '✅ الطريق مفتوح — وقت جيد للعبور', priority: 'low' },
+      multi:  { text: '⚠️ تغيرت حالة الازدحام عدة مرات — تحقق من التطبيق', priority: 'medium' }
+    },
+    es: {
+      red:    { text: '🚨 Atasco severo ahora — evita ir al paso', priority: 'high' },
+      orange: { text: '⚠️ Tráfico lento actualmente en el paso', priority: 'medium' },
+      green:  { text: '✅ Paso libre — buen momento para cruzar', priority: 'low' },
+      multi:  { text: '⚠️ El estado ha cambiado varias veces — revisa la app', priority: 'medium' }
+    }
+  };
+
+  function _canNotify() {
+    // لا ترسل إذا التطبيق مفتوح ومرئي
+    if (!document.hidden) return false;
+    // لا ترسل إذا الإشعارات موقفة
+    if (localStorage.getItem('notifications_enabled') !== 'true') return false;
+    // لا ترسل إذا الإذن غير ممنوح
+    if (Notification.permission !== 'granted') return false;
+    return true;
+  }
+
+  function _send(text, priority) {
+    if (!_canNotify()) return;
+    const now = Date.now();
+    // cooldown حسب الأولوية
+    const cooldown = priority === 'high' ? 60000 : COOLDOWN_MS;
+    if (now - _lastNotifTs < cooldown) return;
+    _lastNotifTs = now;
+    try {
+      new Notification('Qantara 🌉', {
+        body: text,
+        icon: '/Qantara/icon-192.png',
+        badge: '/Qantara/icon-192.png',
+        tag: 'qantara-status',
+        renotify: priority === 'high'
+      });
+    } catch(e) {}
+  }
+
+  function notify(status) {
+    if (!_canNotify()) return;
+    const l = (typeof lang !== 'undefined' ? lang : 'ar') === 'es' ? 'es' : 'ar';
+    const msgs = MESSAGES[l];
+
+    // تتبع تغييرات متعددة
+    _changeCount++;
+    clearTimeout(_changeTimer);
+    _changeTimer = setTimeout(() => { _changeCount = 0; }, COOLDOWN_MS);
+
+    if (_changeCount >= 3) {
+      _send(msgs.multi.text, msgs.multi.priority);
+      _changeCount = 0;
+      return;
+    }
+
+    const msg = msgs[status] || msgs.orange;
+    _send(msg.text, msg.priority);
+  }
+
+  return { notify };
+})();
 
 // قراءة الحالة عند التشغيل
 _updateNotifBtn();
