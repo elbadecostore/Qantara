@@ -2543,8 +2543,50 @@ Map.init();
 initGPS();
 setLang(lang);
 
+// FCM + Service Worker
+(async function() {
+  try {
+    const { getMessaging, getToken } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js');
+    const messaging = getMessaging(_app);
+    const registration = await navigator.serviceWorker.ready;
+    const currentToken = await getToken(messaging, {
+      vapidKey: 'BEOK1N--X4-hjtfoHpcdjDmqT4omCCuI_-dwTDOfixg7_lgv0Qsgdd5bJMJiYB2gTm9SQj4pJkx63vS2Vz1sy_M',
+      serviceWorkerRegistration: registration
+    });
+    if (currentToken) {
+      alert("FCM TOKEN READY");
+      console.log("TOKEN:", currentToken);
+    } else {
+      alert("NO TOKEN");
+    }
+  } catch(err) {
+    alert("TOKEN ERROR: " + err.message);
+    console.error(err);
+  }
+})();
+
 navigator.serviceWorker.getRegistrations().then(regs => {
   alert("SW REGISTRATIONS: " + regs.length);
+});
+
+// FCM + Service Worker
+const { getMessaging, getToken } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js');
+const _messaging = getMessaging(_app);
+navigator.serviceWorker.ready.then(registration => {
+  getToken(_messaging, {
+    vapidKey: 'BEOK1N--X4-hjtfoHpcdjDmqT4omCCuI_-dwTDOfixg7_lgv0Qsgdd5bJMJiYB2gTm9SQj4pJkx63vS2Vz1sy_M',
+    serviceWorkerRegistration: registration
+  }).then(currentToken => {
+    if (currentToken) {
+      alert("FCM TOKEN READY");
+      console.log("TOKEN:", currentToken);
+    } else {
+      alert("NO TOKEN");
+    }
+  }).catch(err => {
+    alert("TOKEN ERROR: " + err.message);
+    console.error(err);
+  });
 });
 
 (async () => {
