@@ -108,7 +108,7 @@
 </div>
 </div>
 <div style="display:flex;align-items:center;gap:8px">
-<div id="onlineChip" style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:99px;padding:4px 10px;font-size:11px;font-weight:700;color:rgba(255,255,255,.5);">👥 <span id="onlineCount">—</span></div><button id="repBtn" onclick="toggleRepPopup()">⭐ <span id="repPts">0</span></button>
+<div id="onlineChip" style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:99px;padding:4px 10px;font-size:11px;font-weight:700;color:rgba(255,255,255,.5);">👥 <span id="onlineCount">—</span></div><button id="repBtn" onclick="toggleRepPopup()">⭐ <span id="repPts">0</span></button><button id="notifBtn" onclick="toggleNotifications()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:99px;padding:4px 10px;cursor:pointer;font-size:14px;color:rgba(255,255,255,.8);transition:background .2s" title="Notifications">🔔</button>
 <div class="live-pill" id="livePill"><div class="ldot"></div><span id="pillTxt">—</span></div>
 </div>
 </div>
@@ -2496,6 +2496,44 @@ function shareStatus() {
   document.body.appendChild(ov);
 }
 
+// ══ نظام تحكم الإشعارات ══
+function _updateNotifBtn() {
+  var btn = document.getElementById('notifBtn');
+  if (!btn) return;
+  var enabled = localStorage.getItem('notifications_enabled') === 'true'
+    && Notification.permission === 'granted';
+  btn.textContent = enabled ? '🔔' : '🔕';
+  btn.style.opacity = enabled ? '1' : '0.5';
+}
+
+async function toggleNotifications() {
+  var enabled = localStorage.getItem('notifications_enabled') === 'true'
+    && Notification.permission === 'granted';
+
+  if (enabled) {
+    // إيقاف
+    localStorage.setItem('notifications_enabled', 'false');
+    showToast(lang === 'es' ? '🔕 Notificaciones desactivadas' : '🔕 تم إيقاف الإشعارات');
+  } else {
+    // تفعيل — طلب الإذن
+    var perm = Notification.permission;
+    if (perm === 'default') {
+      perm = await Notification.requestPermission();
+    }
+    if (perm === 'granted') {
+      localStorage.setItem('notifications_enabled', 'true');
+      showToast(lang === 'es' ? '🔔 Notificaciones activadas' : '🔔 تم تفعيل الإشعارات');
+    } else {
+      showToast(lang === 'es' ? '❌ Permiso denegado' : '❌ تم رفض الإذن');
+    }
+  }
+  _updateNotifBtn();
+}
+window.toggleNotifications = toggleNotifications;
+
+// قراءة الحالة عند التشغيل
+_updateNotifBtn();
+
 window.setLang       = setLang;
 window.setZone       = setZone;
 window.openSheet     = openSheet;
@@ -2629,7 +2667,10 @@ navigator.serviceWorker.ready.then(registration => {
         }
         onMessage(_msg, payload => {
           const n = payload.notification || {};
-          if (n.title) new Notification(n.title, { body: n.body || '', icon: '/Qantara/icon-192.png' });
+          var _notifEnabled = localStorage.getItem('notifications_enabled') === 'true';
+          if (n.title && _notifEnabled && Notification.permission === 'granted') {
+            new Notification(n.title, { body: n.body || '', icon: '/Qantara/icon-192.png' });
+          }
         });
       }
     }
