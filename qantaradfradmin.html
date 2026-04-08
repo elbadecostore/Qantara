@@ -1,1655 +1,889 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Qantara Admin — لوحة التحكم</title>
-
-<!-- Firebase Compat SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js"></script>
-
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Qantara Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* ═══════════════════════════════════════════
-   TOKENS & RESET
-═══════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+Arabic:wght@300;400;600;700&family=Rajdhani:wght@500;600;700&display=swap');
+:root{
+  --bg:#06080f;--bg2:#090c18;--surf:#0f1422;--card:#131926;--card2:#171e2d;
+  --b1:rgba(255,255,255,.07);--b2:rgba(255,255,255,.13);
+  --txt:#e8ecf8;--mut:rgba(232,236,248,.45);--dim:rgba(232,236,248,.2);
+  --grn:#00d46e;--org:#ff8f00;--red:#ff3355;--blu:#2563ff;--cyn:#00c4ff;--gld:#ffd700;
+  --grn-b:rgba(0,212,110,.09);--org-b:rgba(255,143,0,.09);
+  --red-b:rgba(255,51,85,.09);--blu-b:rgba(37,99,255,.09);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Sora',sans-serif;background:var(--bg);color:var(--txt);overflow:hidden}
 
-:root {
-  --bg-void:     #080c10;
-  --bg-base:     #0d1117;
-  --bg-card:     #111820;
-  --bg-raised:   #161e28;
-  --bg-hover:    #1c2733;
+/* LOGIN */
+#loginWrap{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center}
+.login-card{width:360px;padding:40px;background:var(--surf);border:1px solid var(--b2);border-radius:20px;box-shadow:0 40px 80px rgba(0,0,0,.7)}
+.login-card h1{font-size:26px;font-weight:800;letter-spacing:-.02em;text-align:center;margin-bottom:4px}
+.login-card p{font-size:10px;color:var(--mut);letter-spacing:.18em;text-transform:uppercase;text-align:center;margin-bottom:28px}
+.login-card input{width:100%;padding:12px 16px;background:var(--card);border:1px solid var(--b2);border-radius:10px;color:var(--txt);font-family:'Sora';font-size:14px;font-weight:600;outline:none;margin-bottom:12px;transition:border-color .2s}
+.login-card input:focus{border-color:var(--blu)}
+.login-card button{width:100%;padding:13px;background:linear-gradient(135deg,#2563ff,#1a4ff0);border:none;border-radius:10px;color:#fff;font-family:'Sora';font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.login-card button:hover{opacity:.88}
+.login-err{font-size:12px;color:var(--red);text-align:center;margin-top:10px;min-height:16px}
 
-  --border:      #1e2d3d;
-  --border-glow: #2a4060;
+/* LAYOUT */
+#dash{display:none;height:100vh;flex-direction:row}
+.sidebar{width:216px;flex-shrink:0;background:var(--surf);border-right:1px solid var(--b1);display:flex;flex-direction:column;padding:18px 0}
+.s-logo{padding:0 18px 18px;border-bottom:1px solid var(--b1);margin-bottom:10px}
+.s-logo h2{font-size:18px;font-weight:800;letter-spacing:-.02em}
+.s-logo span{font-size:9px;color:var(--mut);letter-spacing:.18em;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;cursor:pointer;font-size:12px;font-weight:600;color:var(--mut);transition:all .15s;border-right:2px solid transparent;user-select:none}
+.nav-item:hover{color:var(--txt);background:rgba(255,255,255,.03)}
+.nav-item.on{color:var(--txt);background:var(--blu-b);border-right-color:var(--blu)}
+.nav-ico{font-size:15px;width:20px;text-align:center}
+.s-foot{margin-top:auto;padding:14px 18px;border-top:1px solid var(--b1)}
+.live-dot{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--grn)}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:blink 1.5s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.s-clock{font-size:10px;color:var(--dim);font-family:'JetBrains Mono';margin-top:5px}
 
-  --text-primary:   #e8edf2;
-  --text-secondary: #7a9ab8;
-  --text-muted:     #3d5168;
+.main{flex:1;overflow-y:auto;min-height:0;background:var(--bg2)}
+.main::-webkit-scrollbar{width:4px}
+.main::-webkit-scrollbar-thumb{background:var(--b2);border-radius:99px}
 
-  --amber:    #f0a500;
-  --amber-dim: #7a5200;
-  --green:    #00e676;
-  --green-dim: #004d26;
-  --orange:   #ff6d00;
-  --orange-dim:#7a3400;
-  --red:      #ff1744;
-  --red-dim:  #7a0c20;
-  --blue:     #2979ff;
-  --blue-dim: #0d2b7a;
-  --cyan:     #00bcd4;
+.page{display:none;padding:22px}
+.page.on{display:block}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
+.pt{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.ps{font-size:11px;color:var(--mut);margin-top:3px}
 
-  --status-green:  #00e676;
-  --status-orange: #ff9100;
-  --status-red:    #ff1744;
+/* GRID */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
 
-  --radius: 6px;
-  --mono: 'IBM Plex Mono', monospace;
-  --sans: 'IBM Plex Sans Arabic', sans-serif;
-  --display: 'Rajdhani', sans-serif;
-}
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--b1);border-radius:13px;padding:14px}
+.kcard{background:var(--card);border:1px solid var(--b1);border-radius:13px;padding:14px;position:relative;overflow:hidden}
+.kcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0}
+.kcard.k-blu::before{background:var(--blu)}
+.kcard.k-grn::before{background:var(--grn)}
+.kcard.k-org::before{background:var(--org)}
+.kcard.k-cyn::before{background:var(--cyn)}
+.kcard.k-red::before{background:var(--red)}
+.k-ico{font-size:20px;margin-bottom:8px}
+.k-val{font-size:28px;font-weight:800;letter-spacing:-.03em;font-family:'JetBrains Mono';line-height:1}
+.k-lbl{font-size:10px;color:var(--mut);margin-top:5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.k-sub{font-size:10px;margin-top:6px;font-weight:700}
+.k-sub.up{color:var(--grn)} .k-sub.neutral{color:var(--mut)} .k-sub.dn{color:var(--red)}
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 14px; }
-body {
-  background: var(--bg-void);
-  color: var(--text-primary);
-  font-family: var(--sans);
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-button { cursor: pointer; border: none; outline: none; font-family: inherit; }
-input, select { font-family: inherit; outline: none; }
+/* SKELETON */
+.skel{background:linear-gradient(90deg,var(--card) 25%,var(--card2) 50%,var(--card) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-/* ═══════════════════════════════════════════
-   SCROLLBAR
-═══════════════════════════════════════════ */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: var(--bg-base); }
-::-webkit-scrollbar-thumb { background: var(--border-glow); border-radius: 2px; }
+/* LANE STATUS */
+.ls{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--card2);border:1px solid var(--b1);border-radius:10px;margin-bottom:8px}
+.ls-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.ls-dot.grn{background:var(--grn);box-shadow:0 0 8px rgba(0,212,110,.5)}
+.ls-dot.org{background:var(--org);box-shadow:0 0 8px rgba(255,143,0,.5)}
+.ls-dot.red{background:var(--red);box-shadow:0 0 8px rgba(255,51,85,.5)}
+.ls-name{font-size:12px;font-weight:700}
+.ls-val{margin-right:auto;font-size:11px;color:var(--mut)}
+.ls-time{font-size:10px;color:var(--dim);font-family:'JetBrains Mono'}
 
-/* ═══════════════════════════════════════════
-   TOP BAR
-═══════════════════════════════════════════ */
-#topbar {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  height: 54px;
-  background: rgba(8,12,16,0.96);
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center;
-  padding: 0 16px;
-  gap: 12px;
-  backdrop-filter: blur(12px);
-}
-#topbar .logo {
-  font-family: var(--display);
-  font-size: 22px; font-weight: 700;
-  letter-spacing: 3px;
-  color: var(--amber);
-  text-transform: uppercase;
-}
-#topbar .logo span { color: var(--text-secondary); font-size: 11px; font-weight: 500; }
-.topbar-spacer { flex: 1; }
-.conn-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--text-muted);
-  transition: background .3s;
-}
-.conn-dot.live { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse-dot 2s infinite; }
-.conn-dot.error { background: var(--red); }
-@keyframes pulse-dot {
-  0%,100% { opacity: 1; } 50% { opacity: .4; }
-}
-#conn-label { font-family: var(--mono); font-size: 11px; color: var(--text-secondary); }
+/* FEED */
+.feed{display:flex;flex-direction:column;gap:7px;max-height:340px;overflow-y:auto}
+.fi{display:flex;align-items:center;gap:9px;padding:9px 12px;background:var(--card2);border:1px solid var(--b1);border-radius:9px;font-size:12px;animation:fadeSlide .3s ease}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.fi-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.fi-dot.grn{background:var(--grn)} .fi-dot.org{background:var(--org)} .fi-dot.red{background:var(--red)}
+.fi-lane{font-weight:700}
+.fi-st{font-weight:700;font-size:11px}
+.fi-ago{margin-right:auto;color:var(--dim);font-family:'JetBrains Mono';font-size:10px}
+.fi-pts{color:var(--gld);font-weight:700;font-size:10px}
 
-.topbar-btn {
-  padding: 6px 14px;
-  border-radius: var(--radius);
-  font-family: var(--mono); font-size: 12px; font-weight: 600;
-  letter-spacing: 1px; text-transform: uppercase;
-  transition: all .2s;
-}
-#btn-emergency {
-  background: linear-gradient(135deg, #7a0c20, #3d0610);
-  color: var(--red);
-  border: 1px solid var(--red-dim);
-}
-#btn-emergency:hover { background: linear-gradient(135deg, #b01030, #7a0c20); border-color: var(--red); }
-#btn-emergency.active {
-  background: var(--red);
-  color: #fff;
-  box-shadow: 0 0 20px rgba(255,23,68,.6);
-  animation: emergency-pulse 1s infinite;
-}
-@keyframes emergency-pulse {
-  0%,100%{ box-shadow: 0 0 20px rgba(255,23,68,.6); }
-  50%{ box-shadow: 0 0 40px rgba(255,23,68,.9); }
-}
+/* CHART */
+.chart-wrap{background:var(--card);border:1px solid var(--b1);border-radius:13px;padding:14px;margin-bottom:16px}
+.chart-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.chart-title{font-size:13px;font-weight:700}
+.chart-tabs{display:flex;gap:3px}
+.ctab{padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;color:var(--mut);background:transparent;border:1px solid transparent;transition:all .15s}
+.ctab.on{background:var(--blu-b);color:var(--blu);border-color:rgba(37,99,255,.3)}
+.chart-area{height:150px;position:relative}
+.chart-svg{width:100%;height:100%}
+.chart-tooltip{position:absolute;background:rgba(15,20,34,.95);border:1px solid var(--b2);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;pointer-events:none;display:none;white-space:nowrap;z-index:10}
 
-#btn-notif {
-  background: var(--bg-raised);
-  color: var(--text-secondary);
-  border: 1px solid var(--border);
-}
-#btn-notif:hover { border-color: var(--amber); color: var(--amber); }
-#btn-notif.granted { color: var(--green); border-color: var(--green-dim); }
+/* CONTROLS */
+.sbtn-row{display:flex;gap:8px;margin-bottom:12px}
+.sbtn{flex:1;padding:12px 8px;border-radius:11px;border:2px solid transparent;cursor:pointer;font-family:'Sora';font-size:12px;font-weight:700;transition:all .2s;text-align:center}
+.sbtn.s-grn{background:var(--grn-b);border-color:rgba(0,212,110,.2);color:var(--grn)}
+.sbtn.s-grn.on,.sbtn.s-grn:hover{background:rgba(0,212,110,.18);border-color:var(--grn);box-shadow:0 0 18px rgba(0,212,110,.2)}
+.sbtn.s-org{background:var(--org-b);border-color:rgba(255,143,0,.2);color:var(--org)}
+.sbtn.s-org.on,.sbtn.s-org:hover{background:rgba(255,143,0,.18);border-color:var(--org);box-shadow:0 0 18px rgba(255,143,0,.2)}
+.sbtn.s-red{background:var(--red-b);border-color:rgba(255,51,85,.2);color:var(--red)}
+.sbtn.s-red.on,.sbtn.s-red:hover{background:rgba(255,51,85,.18);border-color:var(--red);box-shadow:0 0 18px rgba(255,51,85,.2)}
 
-.clock {
-  font-family: var(--mono); font-size: 13px; color: var(--amber);
-  letter-spacing: 2px;
-}
+/* TOGGLE */
+.trow{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--b1)}
+.trow:last-child{border-bottom:none}
+.tlbl{font-size:13px;font-weight:600}
+.tsub{font-size:11px;color:var(--mut);margin-top:2px}
+.toggle{width:38px;height:21px;background:var(--b2);border-radius:99px;position:relative;cursor:pointer;transition:background .25s;flex-shrink:0}
+.toggle.on{background:var(--blu)}
+.toggle::after{content:'';position:absolute;top:2.5px;left:2.5px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .25s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.toggle.on::after{transform:translateX(17px)}
 
-/* ═══════════════════════════════════════════
-   MAIN LAYOUT
-═══════════════════════════════════════════ */
-#app {
-  margin-top: 54px;
-  padding: 14px;
-  display: grid;
-  grid-template-columns: 280px 1fr 300px;
-  grid-template-rows: auto auto auto;
-  gap: 12px;
-  max-width: 1600px;
-  margin-left: auto; margin-right: auto;
-}
+/* BTN */
+.btn{padding:8px 16px;border-radius:8px;cursor:pointer;font-family:'Sora';font-size:12px;font-weight:700;transition:all .15s;border:none}
+.btn-pri{background:var(--blu);color:#fff}
+.btn-pri:hover{background:#1a4ff0}
+.btn-dng{background:var(--red-b);color:var(--red);border:1px solid rgba(255,51,85,.25)}
+.btn-dng:hover{background:rgba(255,51,85,.16)}
+.btn-gst{background:var(--card2);color:var(--txt);border:1px solid var(--b2)}
 
-/* ═══════════════════════════════════════════
-   CARDS
-═══════════════════════════════════════════ */
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-.card-head {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; gap: 8px;
-}
-.card-head .ch-icon { font-size: 14px; }
-.card-head .ch-title {
-  font-family: var(--mono); font-size: 12px; font-weight: 600;
-  letter-spacing: 1.5px; text-transform: uppercase;
-  color: var(--amber);
-}
-.card-head .ch-sub { font-size: 11px; color: var(--text-muted); margin-right: auto; }
-.card-head .ch-badge {
-  font-family: var(--mono); font-size: 10px;
-  padding: 2px 7px; border-radius: 2px;
-  background: var(--bg-raised); color: var(--text-secondary);
-}
-.card-body { padding: 14px; }
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:8px 12px;text-align:right;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--b1)}
+td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.03)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700}
+.bg-grn{background:var(--grn-b);color:var(--grn)}
+.bg-org{background:var(--org-b);color:var(--org)}
+.bg-red{background:var(--red-b);color:var(--red)}
 
-/* ═══════════════════════════════════════════
-   STATUS PANELS (Left Column)
-═══════════════════════════════════════════ */
-#col-left { grid-column: 1; grid-row: 1 / 4; display: flex; flex-direction: column; gap: 12px; }
+/* MISC */
+.sec{font-size:10px;font-weight:700;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+.divider{height:1px;background:var(--b1);margin:14px 0}
+.override-bar{display:none;padding:9px 13px;border-radius:9px;background:rgba(255,143,0,.1);border:1px solid rgba(255,143,0,.3);color:var(--org);font-size:12px;font-weight:700;margin-bottom:12px;align-items:center;gap:8px}
+.override-bar.on{display:flex}
+.notif-ta{width:100%;padding:11px;background:var(--card2);border:1px solid var(--b2);border-radius:9px;color:var(--txt);font-family:'Sora';font-size:13px;resize:none;outline:none;height:75px}
+.notif-ta:focus{border-color:var(--blu)}
+.notif-in{width:100%;padding:10px 12px;background:var(--card2);border:1px solid var(--b2);border-radius:9px;color:var(--txt);font-family:'Sora';font-size:13px;font-weight:600;outline:none;margin-bottom:8px}
+.notif-in:focus{border-color:var(--blu)}
+.donut-wrap{display:flex;align-items:center;gap:16px}
+.donut-leg{display:flex;flex-direction:column;gap:7px}
+.dleg{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600}
+.ddot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.mini-bars{display:flex;align-items:flex-end;gap:2px;height:46px}
+.mbar{flex:1;border-radius:2px 2px 0 0;min-height:2px;background:var(--blu);opacity:.55;cursor:pointer;transition:opacity .15s}
+.mbar:hover{opacity:1}
+.mbar.peak{background:var(--red);opacity:.75}
 
-.lane-widget {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
-  display: flex; flex-direction: column; gap: 8px;
-}
-.lane-widget:last-child { border-bottom: none; }
-.lane-header { display: flex; justify-content: space-between; align-items: center; }
-.lane-name { font-family: var(--mono); font-size: 11px; color: var(--text-secondary); letter-spacing: 1px; }
-.lane-status-badge {
-  font-family: var(--mono); font-size: 12px; font-weight: 600;
-  padding: 3px 10px; border-radius: 3px;
-  letter-spacing: 1px; text-transform: uppercase;
-}
-.badge-green  { background: var(--green-dim);  color: var(--green);  }
-.badge-orange { background: var(--orange-dim); color: var(--orange); }
-.badge-red    { background: var(--red-dim);    color: var(--red);    }
-.badge-grey   { background: #1e2d3d; color: var(--text-muted); }
+/* TOAST */
+#toast{position:fixed;top:18px;right:18px;z-index:99999;background:#141e30;border:1px solid var(--b2);border-radius:11px;padding:11px 16px;font-size:12px;font-weight:600;color:var(--txt);box-shadow:0 8px 28px rgba(0,0,0,.5);transform:translateY(-140%);transition:transform .35s cubic-bezier(.16,1,.3,1);max-width:300px;pointer-events:none}
+#toast.show{transform:translateY(0)}
 
-.lane-meta { display: flex; gap: 12px; }
-.lane-meta-item { font-size: 11px; color: var(--text-muted); }
-.lane-meta-item strong { color: var(--text-secondary); }
-
-.lane-bar { height: 3px; border-radius: 2px; background: var(--border); overflow: hidden; }
-.lane-bar-fill { height: 100%; border-radius: 2px; transition: width .5s, background .5s; }
-
-/* Override controls */
-.override-section { padding: 14px; }
-.override-toggle {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 12px;
-}
-.override-label { font-family: var(--mono); font-size: 12px; color: var(--text-secondary); }
-
-.toggle-switch { position: relative; width: 44px; height: 22px; }
-.toggle-switch input { display: none; }
-.toggle-slider {
-  position: absolute; inset: 0;
-  background: var(--bg-raised); border: 1px solid var(--border);
-  border-radius: 11px; cursor: pointer; transition: .3s;
-}
-.toggle-slider::before {
-  content: ''; position: absolute;
-  width: 16px; height: 16px; border-radius: 50%;
-  background: var(--text-muted);
-  top: 2px; left: 2px; transition: .3s;
-}
-.toggle-switch input:checked + .toggle-slider { background: var(--amber-dim); border-color: var(--amber); }
-.toggle-switch input:checked + .toggle-slider::before { background: var(--amber); transform: translateX(22px); }
-
-.override-controls { display: flex; flex-direction: column; gap: 8px; }
-.override-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.override-row label { font-size: 12px; color: var(--text-secondary); }
-
-.status-select {
-  background: var(--bg-raised); border: 1px solid var(--border);
-  color: var(--text-primary); font-family: var(--mono); font-size: 11px;
-  padding: 4px 8px; border-radius: var(--radius);
-  flex: 1;
-}
-.status-select:focus { border-color: var(--amber); }
-
-.btn-apply-override {
-  width: 100%; padding: 9px;
-  background: linear-gradient(135deg, var(--amber-dim), #3d2900);
-  border: 1px solid var(--amber-dim);
-  color: var(--amber); font-family: var(--mono); font-size: 12px;
-  font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
-  border-radius: var(--radius); margin-top: 8px;
-  transition: all .2s;
-}
-.btn-apply-override:hover { background: var(--amber); color: var(--bg-void); border-color: var(--amber); }
-
-/* Stats mini */
-.stats-row { display: flex; gap: 8px; }
-.stat-mini {
-  flex: 1; background: var(--bg-raised); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 10px; text-align: center;
-}
-.stat-mini .sm-val {
-  font-family: var(--mono); font-size: 22px; font-weight: 600; color: var(--amber);
-  line-height: 1;
-}
-.stat-mini .sm-lbl { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
-.stat-mini .sm-sub { font-size: 9px; color: var(--text-muted); opacity: .7; }
-
-/* ═══════════════════════════════════════════
-   CENTER COLUMN
-═══════════════════════════════════════════ */
-#col-center { grid-column: 2; display: flex; flex-direction: column; gap: 12px; }
-
-/* KPI row */
-.kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
-.kpi-card {
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 12px 14px;
-  position: relative; overflow: hidden;
-}
-.kpi-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-}
-.kpi-card.kpi-green::before  { background: var(--green); }
-.kpi-card.kpi-amber::before  { background: var(--amber); }
-.kpi-card.kpi-blue::before   { background: var(--blue); }
-.kpi-card.kpi-red::before    { background: var(--red); }
-.kpi-icon { font-size: 18px; margin-bottom: 6px; opacity: .7; }
-.kpi-val { font-family: var(--mono); font-size: 28px; font-weight: 700; line-height: 1; }
-.kpi-card.kpi-green  .kpi-val { color: var(--green);  }
-.kpi-card.kpi-amber  .kpi-val { color: var(--amber);  }
-.kpi-card.kpi-blue   .kpi-val { color: var(--blue);   }
-.kpi-card.kpi-red    .kpi-val { color: var(--red);    }
-.kpi-lbl { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
-.kpi-delta { font-family: var(--mono); font-size: 10px; margin-top: 4px; color: var(--text-muted); }
-
-/* Live feed */
-#feed-list {
-  list-style: none; max-height: 320px; overflow-y: auto;
-  display: flex; flex-direction: column; gap: 4px;
-}
-.feed-item {
-  display: flex; align-items: flex-start; gap: 10px;
-  padding: 8px 10px; border-radius: 4px;
-  background: var(--bg-raised); border: 1px solid var(--border);
-  animation: feed-in .3s ease;
-  font-size: 12px;
-}
-@keyframes feed-in {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.feed-dot {
-  width: 7px; height: 7px; border-radius: 50%; margin-top: 3px; flex-shrink: 0;
-}
-.feed-dot.green  { background: var(--green); }
-.feed-dot.orange { background: var(--orange); }
-.feed-dot.red    { background: var(--red); }
-.feed-dot.grey   { background: var(--text-muted); }
-.feed-body { flex: 1; }
-.feed-body .fb-main { color: var(--text-primary); }
-.feed-body .fb-meta { color: var(--text-muted); font-family: var(--mono); font-size: 10px; margin-top: 2px; }
-.feed-conf {
-  font-family: var(--mono); font-size: 10px; color: var(--text-muted);
-  white-space: nowrap;
-}
-
-/* Presence bar */
-.presence-bar {
-  display: flex; align-items: center; gap: 6px;
-  padding: 6px 14px;
-  border-bottom: 1px solid var(--border);
-  font-family: var(--mono); font-size: 11px; color: var(--text-secondary);
-}
-.presence-bar .pb-count { color: var(--amber); font-weight: 600; }
-
-/* ═══════════════════════════════════════════
-   RIGHT COLUMN
-═══════════════════════════════════════════ */
-#col-right { grid-column: 3; grid-row: 1 / 4; display: flex; flex-direction: column; gap: 12px; }
-
-/* Chart tabs */
-.chart-tabs { display: flex; border-bottom: 1px solid var(--border); }
-.chart-tab {
-  flex: 1; padding: 8px 4px; text-align: center;
-  font-family: var(--mono); font-size: 10px; letter-spacing: .5px;
-  color: var(--text-muted); cursor: pointer; background: none;
-  border-bottom: 2px solid transparent; transition: all .2s;
-}
-.chart-tab.active { color: var(--amber); border-bottom-color: var(--amber); }
-.chart-panel { display: none; padding: 12px; }
-.chart-panel.active { display: block; }
-canvas { width: 100% !important; }
-
-/* Top users */
-.user-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 12px; border-bottom: 1px solid var(--border);
-}
-.user-row:last-child { border-bottom: none; }
-.user-rank {
-  font-family: var(--mono); font-size: 11px; color: var(--text-muted);
-  width: 20px; text-align: center;
-}
-.user-avatar {
-  width: 30px; height: 30px; border-radius: 50%;
-  background: var(--bg-raised); border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px;
-}
-.user-info { flex: 1; }
-.user-info .ui-name { font-size: 12px; color: var(--text-primary); }
-.user-info .ui-id { font-family: var(--mono); font-size: 9px; color: var(--text-muted); }
-.user-conf {
-  font-family: var(--mono); font-size: 12px; color: var(--amber); font-weight: 600;
-}
-.user-conf span { font-size: 9px; color: var(--text-muted); font-weight: 400; }
-
-/* Activity heatmap mini */
-.heatmap-grid {
-  display: grid; grid-template-columns: repeat(24, 1fr);
-  gap: 2px; padding: 12px;
-}
-.hmap-cell {
-  aspect-ratio: 1; border-radius: 2px;
-  background: var(--bg-raised); border: 1px solid var(--border);
-  transition: background .3s;
-}
-.hmap-cell[data-level="1"] { background: #003d20; border-color: #005230; }
-.hmap-cell[data-level="2"] { background: #006640; border-color: #008050; }
-.hmap-cell[data-level="3"] { background: #00aa60; border-color: var(--green); }
-.hmap-cell[data-level="4"] { background: var(--green); border-color: var(--green); box-shadow: 0 0 4px var(--green); }
-.hmap-labels { display: flex; justify-content: space-between; padding: 0 12px 8px; font-family: var(--mono); font-size: 9px; color: var(--text-muted); }
-
-/* ═══════════════════════════════════════════
-   EMERGENCY OVERLAY
-═══════════════════════════════════════════ */
-#emergency-modal {
-  display: none; position: fixed; inset: 0; z-index: 999;
-  background: rgba(0,0,0,.85); backdrop-filter: blur(8px);
-  align-items: center; justify-content: center;
-}
-#emergency-modal.open { display: flex; }
-.emergency-box {
-  background: #0d0608; border: 2px solid var(--red);
-  border-radius: 10px; padding: 32px; max-width: 400px; width: 90%;
-  text-align: center; box-shadow: 0 0 60px rgba(255,23,68,.3);
-}
-.emergency-box .em-icon { font-size: 48px; margin-bottom: 16px; animation: em-shake .5s infinite; }
-@keyframes em-shake {
-  0%,100%{ transform: rotate(-5deg); } 50%{ transform: rotate(5deg); }
-}
-.emergency-box h2 {
-  font-family: var(--mono); font-size: 18px; color: var(--red);
-  letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;
-}
-.emergency-box p { font-size: 13px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.7; }
-.em-btns { display: flex; gap: 12px; }
-.em-btn-cancel {
-  flex: 1; padding: 12px; border-radius: var(--radius);
-  background: var(--bg-raised); border: 1px solid var(--border);
-  color: var(--text-secondary); font-family: var(--mono); font-size: 13px;
-  transition: all .2s;
-}
-.em-btn-cancel:hover { border-color: var(--text-secondary); color: var(--text-primary); }
-.em-btn-confirm {
-  flex: 1; padding: 12px; border-radius: var(--radius);
-  background: var(--red); color: #fff;
-  font-family: var(--mono); font-size: 13px; font-weight: 700;
-  letter-spacing: 1px; text-transform: uppercase;
-  transition: all .2s;
-}
-.em-btn-confirm:hover { background: #ff4060; box-shadow: 0 0 20px rgba(255,23,68,.5); }
-
-/* ═══════════════════════════════════════════
-   TOAST
-═══════════════════════════════════════════ */
-#toast-container {
-  position: fixed; bottom: 20px; left: 20px; z-index: 9999;
-  display: flex; flex-direction: column-reverse; gap: 8px;
-  pointer-events: none;
-}
-.toast {
-  padding: 10px 16px; border-radius: var(--radius);
-  font-family: var(--mono); font-size: 12px;
-  border-left: 3px solid var(--amber);
-  background: rgba(13,17,23,.96); color: var(--text-primary);
-  backdrop-filter: blur(12px);
-  animation: toast-in .3s ease, toast-out .3s ease 3.7s forwards;
-  max-width: 320px;
-}
-.toast.success { border-left-color: var(--green); }
-.toast.error   { border-left-color: var(--red); }
-@keyframes toast-in  { from { opacity:0; transform: translateX(-10px); } to { opacity:1; transform:translateX(0); } }
-@keyframes toast-out { from { opacity:1; } to { opacity:0; } }
-
-/* ═══════════════════════════════════════════
-   LOG OVERLAY (debug)
-═══════════════════════════════════════════ */
-#debug-log {
-  position: fixed; bottom: 0; right: 0; width: 340px; max-height: 200px;
-  background: rgba(8,12,16,.95); border-top: 1px solid var(--border);
-  border-left: 1px solid var(--border);
-  overflow-y: auto; font-family: var(--mono); font-size: 10px;
-  color: var(--text-muted); padding: 8px; z-index: 500;
-  display: none;
-}
-#debug-log.visible { display: block; }
-
-/* ═══════════════════════════════════════════
-   RESPONSIVE
-═══════════════════════════════════════════ */
-@media (max-width: 1100px) {
-  #app { grid-template-columns: 260px 1fr; }
-  #col-right { grid-column: 1 / 3; grid-row: 4; flex-direction: row; flex-wrap: wrap; }
-  #col-right .card { flex: 1 1 280px; }
-}
-@media (max-width: 720px) {
-  #app { grid-template-columns: 1fr; padding: 8px; gap: 8px; }
-  #col-left, #col-right { grid-column: 1; grid-row: auto; }
-  .kpi-row { grid-template-columns: repeat(2,1fr); }
-}
-
-/* Bilingual inline labels */
-.bilabel { display: flex; flex-direction: column; gap: 1px; }
-.bilabel .ar { font-size: 12px; color: var(--text-primary); }
-.bilabel .en { font-size: 9px; color: var(--text-muted); font-family: var(--mono); }
-
-/* Loading skeleton */
-.skel {
-  background: linear-gradient(90deg, var(--bg-raised) 25%, var(--bg-hover) 50%, var(--bg-raised) 75%);
-  background-size: 200% 100%;
-  animation: skel-shimmer 1.5s infinite;
-  border-radius: 3px;
-}
-@keyframes skel-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-
-/* ═══════════════════════════════════════════
-   STATUS PULSE RING
-═══════════════════════════════════════════ */
-.pulse-ring {
-  width: 10px; height: 10px; border-radius: 50%; position: relative; flex-shrink: 0;
-}
-.pulse-ring::after {
-  content: ''; position: absolute; inset: -4px; border-radius: 50%;
-  border: 1px solid currentColor; opacity: 0;
-  animation: ring-expand 2s infinite;
-}
-@keyframes ring-expand { 0%{opacity:.8;transform:scale(.6)} 100%{opacity:0;transform:scale(1.6)} }
-.pulse-ring.green  { background: var(--green);  color: var(--green); }
-.pulse-ring.orange { background: var(--orange); color: var(--orange); }
-.pulse-ring.red    { background: var(--red);    color: var(--red); }
+/* Range */
+input[type=range]{flex:1;height:4px;border-radius:99px;background:var(--b2);outline:none;cursor:pointer;accent-color:var(--blu)}
+.rval{font-family:'JetBrains Mono';font-size:12px;font-weight:700;color:var(--blu);min-width:44px}
 </style>
 </head>
 <body>
 
-<!-- ░░ TOP BAR ░░ -->
-<div id="topbar">
-  <div class="logo">
-    QANTARA
-    <span>/ ADMIN</span>
-  </div>
-  <div style="display:flex;align-items:center;gap:6px;margin-right:8px;">
-    <div class="conn-dot" id="conn-dot"></div>
-    <span id="conn-label" class="bilabel" style="gap:0">
-      <span class="ar" id="conn-text">جارٍ الاتصال…</span>
-    </span>
-  </div>
-  <div class="topbar-spacer"></div>
-  <div class="clock" id="clock">--:--:--</div>
-  <button class="topbar-btn" id="btn-notif" onclick="requestNotifPerm()">🔔 إشعارات</button>
-  <button class="topbar-btn" id="btn-emergency" onclick="openEmergency()">⚠ طوارئ</button>
-  <button class="topbar-btn" style="background:var(--bg-raised);border:1px solid var(--border);color:var(--text-secondary);font-size:11px;" onclick="toggleDebug()">DBG</button>
-</div>
-
-<!-- ░░ MAIN APP ░░ -->
-<div id="app">
-
-  <!-- ░░ LEFT COLUMN ░░ -->
-  <div id="col-left">
-
-    <!-- Crossing Status -->
-    <div class="card">
-      <div class="card-head">
-        <span class="ch-icon">🚧</span>
-        <div class="bilabel">
-          <span class="ar ch-title" style="font-size:11px">حالة المعبر</span>
-          <span class="en">CROSSING STATUS</span>
-        </div>
-        <span class="ch-sub" id="last-updated-lbl" style="font-size:9px;">—</span>
-      </div>
-
-      <!-- Entry Lane -->
-      <div class="lane-widget" id="widget-entry">
-        <div class="lane-header">
-          <div class="bilabel">
-            <span class="ar" style="font-size:12px">🔵 الدخول</span>
-            <span class="en">ENTRY</span>
-          </div>
-          <span class="lane-status-badge badge-grey" id="entry-badge">—</span>
-        </div>
-        <div class="lane-meta">
-          <div class="lane-meta-item">⏱ <strong id="entry-eta">—</strong></div>
-          <div class="lane-meta-item">📋 <strong id="entry-reports">0</strong> تقرير</div>
-        </div>
-        <div class="lane-bar"><div class="lane-bar-fill" id="entry-bar" style="width:0%;background:var(--text-muted)"></div></div>
-      </div>
-
-      <!-- Exit Lane -->
-      <div class="lane-widget" id="widget-exit">
-        <div class="lane-header">
-          <div class="bilabel">
-            <span class="ar" style="font-size:12px">🔴 الخروج</span>
-            <span class="en">EXIT</span>
-          </div>
-          <span class="lane-status-badge badge-grey" id="exit-badge">—</span>
-        </div>
-        <div class="lane-meta">
-          <div class="lane-meta-item">⏱ <strong id="exit-eta">—</strong></div>
-          <div class="lane-meta-item">📋 <strong id="exit-reports">0</strong> تقرير</div>
-        </div>
-        <div class="lane-bar"><div class="lane-bar-fill" id="exit-bar" style="width:0%;background:var(--text-muted)"></div></div>
-      </div>
-    </div>
-
-    <!-- Override Panel -->
-    <div class="card">
-      <div class="card-head">
-        <span class="ch-icon">⚙️</span>
-        <div class="bilabel">
-          <span class="ar ch-title" style="font-size:11px">تحكم يدوي</span>
-          <span class="en">MANUAL OVERRIDE</span>
-        </div>
-        <span class="ch-badge" id="override-badge">OFF</span>
-      </div>
-      <div class="override-section">
-        <div class="override-toggle">
-          <div class="bilabel">
-            <span class="ar" style="font-size:12px">تفعيل التجاوز</span>
-            <span class="en">Enable override</span>
-          </div>
-          <label class="toggle-switch">
-            <input type="checkbox" id="override-toggle" onchange="handleOverrideToggle()">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <div class="override-controls" id="override-controls" style="opacity:.4;pointer-events:none">
-          <div class="override-row">
-            <label class="bilabel">
-              <span class="ar">الدخول</span>
-              <span class="en">Entry</span>
-            </label>
-            <select class="status-select" id="override-entry">
-              <option value="green">🟢 مريح / Easy</option>
-              <option value="orange">🟠 متوسط / Medium</option>
-              <option value="red">🔴 مزدحم / Busy</option>
-            </select>
-          </div>
-          <div class="override-row">
-            <label class="bilabel">
-              <span class="ar">الخروج</span>
-              <span class="en">Exit</span>
-            </label>
-            <select class="status-select" id="override-exit">
-              <option value="green">🟢 مريح / Easy</option>
-              <option value="orange">🟠 متوسط / Medium</option>
-              <option value="red">🔴 مزدحم / Busy</option>
-            </select>
-          </div>
-          <button class="btn-apply-override" onclick="applyOverride()">
-            ✦ تطبيق / APPLY
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Stats -->
-    <div class="card">
-      <div class="card-head">
-        <span class="ch-icon">📊</span>
-        <div class="bilabel">
-          <span class="ar ch-title" style="font-size:11px">إحصاءات اليوم</span>
-          <span class="en">TODAY'S STATS</span>
-        </div>
-      </div>
-      <div class="card-body" style="display:flex;flex-direction:column;gap:8px;">
-        <div class="stats-row">
-          <div class="stat-mini">
-            <div class="sm-val" id="stat-visits">—</div>
-            <div class="sm-lbl">زيارة / Visits</div>
-          </div>
-          <div class="stat-mini">
-            <div class="sm-val" id="stat-reports">—</div>
-            <div class="sm-lbl">تقرير / Reports</div>
-          </div>
-        </div>
-        <div class="stats-row">
-          <div class="stat-mini">
-            <div class="sm-val" id="stat-online">—</div>
-            <div class="sm-lbl">متصل / Online</div>
-          </div>
-          <div class="stat-mini">
-            <div class="sm-val" id="stat-confs">—</div>
-            <div class="sm-lbl">تأكيد / Confs</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /col-left -->
-
-  <!-- ░░ CENTER COLUMN ░░ -->
-  <div id="col-center">
-
-    <!-- KPI Row -->
-    <div class="kpi-row">
-      <div class="kpi-card kpi-green">
-        <div class="kpi-icon">👥</div>
-        <div class="kpi-val" id="kpi-online">—</div>
-        <div class="kpi-lbl">مستخدمون نشطون<br><span style="font-family:var(--mono);font-size:9px">ACTIVE USERS</span></div>
-      </div>
-      <div class="kpi-card kpi-amber">
-        <div class="kpi-icon">📋</div>
-        <div class="kpi-val" id="kpi-reports">—</div>
-        <div class="kpi-lbl">تقارير اليوم<br><span style="font-family:var(--mono);font-size:9px">TODAY'S REPORTS</span></div>
-      </div>
-      <div class="kpi-card kpi-blue">
-        <div class="kpi-icon">🏠</div>
-        <div class="kpi-val" id="kpi-visits">—</div>
-        <div class="kpi-lbl">زيارات اليوم<br><span style="font-family:var(--mono);font-size:9px">TODAY'S VISITS</span></div>
-      </div>
-      <div class="kpi-card kpi-red">
-        <div class="kpi-icon">⏱</div>
-        <div class="kpi-val" id="kpi-avg-wait">—</div>
-        <div class="kpi-lbl">متوسط الانتظار<br><span style="font-family:var(--mono);font-size:9px">AVG WAIT (MIN)</span></div>
-      </div>
-    </div>
-
-    <!-- Live Feed -->
-    <div class="card">
-      <div class="card-head">
-        <div class="pulse-ring green" id="feed-pulse"></div>
-        <div class="bilabel">
-          <span class="ar ch-title" style="font-size:11px">التقارير الحية</span>
-          <span class="en">LIVE FEED</span>
-        </div>
-        <span class="ch-sub"></span>
-        <div style="display:flex;align-items:center;gap:6px;margin-right:0">
-          <div class="presence-bar" style="border:none;padding:0">
-            <span class="pb-count" id="feed-online-count">0</span>
-            <span style="font-size:10px;color:var(--text-muted)">متصل / online</span>
-          </div>
-          <span class="ch-badge" id="feed-total-badge">0</span>
-        </div>
-      </div>
-      <ul id="feed-list">
-        <li style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;">
-          جارٍ تحميل البيانات… / Loading data…
-        </li>
-      </ul>
-    </div>
-
-    <!-- Report type distribution -->
-    <div class="card">
-      <div class="card-head">
-        <span class="ch-icon">🗂</span>
-        <div class="bilabel">
-          <span class="ar ch-title" style="font-size:11px">توزيع التقارير</span>
-          <span class="en">REPORT DISTRIBUTION</span>
-        </div>
-        <select id="dist-range" class="status-select" style="max-width:100px;font-size:10px;" onchange="refreshDistChart()">
-          <option value="24">آخر 24 ساعة</option>
-          <option value="168">آخر 7 أيام</option>
-          <option value="720">آخر 30 يوم</option>
-        </select>
-      </div>
-      <div style="padding:12px;height:180px;">
-        <canvas id="dist-chart"></canvas>
-      </div>
-    </div>
-
-  </div><!-- /col-center -->
-
-  <!-- ░░ RIGHT COLUMN ░░ -->
-  <div id="col-right">
-
-    <!-- Analytics -->
-    <div class="card">
-      <div class="card-head">
-        <span class="ch-icon">📈</span>
-        <div class="bilabel">
-          <span class="ar ch-title" style="font-size:11px">التحليلات</span>
-          <span class="en">ANALYTICS</span>
-        </div>
-      </div>
-      <div class="chart-tabs">
-        <button class="chart-tab active" onclick="switchTab('hourly',this)">ساعي<br><span style="font-size:8px">HOURLY</span></button>
-        <button class="chart-tab" onclick="switchTab('daily',this)">يومي<br><span style="font-size:8px">DAILY</span></button>
-        <button class="chart-tab" onclick="switchTab('weekly',this)">أسبوعي<br><span style="font-size:8px">WEEKLY</span></button>
-      </div>
-      <div class="chart-panel active" id="panel-hourly" style="height:180px">
-        <canvas id="chart-hourly"></canvas>
-      </div>
-      <div class="chart-panel" id="panel-daily" style="height:180px">
-        <canvas id="chart-daily"></canvas>
-      </div>
-      <div class="chart-panel" id="panel-weekly" style="height:180px">
-        <canvas id="chart-weekly"></canvas>
-      </div>
-    </div>
-
-    <!-- Hourly Heatmap -->
-    <div class="card">
-      <div class="card-head">
-        <span class="ch-icon">🌡</span>
-        <div class="bilabel">
-          <span class="ar ch-title" style="font-size:11px">نشاط ساعي (24 ساعة)</span>
-          <span class="en">HOURLY ACTIVITY</span>
-        </div>
-      </div>
-      <div class="heatmap-grid" id="heatmap-grid">
-        <!-- filled by JS -->
-      </div>
-      <div class="hmap-labels">
-        <span>00h</span><span>06h</span><span>12h</span><span>18h</span><span>23h</span>
-      </div>
-    </div>
-
-    <!-- Top Contributors -->
-    <div class="card">
-      <div class="card-head">
-        <span class="ch-icon">🏆</span>
-        <div class="bilabel">
-          <span class="ar ch-title" style="font-size:11px">أبرز المساهمين</span>
-          <span class="en">TOP CONTRIBUTORS</span>
-        </div>
-        <span class="ch-badge" id="total-users-badge">—</span>
-      </div>
-      <div id="users-list">
-        <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;">جارٍ التحميل…</div>
-      </div>
-    </div>
-
-    <!-- System Log -->
-    <div class="card">
-      <div class="card-head">
-        <span class="ch-icon">🖥</span>
-        <div class="bilabel">
-          <span class="ar ch-title" style="font-size:11px">سجل النظام</span>
-          <span class="en">SYSTEM LOG</span>
-        </div>
-        <button onclick="clearSysLog()" style="font-family:var(--mono);font-size:9px;background:none;color:var(--text-muted);border:1px solid var(--border);padding:2px 6px;border-radius:3px;">CLEAR</button>
-      </div>
-      <div id="sys-log" style="padding:8px;max-height:160px;overflow-y:auto;font-family:var(--mono);font-size:10px;color:var(--text-muted);"></div>
-    </div>
-
-  </div><!-- /col-right -->
-
-</div><!-- /app -->
-
-<!-- ░░ EMERGENCY MODAL ░░ -->
-<div id="emergency-modal">
-  <div class="emergency-box">
-    <div class="em-icon" id="em-icon">⚠️</div>
-    <h2 id="em-title">وضع الطوارئ / EMERGENCY</h2>
-    <p id="em-desc">
-      سيتم ضبط كلا الاتجاهين على <strong style="color:var(--red)">أحمر</strong> فوراً
-      وإخطار جميع المستخدمين.<br><br>
-      Both lanes will be set to <strong style="color:var(--red)">RED</strong> immediately.
-    </p>
-    <div class="em-btns">
-      <button class="em-btn-cancel" onclick="closeEmergency()">إلغاء / Cancel</button>
-      <button class="em-btn-confirm" id="em-confirm-btn" onclick="confirmEmergency()">تفعيل / ACTIVATE</button>
-    </div>
+<!-- LOGIN -->
+<div id="loginWrap">
+  <div class="login-card">
+    <h1>🌉 Qantara</h1>
+    <p>Admin Control Center</p>
+    <input type="password" id="pwIn" placeholder="Password · كلمة المرور" onkeydown="if(event.key==='Enter')login()">
+    <button onclick="login()">تسجيل الدخول · Login</button>
+    <div class="login-err" id="loginErr"></div>
   </div>
 </div>
 
-<!-- ░░ TOAST CONTAINER ░░ -->
-<div id="toast-container"></div>
+<!-- DASHBOARD -->
+<div id="dash">
+  <div class="sidebar">
+    <div class="s-logo"><h2>🌉 Qantara</h2><span>Admin Panel</span></div>
+    <div class="nav-item on"  onclick="nav('overview')"><span class="nav-ico">📊</span>Overview</div>
+    <div class="nav-item"     onclick="nav('analytics')"><span class="nav-ico">📈</span>Analytics</div>
+    <div class="nav-item"     onclick="nav('live')"><span class="nav-ico">🔴</span>Live Feed</div>
+    <div class="nav-item"     onclick="nav('control')"><span class="nav-ico">🎛️</span>Traffic Control</div>
+    <div class="nav-item"     onclick="nav('notifs')"><span class="nav-ico">🔔</span>Notifications</div>
+    <div class="nav-item"     onclick="nav('users')"><span class="nav-ico">👥</span>Users</div>
+    <div class="nav-item"     onclick="nav('settings')"><span class="nav-ico">⚙️</span>Settings</div>
+    <div class="s-foot">
+      <div class="live-dot"><div class="dot"></div>Firebase Connected</div>
+      <div class="s-clock" id="sClock"></div>
+    </div>
+  </div>
 
-<!-- ░░ DEBUG LOG ░░ -->
-<div id="debug-log"></div>
+  <div class="main">
 
-<!-- ░════════════════════════════════════════
-     FIREBASE CONFIG — قم بتحديث هذه القيم
-     Update these values from Firebase Console
-     ════════════════════════════════════════ -->
-<script>
-// ⚠️ IMPORTANT: Replace with your actual Firebase config
-// Project: qantara-live
-// Firebase Console → Project Settings → Your apps → Web app config
-const firebaseConfig = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "qantara-live.firebaseapp.com",
-  projectId:         "qantara-live",
-  storageBucket:     "qantara-live.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId:             "YOUR_APP_ID",
-  measurementId:     "G-VHTGSJYSD2"
+    <!-- OVERVIEW -->
+    <div class="page on" id="pg-overview">
+      <div class="ph">
+        <div><div class="pt">Overview · نظرة عامة</div><div class="ps">Tarajal Border — Live monitoring</div></div>
+        <div style="font-size:10px;color:var(--dim);font-family:'JetBrains Mono'" id="ovTs">—</div>
+      </div>
+      <div class="g4">
+        <div class="kcard k-blu"><div class="k-ico">👥</div><div class="k-val" id="kUsers">—</div><div class="k-lbl">Online Now</div><div class="k-sub neutral" id="kUsersSub">Loading…</div></div>
+        <div class="kcard k-grn"><div class="k-ico">✅</div><div class="k-val" id="kConf">—</div><div class="k-lbl">Confirmations / 10min</div><div class="k-sub neutral">Last 10 minutes</div></div>
+        <div class="kcard k-cyn"><div class="k-ico">👁️</div><div class="k-val" id="kVisits">—</div><div class="k-lbl">Daily Visits</div><div class="k-sub up">Today</div></div>
+        <div class="kcard k-org"><div class="k-ico">📊</div><div class="k-val" id="kTotal">—</div><div class="k-lbl">Reports Today</div><div class="k-sub neutral" id="kTotalSub">24h window</div></div>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="sec">Current Lane Status · حالة الممرين</div>
+          <div class="ls"><div class="ls-dot red" id="eDot"></div><div class="ls-name">⬆️ Entrada Ceuta</div><div class="ls-val" id="eVal">—</div><div class="ls-time" id="eTime">—</div></div>
+          <div class="ls"><div class="ls-dot grn" id="xDot"></div><div class="ls-name">⬇️ Salida Fnideq</div><div class="ls-val" id="xVal">—</div><div class="ls-time" id="xTime">—</div></div>
+        </div>
+        <div class="card">
+          <div class="sec">Hourly Activity</div>
+          <div class="mini-bars" id="miniBars"></div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px">
+            <span style="font-size:9px;color:var(--dim);font-family:'JetBrains Mono'">00:00</span>
+            <span style="font-size:9px;color:var(--dim);font-family:'JetBrains Mono'">Now</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="sec" style="margin:0">Recent Confirmations</div>
+          <button class="btn btn-gst" style="padding:3px 10px;font-size:10px" onclick="nav('live')">View all →</button>
+        </div>
+        <div class="feed" id="ovFeed"><div style="color:var(--dim);font-size:11px;padding:10px">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="page" id="pg-analytics">
+      <div class="ph"><div><div class="pt">Analytics · تحليلات</div><div class="ps">Traffic patterns & insights</div></div></div>
+      <div class="chart-wrap">
+        <div class="chart-hd">
+          <div class="chart-title">Reports Volume</div>
+          <div class="chart-tabs">
+            <div class="ctab on" onclick="switchChart(this,'hour')">Hourly</div>
+            <div class="ctab" onclick="switchChart(this,'day')">Daily</div>
+            <div class="ctab" onclick="switchChart(this,'week')">Weekly</div>
+          </div>
+        </div>
+        <div class="chart-area" id="chartArea">
+          <svg class="chart-svg" id="chartSvg" viewBox="0 0 600 150" preserveAspectRatio="none"></svg>
+          <div class="chart-tooltip" id="cTip"></div>
+        </div>
+        <div id="chartXLabels" style="display:flex;justify-content:space-between;margin-top:4px;font-size:9px;color:var(--dim);font-family:'JetBrains Mono'"></div>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="sec">Status Distribution (Today)</div>
+          <div class="donut-wrap" style="margin-top:8px">
+            <svg width="90" height="90" viewBox="0 0 90 90" style="flex-shrink:0">
+              <circle cx="45" cy="45" r="34" fill="none" stroke="var(--b2)" stroke-width="12"/>
+              <circle cx="45" cy="45" r="34" fill="none" stroke="var(--red)"   stroke-width="12" id="dRed"  stroke-dasharray="0 214" stroke-dashoffset="0" transform="rotate(-90 45 45)" style="transition:stroke-dasharray .6s ease"/>
+              <circle cx="45" cy="45" r="34" fill="none" stroke="var(--org)" stroke-width="12" id="dOrg"  stroke-dasharray="0 214" stroke-dashoffset="0" transform="rotate(-90 45 45)" style="transition:stroke-dasharray .6s ease"/>
+              <circle cx="45" cy="45" r="34" fill="none" stroke="var(--grn)"  stroke-width="12" id="dGrn"  stroke-dasharray="0 214" stroke-dashoffset="0" transform="rotate(-90 45 45)" style="transition:stroke-dasharray .6s ease"/>
+            </svg>
+            <div class="donut-leg">
+              <div class="dleg"><div class="ddot" style="background:var(--red)"></div><span id="dRedLbl">🔴 Heavy — —%</span></div>
+              <div class="dleg"><div class="ddot" style="background:var(--org)"></div><span id="dOrgLbl">🟠 Moderate — —%</span></div>
+              <div class="dleg"><div class="ddot" style="background:var(--grn)"></div><span id="dGrnLbl">🟢 Clear — —%</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sec">Key Metrics</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">Reports today</span><span style="font-weight:700;font-family:'JetBrains Mono'" id="mTotal">—</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">Online users</span><span style="font-weight:700;font-family:'JetBrains Mono'" id="mOnline">—</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">Daily visits</span><span style="font-weight:700;font-family:'JetBrains Mono'" id="mVisits">—</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">Confirmations / 10min</span><span style="font-weight:700;font-family:'JetBrains Mono'" id="mConf10">—</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">Entry lane status</span><span style="font-weight:700" id="mEntry">—</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">Exit lane status</span><span style="font-weight:700" id="mExit">—</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE FEED -->
+    <div class="page" id="pg-live">
+      <div class="ph">
+        <div><div class="pt">Live Feed · تغذية مباشرة</div><div class="ps">Real-time confirmations stream</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="live-dot" style="font-size:11px"><div class="dot"></div>Live</div>
+          <button class="btn btn-gst" onclick="clearFeed()">Clear</button>
+        </div>
+      </div>
+      <div class="g3" style="margin-bottom:14px">
+        <div class="kcard k-grn" style="padding:12px"><div class="k-val" style="font-size:22px" id="lTotal">—</div><div class="k-lbl">Total today</div></div>
+        <div class="kcard k-blu" style="padding:12px"><div class="k-val" style="font-size:22px" id="lOnline">—</div><div class="k-lbl">Online now</div></div>
+        <div class="kcard k-org" style="padding:12px"><div class="k-val" style="font-size:22px" id="lLast10">—</div><div class="k-lbl">Last 10 min</div></div>
+      </div>
+      <div class="card"><div class="sec">Confirmations Feed</div><div class="feed" id="liveFeed" style="max-height:420px"><div style="color:var(--dim);font-size:11px;padding:10px">Loading…</div></div></div>
+    </div>
+
+    <!-- TRAFFIC CONTROL -->
+    <div class="page" id="pg-control">
+      <div class="ph"><div><div class="pt">Traffic Control · التحكم في الحركة</div><div class="ps">Manual override & status management</div></div></div>
+      <div class="override-bar" id="ovBar">⚠️ Override Mode Active — user reports are being ignored<button class="btn btn-dng" style="padding:3px 10px;font-size:10px;margin-right:auto" onclick="toggleOverride()">Disable</button></div>
+      <div class="g2">
+        <div class="card">
+          <div class="sec">Entry Lane ⬆️ دخول سبتة</div>
+          <div class="sbtn-row">
+            <button class="sbtn s-grn" id="eGrn" onclick="setLane('entry','green',this)">🟢 Clear</button>
+            <button class="sbtn s-org" id="eOrg" onclick="setLane('entry','orange',this)">🟠 Moderate</button>
+            <button class="sbtn s-red on" id="eRed" onclick="setLane('entry','red',this)">🔴 Heavy</button>
+          </div>
+          <div style="font-size:11px;color:var(--mut)">Current: <span id="eCur" style="font-weight:700;color:var(--red)">Heavy</span></div>
+        </div>
+        <div class="card">
+          <div class="sec">Exit Lane ⬇️ خروج الفنيدق</div>
+          <div class="sbtn-row">
+            <button class="sbtn s-grn on" id="xGrn" onclick="setLane('exit','green',this)">🟢 Clear</button>
+            <button class="sbtn s-org" id="xOrg" onclick="setLane('exit','orange',this)">🟠 Moderate</button>
+            <button class="sbtn s-red" id="xRed" onclick="setLane('exit','red',this)">🔴 Heavy</button>
+          </div>
+          <div style="font-size:11px;color:var(--mut)">Current: <span id="xCur" style="font-weight:700;color:var(--grn)">Clear</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="trow">
+          <div><div class="tlbl">Override Mode</div><div class="tsub">Manually force status — ignore user reports</div></div>
+          <div class="toggle" id="ovToggle" onclick="toggleOverride()"></div>
+        </div>
+        <div class="trow" style="border:none">
+          <div><div class="tlbl" style="color:var(--red)">Emergency Mode 🚨</div><div class="tsub">Set BOTH lanes to RED immediately</div></div>
+          <button class="btn btn-dng" onclick="emergency()">Activate Emergency</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="page" id="pg-notifs">
+      <div class="ph"><div><div class="pt">Notifications · إشعارات</div><div class="ps">Push notifications to users</div></div></div>
+      <div class="g2">
+        <div class="card">
+          <div class="sec">Send Notification</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <input class="notif-in" type="text" id="nTitle" placeholder="العنوان · Title">
+            <textarea class="notif-ta" id="nBody" placeholder="الرسالة · Message"></textarea>
+            <div style="display:flex;gap:8px">
+              <select id="nLang" style="flex:1;padding:8px 10px;background:var(--card2);border:1px solid var(--b2);border-radius:8px;color:var(--txt);font-family:'Sora';font-size:12px;outline:none">
+                <option value="all">All users</option>
+                <option value="ar">Arabic</option>
+                <option value="es">Spanish</option>
+              </select>
+              <button class="btn btn-pri" onclick="sendNotif()">Send 🚀</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sec">Quick Templates</div>
+          <div style="display:flex;flex-direction:column;gap:7px;margin-top:8px">
+            <button class="btn btn-gst" style="text-align:right;width:100%" onclick="tpl('urg')">🚨 ازدحام شديد — تجنب المعبر</button>
+            <button class="btn btn-gst" style="text-align:right;width:100%" onclick="tpl('clr')">✅ الطريق مفتوح — وقت ممتاز</button>
+            <button class="btn btn-gst" style="text-align:right;width:100%" onclick="tpl('mod')">⚠️ حركة بطيئة — خطط مسبقاً</button>
+            <button class="btn btn-gst" style="text-align:right;width:100%" onclick="tpl('cls')">🔒 المعبر مغلق مؤقتاً</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sec">Notification History</div>
+        <div class="tbl-wrap" style="margin-top:8px">
+          <table><thead><tr><th>Title</th><th>Target</th><th>Time</th><th>Status</th></tr></thead>
+          <tbody id="nHist"><tr><td colspan="4" style="color:var(--dim);text-align:center;padding:16px">No notifications sent yet</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page" id="pg-users">
+      <div class="ph"><div><div class="pt">Users · المستخدمون</div><div class="ps">Top contributors & activity</div></div></div>
+      <div class="g3" style="margin-bottom:14px">
+        <div class="kcard k-blu" style="padding:12px"><div class="k-val" style="font-size:22px" id="uOnline">—</div><div class="k-lbl">Online now</div></div>
+        <div class="kcard k-grn" style="padding:12px"><div class="k-val" style="font-size:22px" id="uToday">—</div><div class="k-lbl">Reports today</div></div>
+        <div class="kcard k-org" style="padding:12px"><div class="k-val" style="font-size:22px" id="uUniq">—</div><div class="k-lbl">Unique contributors</div></div>
+      </div>
+      <div class="card">
+        <div class="sec">Top Contributors (from reports)</div>
+        <div class="tbl-wrap" style="margin-top:8px">
+          <table><thead><tr><th>#</th><th>User ID</th><th>Reports</th><th>Last Status</th><th>Last Active</th></tr></thead>
+          <tbody id="uTable"><tr><td colspan="5" style="color:var(--dim);text-align:center;padding:16px">Loading from Firebase…</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="pg-settings">
+      <div class="ph"><div><div class="pt">Settings · الإعدادات</div><div class="ps">System configuration</div></div></div>
+      <div class="g2">
+        <div class="card">
+          <div class="sec">Polling & Performance</div>
+          <div class="trow">
+            <div><div class="tlbl">Polling Interval</div><div class="tsub">How often to refresh data</div></div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="range" min="30" max="300" step="30" value="60" id="polR" oninput="document.getElementById('polV').textContent=this.value+'s'">
+              <div class="rval" id="polV">60s</div>
+            </div>
+          </div>
+          <div class="trow" style="border:none">
+            <div><div class="tlbl">Pause on Hidden Tab</div><div class="tsub">Stop polling when tab is in background</div></div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sec">Features</div>
+          <div class="trow"><div><div class="tlbl">Push Notifications (FCM)</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="trow"><div><div class="tlbl">Online Users Counter 👥</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="trow"><div><div class="tlbl">Google Analytics GA4</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="trow" style="border:none"><div><div class="tlbl">Smart Notifications AI</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="trow"><div><div class="tlbl" style="color:var(--red)">Logout · تسجيل الخروج</div></div><button class="btn btn-dng" onclick="logout()">Logout →</button></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /dash -->
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp }    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getFirestore, collection, getDocs, getDoc, doc, setDoc, onSnapshot }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+// ─── Firebase ───
+const _app = initializeApp({
+  apiKey:            'AIzaSyCxVDBRV20xCo8sYmlnKt67ggh8HY3KxF8',
+  authDomain:        'qantara-live.firebaseapp.com',
+  projectId:         'qantara-live',
+  storageBucket:     'qantara-live.firebasestorage.app',
+  messagingSenderId: '219692468615',
+  appId:             '1:219692468615:web:4598dd00cb99afa38a6b22'
+});
+const _db = getFirestore(_app);
+const lanesRef   = { entry: doc(_db,'lanes_state','entry'), exit: doc(_db,'lanes_state','exit') };
+const reportsCol = collection(_db,'reports');
+const onlineCol  = collection(_db,'online_users');
+
+// ─── State ───
+const PW = 'qantara2025dfr';
+let laneStatus = { entry:'green', exit:'green' };
+let overrideOn = false;
+let allReports = [];
+let pollingTimer = null;
+let chartMode = 'hour';
+
+// ─── AUTH ───
+function login() {
+  const pw = document.getElementById('pwIn').value;
+  if (pw === PW) {
+    document.getElementById('loginWrap').style.display = 'none';
+    document.getElementById('dash').style.display = 'flex';
+    init();
+  } else {
+    document.getElementById('loginErr').textContent = '❌ Wrong password · كلمة المرور خاطئة';
+    document.getElementById('pwIn').value = '';
+    setTimeout(() => document.getElementById('loginErr').textContent = '', 2500);
+  }
+}
+function logout() {
+  location.reload();
+}
+
+// ─── NAV ───
+function nav(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('on'));
+  document.getElementById('pg-' + id).classList.add('on');
+  const pages = ['overview','analytics','live','control','notifs','users','settings'];
+  document.querySelectorAll('.nav-item')[pages.indexOf(id)]?.classList.add('on');
+}
+
+// ─── INIT ───
+function init() {
+  startClock();
+  startListeners();
+  buildMiniBars();
+  startPolling();
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) { fetchPoll(); }
+  });
+}
+
+// ─── CLOCK ───
+function startClock() {
+  function tick() {
+    const t = new Date().toLocaleTimeString('en-GB');
+    const el = document.getElementById('sClock');
+    if (el) el.textContent = t;
+    const ov = document.getElementById('ovTs');
+    if (ov) ov.textContent = 'Updated ' + t;
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+// ─── REAL-TIME LISTENERS (onSnapshot) ───
+function startListeners() {
+  // lanes_state — entry
+  onSnapshot(lanesRef.entry, snap => {
+    if (!snap.exists()) return;
+    const d = snap.data();
+    laneStatus.entry = d.status || 'green';
+    if (!overrideOn) renderLane('entry', d.status, d.savedAt);
+  }, e => toast('⚠️ lanes_state error: ' + e.message));
+
+  // lanes_state — exit
+  onSnapshot(lanesRef.exit, snap => {
+    if (!snap.exists()) return;
+    const d = snap.data();
+    laneStatus.exit = d.status || 'green';
+    if (!overrideOn) renderLane('exit', d.status, d.savedAt);
+  }, e => toast('⚠️ lanes_state error: ' + e.message));
+
+  // reports — onSnapshot for live feed
+  onSnapshot(reportsCol, snap => {
+    const WIN = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    allReports = [];
+    snap.forEach(d => {
+      const f = d.data();
+      if (f.tsMs && (now - f.tsMs) < WIN) allReports.push(f);
+    });
+    allReports.sort((a, b) => b.tsMs - a.tsMs);
+    renderFeed();
+    renderKPIs();
+    renderUsers();
+    renderDonut();
+    buildChart(chartMode);
+  }, e => toast('⚠️ reports error: ' + e.message));
+}
+
+// ─── POLLING (online_users, daily_visits) ───
+function startPolling() {
+  fetchPoll();
+  pollingTimer = setInterval(() => {
+    if (!document.hidden) fetchPoll();
+  }, 60000);
+}
+
+async function fetchPoll() {
+  try {
+    // online_users
+    const onSnap = await getDocs(onlineCol);
+    let online = 0;
+    onSnap.forEach(d => { if (d.data().ts && Date.now() - d.data().ts < 90000) online++; });
+    const ou = Math.max(1, online);
+    setEl('kUsers',  ou);
+    setEl('lOnline', ou);
+    setEl('uOnline', ou);
+    setEl('mOnline', ou);
+    setEl('kUsersSub', ou + ' user' + (ou !== 1 ? 's' : '') + ' active');
+
+    // daily_visits
+    const today = new Date().toISOString().slice(0,10);
+    const vSnap = await getDoc(doc(_db, 'daily_visits', today));
+    const visits = vSnap.exists() ? (vSnap.data().count || 0) : 0;
+    setEl('kVisits', visits.toLocaleString());
+    setEl('mVisits', visits.toLocaleString());
+  } catch(e) { toast('⚠️ Poll error: ' + e.message); }
+}
+
+// ─── RENDER ───
+const ST = {
+  green:  { label:'Clear',    color:'var(--grn)', dot:'grn', wait:'30–60m', emoji:'🟢' },
+  orange: { label:'Moderate', color:'var(--org)', dot:'org', wait:'1–2h',   emoji:'🟠' },
+  red:    { label:'Heavy',    color:'var(--red)', dot:'red', wait:'2–4h',   emoji:'🔴' }
 };
 
-// Admin password (change to something secret)
-const ADMIN_PASSWORD = "qantara2025admin";
+function renderLane(lane, status, savedAt) {
+  const s = ST[status] || ST.green;
+  const pfx = lane === 'entry' ? 'e' : 'x';
+  setEl(pfx + 'Dot',  '', 'ls-dot ' + s.dot);
+  setEl(pfx + 'Val',  s.emoji + ' ' + s.label + ' — ' + s.wait);
+  setEl(pfx + 'Time', savedAt ? new Date(savedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '—');
+  // analytics sync
+  setEl('m' + (lane === 'entry' ? 'Entry' : 'Exit'), s.emoji + ' ' + s.label, '', s.color);
+}
 
-// Presence timeout (ms) — must match main app
-const PRESENCE_TIMEOUT_MS = 90 * 1000;  // 90 seconds
+function renderKPIs() {
+  const now = Date.now();
+  const total = allReports.length;
+  const last10 = allReports.filter(r => now - r.tsMs < 600000).length;
+  setEl('kTotal',  total);
+  setEl('lTotal',  total);
+  setEl('uToday',  total);
+  setEl('mTotal',  total);
+  setEl('kConf',   last10);
+  setEl('lLast10', last10);
+  setEl('mConf10', last10);
+}
 
-// Polling interval for non-realtime collections
-const POLL_INTERVAL_MS = 15 * 1000;     // 15 seconds
-
-// Max feed items to show
-const FEED_MAX = 50;
-</script>
-
-<!-- ░════════════════════════════════════════
-     MAIN DASHBOARD LOGIC
-     ════════════════════════════════════════ -->
-<script>
-'use strict';
-
-/* ═══════════════════════════
-   GLOBALS
-═══════════════════════════ */
-let db;
-let isEmergencyActive = false;
-let isOverrideActive  = false;
-let unsubFeed  = null;
-let unsubLanes = null;
-let pollTimer  = null;
-let reportCache     = [];
-let hourlyChartInst = null;
-let dailyChartInst  = null;
-let weeklyChartInst = null;
-let distChartInst   = null;
-let sysLogLines = [];
-
-/* ═══════════════════════════
-   INIT
-═══════════════════════════ */
-window.addEventListener('DOMContentLoaded', async () => {
-  startClock();
-  renderHeatmapSkeleton();
-
-  // Simple admin auth
-  if (!sessionStorage.getItem('qantara_admin_auth')) {
-    const pw = prompt('🔐 كلمة مرور المشرف / Admin password:');
-    if (pw !== ADMIN_PASSWORD) {
-      document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:monospace;color:#ff1744;font-size:18px;">⛔ Access Denied</div>`;
+function renderFeed() {
+  const feeds = ['ovFeed','liveFeed'];
+  const items = allReports.slice(0, 10);
+  feeds.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = '';
+    if (!items.length) {
+      el.innerHTML = '<div style="color:var(--dim);font-size:11px;padding:10px">No reports in last 24h</div>';
       return;
     }
-    sessionStorage.setItem('qantara_admin_auth', '1');
-  }
-
-  try {
-    firebase.initializeApp(firebaseConfig);
-    db = firebase.firestore();
-    db.settings({ merge: true });
-    sysLog('✅ Firebase connected — ' + firebaseConfig.projectId);
-    setConnState('live');
-  } catch(e) {
-    sysLog('❌ Firebase init failed: ' + e.message, 'error');
-    setConnState('error');
-    toast('فشل الاتصال بـ Firebase: ' + e.message, 'error');
-    return;
-  }
-
-  initCharts();
-  startRealtimeListeners();
-  startPolling();
-  checkNotifPermission();
-});
-
-/* ═══════════════════════════
-   CLOCK
-═══════════════════════════ */
-function startClock() {
-  const el = document.getElementById('clock');
-  setInterval(() => {
-    el.textContent = new Date().toLocaleTimeString('ar-MA', { hour12: false });
-  }, 1000);
-}
-
-/* ═══════════════════════════
-   CONNECTION STATE
-═══════════════════════════ */
-function setConnState(state) {
-  const dot = document.getElementById('conn-dot');
-  const lbl = document.getElementById('conn-text');
-  dot.className = 'conn-dot ' + state;
-  if (state === 'live')  lbl.textContent = 'متصل مباشرة / LIVE';
-  if (state === 'error') lbl.textContent = 'خطأ في الاتصال / ERROR';
-  if (state === '')      lbl.textContent = 'جارٍ الاتصال… / Connecting…';
-}
-
-/* ═══════════════════════════
-   REALTIME LISTENERS (onSnapshot)
-═══════════════════════════ */
-function startRealtimeListeners() {
-  sysLog('🔌 Starting onSnapshot listeners…');
-
-  // 1. lanes_state — real-time crossing status
-  try {
-    unsubLanes = db.collection('lanes_state')
-      .onSnapshot(snap => {
-        snap.forEach(doc => {
-          updateLaneUI(doc.id, doc.data());
-        });
-        document.getElementById('last-updated-lbl').textContent =
-          'آخر تحديث: ' + new Date().toLocaleTimeString('ar-MA', {hour12:false});
-      }, err => {
-        sysLog('⚠ lanes_state listener error: ' + err.message, 'warn');
-      });
-    sysLog('📡 lanes_state → onSnapshot active');
-  } catch(e) {
-    sysLog('❌ lanes_state subscribe failed: ' + e.message, 'error');
-  }
-
-  // 2. reports — real-time live feed (last 50)
-  try {
-    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000); // last 24h
-    unsubFeed = db.collection('reports')
-      .where('tsMs', '>=', cutoff.getTime())
-      .orderBy('tsMs', 'desc')
-      .limit(FEED_MAX)
-      .onSnapshot(snap => {
-        reportCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderFeed(reportCache);
-        updateKPIReports(reportCache.length);
-        updateAvgWait(reportCache);
-        refreshDistChart();
-        refreshHourlyChart(reportCache);
-        buildTopUsers(reportCache);
-        buildHeatmap(reportCache);
-        document.getElementById('stat-reports').textContent = reportCache.length;
-        document.getElementById('stat-confs').textContent =
-          reportCache.reduce((acc,r) => acc + (r.confirmations||0), 0);
-        document.getElementById('feed-total-badge').textContent = reportCache.length;
-      }, err => {
-        sysLog('⚠ reports listener error: ' + err.message, 'warn');
-      });
-    sysLog('📡 reports → onSnapshot active (last 24h)');
-  } catch(e) {
-    sysLog('❌ reports subscribe failed: ' + e.message, 'error');
-  }
-}
-
-/* ═══════════════════════════
-   POLLING (online_users + daily_visits)
-═══════════════════════════ */
-function startPolling() {
-  pollOnce();
-  pollTimer = setInterval(() => {
-    if (!document.hidden) pollOnce();
-  }, POLL_INTERVAL_MS);
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) pollOnce();
+    items.forEach(r => el.appendChild(makeFI(r)));
   });
 }
 
-async function pollOnce() {
-  await pollOnlineUsers();
-  await pollDailyVisits();
-  await pollWeeklyReports();
+function makeFI(r) {
+  const s = ST[r.status] || ST.green;
+  const ago = Math.round((Date.now() - r.tsMs) / 60000);
+  const div = document.createElement('div');
+  div.className = 'fi';
+  div.innerHTML = `
+    <div class="fi-dot ${s.dot}"></div>
+    <div class="fi-lane">${r.lane === 'entry' ? '⬆️ Entrada' : '⬇️ Salida'}</div>
+    <div class="fi-st" style="color:${s.color}">${s.label}</div>
+    <div class="fi-ago">${ago < 1 ? 'just now' : ago + 'm ago'}</div>
+    <div class="fi-pts">+${Math.round((r.w||1)*10)} ⭐</div>
+  `;
+  return div;
 }
 
-async function pollOnlineUsers() {
-  if (!db) return;
-  try {
-    const cutoff = firebase.firestore.Timestamp.fromMillis(Date.now() - PRESENCE_TIMEOUT_MS);
-    const snap = await db.collection('online_users')
-      .where('timestamp', '>', cutoff)
-      .get();
-    const count = snap.size;
-    document.getElementById('kpi-online').textContent  = count;
-    document.getElementById('stat-online').textContent = count;
-    document.getElementById('feed-online-count').textContent = count;
-    sysLog(`👥 Online users: ${count}`);
-  } catch(e) {
-    sysLog('⚠ online_users poll error: ' + e.message, 'warn');
-  }
-}
-
-async function pollDailyVisits() {
-  if (!db) return;
-  try {
-    const today = todayKey();
-    const doc = await db.collection('daily_visits').doc(today).get();
-    const visits = doc.exists ? (doc.data().count || 0) : 0;
-    document.getElementById('kpi-visits').textContent  = visits;
-    document.getElementById('stat-visits').textContent = visits;
-    sysLog(`🏠 Daily visits (${today}): ${visits}`);
-    refreshDailyChart();
-  } catch(e) {
-    sysLog('⚠ daily_visits poll error: ' + e.message, 'warn');
-  }
-}
-
-async function pollWeeklyReports() {
-  // Build 7-day data for the weekly chart
-  if (!db) return;
-  try {
-    const days = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(Date.now() - i * 86400000);
-      days.push({
-        label: d.toLocaleDateString('ar-MA', { weekday: 'short' }),
-        ts: d.setHours(0,0,0,0)
-      });
-    }
-    const cutoff = days[0].ts;
-    const snap = await db.collection('reports')
-      .where('tsMs', '>=', cutoff)
-      .get();
-    const counts = new Array(7).fill(0);
-    snap.forEach(doc => {
-      const ts = doc.data().tsMs || 0;
-      for (let i = 6; i >= 0; i--) {
-        const dayStart = days[i].ts;
-        const dayEnd   = dayStart + 86400000;
-        if (ts >= dayStart && ts < dayEnd) { counts[i]++; break; }
-      }
-    });
-    updateWeeklyChart(days.map(d=>d.label), counts);
-  } catch(e) {
-    sysLog('⚠ weekly poll error: ' + e.message, 'warn');
-  }
-}
-
-/* ═══════════════════════════
-   LANE UI UPDATE
-═══════════════════════════ */
-function updateLaneUI(laneId, data) {
-  const which = laneId.includes('exit') ? 'exit' : 'entry';
-  const status = data.status || 'grey';
-  const eta    = data.eta    || '—';
-  const repCnt = data.reportsCount || 0;
-
-  const badge  = document.getElementById(`${which}-badge`);
-  const etaEl  = document.getElementById(`${which}-eta`);
-  const repEl  = document.getElementById(`${which}-reports`);
-  const barEl  = document.getElementById(`${which}-bar`);
-
-  // Badge
-  const labels = { green:'🟢 مريح', orange:'🟠 متوسط', red:'🔴 مزدحم' };
-  badge.textContent = labels[status] || status;
-  badge.className = `lane-status-badge badge-${status||'grey'}`;
-
-  etaEl.textContent = typeof eta === 'number' ? eta + ' دقيقة' : eta;
-  repEl.textContent = repCnt;
-
-  // Bar fill %
-  const pct = { green: 25, orange: 60, red: 90 }[status] || 0;
-  const clr = { green: 'var(--green)', orange: 'var(--orange)', red: 'var(--red)' }[status] || 'var(--text-muted)';
-  barEl.style.width = pct + '%';
-  barEl.style.background = clr;
-}
-
-/* ═══════════════════════════
-   LIVE FEED RENDER
-═══════════════════════════ */
-function renderFeed(reports) {
-  const list = document.getElementById('feed-list');
-  if (!reports || reports.length === 0) {
-    list.innerHTML = '<li style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;">لا توجد تقارير / No reports yet</li>';
-    return;
-  }
-  list.innerHTML = '';
-  reports.slice(0, FEED_MAX).forEach(r => {
-    const li = document.createElement('li');
-    li.className = 'feed-item';
-    const st  = r.status || 'grey';
-    const ts  = r.tsMs ? new Date(r.tsMs).toLocaleTimeString('ar-MA',{hour12:false,hour:'2-digit',minute:'2-digit'}) : '—';
-    const lane = r.lane === 'exit' ? 'خروج/Exit' : 'دخول/Entry';
-    const confs = r.confirmations || r.w || 0;
-    const stLabels = { green:'مريح', orange:'متوسط', red:'مزدحم' };
-    li.innerHTML = `
-      <div class="feed-dot ${st}"></div>
-      <div class="feed-body">
-        <div class="fb-main">${lane} — ${stLabels[st]||st}</div>
-        <div class="fb-meta">${ts} · ${r.uid ? r.uid.slice(0,8)+'…' : 'مجهول'}</div>
-      </div>
-      <div class="feed-conf">✓${confs}</div>
-    `;
-    list.appendChild(li);
-  });
-}
-
-/* ═══════════════════════════
-   KPI UPDATERS
-═══════════════════════════ */
-function updateKPIReports(n) {
-  document.getElementById('kpi-reports').textContent = n;
-}
-function updateAvgWait(reports) {
-  const withEta = reports.filter(r => typeof r.eta === 'number' && r.eta > 0);
-  if (!withEta.length) { document.getElementById('kpi-avg-wait').textContent = '—'; return; }
-  const avg = Math.round(withEta.reduce((a,r) => a + r.eta, 0) / withEta.length);
-  document.getElementById('kpi-avg-wait').textContent = avg;
-}
-
-/* ═══════════════════════════
-   TOP USERS
-═══════════════════════════ */
-function buildTopUsers(reports) {
+function renderUsers() {
   const map = {};
-  reports.forEach(r => {
-    if (!r.uid) return;
-    if (!map[r.uid]) map[r.uid] = { reports: 0, confs: 0 };
-    map[r.uid].reports++;
-    map[r.uid].confs += (r.confirmations || r.w || 0);
+  allReports.forEach(r => {
+    if (!r.uid && !r.lane) return;
+    const uid = r.uid || 'u_anon';
+    if (!map[uid]) map[uid] = { reports:0, last:0, lastStatus:'green', lastLane:'entry' };
+    map[uid].reports++;
+    if (r.tsMs > map[uid].last) { map[uid].last = r.tsMs; map[uid].lastStatus = r.status; map[uid].lastLane = r.lane; }
   });
-  const sorted = Object.entries(map)
-    .sort((a,b) => b[1].reports - a[1].reports)
-    .slice(0, 8);
-
-  document.getElementById('total-users-badge').textContent = Object.keys(map).length;
-
-  const emojis = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
-  const cont = document.getElementById('users-list');
+  const sorted = Object.entries(map).sort((a,b) => b[1].reports - a[1].reports).slice(0,8);
+  const tbody = document.getElementById('uTable');
+  if (!tbody) return;
+  setEl('uUniq', sorted.length);
   if (!sorted.length) {
-    cont.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;">لا بيانات / No data</div>';
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--dim);text-align:center;padding:16px">No user data in reports</td></tr>';
     return;
   }
-  cont.innerHTML = sorted.map(([uid, data], i) => `
-    <div class="user-row">
-      <div class="user-rank">${emojis[i]||i+1}</div>
-      <div class="user-avatar">${uid.slice(0,1).toUpperCase()}</div>
-      <div class="user-info">
-        <div class="ui-name">مستخدم / User</div>
-        <div class="ui-id">${uid.slice(0,16)}…</div>
-      </div>
-      <div class="user-conf">${data.reports}<span> تقرير</span><br>${data.confs}<span> ✓</span></div>
-    </div>
-  `).join('');
-}
-
-/* ═══════════════════════════
-   HOURLY HEATMAP
-═══════════════════════════ */
-function renderHeatmapSkeleton() {
-  const g = document.getElementById('heatmap-grid');
-  g.innerHTML = Array(24).fill(`<div class="hmap-cell skel"></div>`).join('');
-}
-
-function buildHeatmap(reports) {
-  const counts = new Array(24).fill(0);
-  reports.forEach(r => {
-    if (r.tsMs) {
-      const h = new Date(r.tsMs).getHours();
-      counts[h]++;
-    }
+  tbody.innerHTML = '';
+  sorted.forEach(([uid, d], i) => {
+    const ago = Math.round((Date.now() - d.last) / 60000);
+    const s = ST[d.lastStatus] || ST.green;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="font-weight:800;color:var(--dim)">${i+1}</td>
+      <td style="font-family:'JetBrains Mono';font-size:11px">${uid.slice(0,12)}</td>
+      <td style="font-weight:700">${d.reports}</td>
+      <td><span class="badge bg-${d.lastStatus === 'green' ? 'grn' : d.lastStatus === 'orange' ? 'org' : 'red'}">${s.emoji} ${s.label}</span></td>
+      <td style="color:var(--dim);font-size:11px">${ago < 1 ? 'just now' : ago + 'm ago'}</td>
+    `;
+    tbody.appendChild(tr);
   });
-  const max = Math.max(...counts, 1);
-  const g = document.getElementById('heatmap-grid');
-  g.innerHTML = counts.map((c, h) => {
-    const ratio = c / max;
-    const level = ratio === 0 ? 0 : ratio < .25 ? 1 : ratio < .5 ? 2 : ratio < .75 ? 3 : 4;
-    return `<div class="hmap-cell" data-level="${level}" title="${h}:00 — ${c} تقرير"></div>`;
-  }).join('');
 }
 
-/* ═══════════════════════════
-   OVERRIDE MODE
-═══════════════════════════ */
-function handleOverrideToggle() {
-  const enabled = document.getElementById('override-toggle').checked;
-  isOverrideActive = enabled;
-  const badge = document.getElementById('override-badge');
-  const ctrl  = document.getElementById('override-controls');
-  if (enabled) {
-    badge.textContent = 'ON'; badge.style.color = 'var(--amber)';
-    ctrl.style.opacity = '1'; ctrl.style.pointerEvents = 'auto';
-    sysLog('⚙️ Override mode ENABLED');
-    toast('وضع التجاوز مفعّل / Override mode enabled');
-  } else {
-    badge.textContent = 'OFF'; badge.style.color = '';
-    ctrl.style.opacity = '.4'; ctrl.style.pointerEvents = 'none';
-    sysLog('⚙️ Override mode DISABLED');
-    toast('وضع التجاوز معطّل / Override mode disabled');
+function renderDonut() {
+  const r = allReports.filter(x => x.status === 'red').length;
+  const o = allReports.filter(x => x.status === 'orange').length;
+  const g = allReports.filter(x => x.status === 'green').length;
+  const tot = r + o + g || 1;
+  const C = 2 * Math.PI * 34;
+  const rPct = r/tot, oPct = o/tot, gPct = g/tot;
+  const rA = C*rPct, oA = C*oPct, gA = C*gPct;
+  const dR = document.getElementById('dRed');
+  const dO = document.getElementById('dOrg');
+  const dG = document.getElementById('dGrn');
+  if (dR) { dR.setAttribute('stroke-dasharray', `${rA} ${C-rA}`); dR.setAttribute('stroke-dashoffset','0'); }
+  if (dO) { dO.setAttribute('stroke-dasharray', `${oA} ${C-oA}`); dO.setAttribute('stroke-dashoffset', `${-rA}`); }
+  if (dG) { dG.setAttribute('stroke-dasharray', `${gA} ${C-gA}`); dG.setAttribute('stroke-dashoffset', `${-(rA+oA)}`); }
+  setEl('dRedLbl', `🔴 Heavy — ${Math.round(rPct*100)}%`);
+  setEl('dOrgLbl', `🟠 Moderate — ${Math.round(oPct*100)}%`);
+  setEl('dGrnLbl', `🟢 Clear — ${Math.round(gPct*100)}%`);
+}
+
+// ─── MINI BARS ───
+function buildMiniBars() {
+  const wrap = document.getElementById('miniBars');
+  if (!wrap) return;
+  const h = new Date().getHours();
+  const hourly = new Array(24).fill(0);
+  allReports.forEach(r => {
+    const rh = new Date(r.tsMs).getHours();
+    if (rh <= h) hourly[rh]++;
+  });
+  const max = Math.max(...hourly, 1);
+  wrap.innerHTML = '';
+  for (let i = 0; i <= h; i++) {
+    const bar = document.createElement('div');
+    const pct = Math.max(4, Math.round((hourly[i]/max)*100));
+    bar.className = 'mbar' + (i === h ? ' peak' : '');
+    bar.style.height = pct + '%';
+    bar.title = `${String(i).padStart(2,'0')}:00 — ${hourly[i]} reports`;
+    wrap.appendChild(bar);
   }
 }
 
-async function applyOverride() {
-  if (!isOverrideActive || !db) return;
-  const entryStatus = document.getElementById('override-entry').value;
-  const exitStatus  = document.getElementById('override-exit').value;
+// ─── CHART ───
+function buildChart(type) {
+  chartMode = type;
+  const svg = document.getElementById('chartSvg');
+  const xl  = document.getElementById('chartXLabels');
+  if (!svg) return;
+  const W=600, H=150;
+  let points=[], labels=[];
 
-  const ETAs = { green: 35, orange: 75, red: 150 };
-
-  try {
-    const batch = db.batch();
-    const now = firebase.firestore.FieldValue.serverTimestamp();
-
-    batch.set(db.collection('lanes_state').doc('entry'), {
-      status: entryStatus,
-      eta: ETAs[entryStatus],
-      override: true,
-      updatedAt: now
-    }, { merge: true });
-
-    batch.set(db.collection('lanes_state').doc('exit'), {
-      status: exitStatus,
-      eta: ETAs[exitStatus],
-      override: true,
-      updatedAt: now
-    }, { merge: true });
-
-    await batch.commit();
-    sysLog(`✅ Override applied: entry=${entryStatus}, exit=${exitStatus}`);
-    toast('تم تطبيق التجاوز اليدوي / Override applied', 'success');
-  } catch(e) {
-    sysLog('❌ Override write failed: ' + e.message, 'error');
-    toast('فشل التطبيق: ' + e.message, 'error');
-  }
-}
-
-/* ═══════════════════════════
-   EMERGENCY MODE
-═══════════════════════════ */
-function openEmergency() {
-  if (isEmergencyActive) {
-    // Deactivate
-    document.getElementById('em-icon').textContent   = '✅';
-    document.getElementById('em-title').textContent  = 'إلغاء الطوارئ / CANCEL EMERGENCY';
-    document.getElementById('em-desc').innerHTML     = 'هل تريد إلغاء وضع الطوارئ وإعادة الحالة للاعتيادي؟<br><br>Deactivate emergency mode?';
-    document.getElementById('em-confirm-btn').textContent = 'إلغاء / DEACTIVATE';
-  } else {
-    document.getElementById('em-icon').textContent   = '⚠️';
-    document.getElementById('em-title').textContent  = 'وضع الطوارئ / EMERGENCY';
-    document.getElementById('em-desc').innerHTML     = 'سيتم ضبط كلا الاتجاهين على <strong style="color:var(--red)">أحمر</strong> فوراً.<br><br>Both lanes set to <strong style="color:var(--red)">RED</strong> immediately.';
-    document.getElementById('em-confirm-btn').textContent = 'تفعيل / ACTIVATE';
-  }
-  document.getElementById('emergency-modal').classList.add('open');
-}
-function closeEmergency() {
-  document.getElementById('emergency-modal').classList.remove('open');
-}
-
-async function confirmEmergency() {
-  closeEmergency();
-  if (!db) return;
-
-  if (isEmergencyActive) {
-    // Deactivate — restore to neutral
-    await deactivateEmergency();
-  } else {
-    // Activate
-    await activateEmergency();
-  }
-}
-
-async function activateEmergency() {
-  try {
-    const batch = db.batch();
-    const now = firebase.firestore.FieldValue.serverTimestamp();
-
-    ['entry','exit'].forEach(lane => {
-      batch.set(db.collection('lanes_state').doc(lane), {
-        status: 'red',
-        eta: 240,
-        emergency: true,
-        override: true,
-        updatedAt: now
-      }, { merge: true });
-    });
-    await batch.commit();
-
-    isEmergencyActive = true;
-    document.getElementById('btn-emergency').classList.add('active');
-    document.getElementById('btn-emergency').textContent = '🚨 طوارئ نشطة';
-    sysLog('🚨 EMERGENCY MODE ACTIVATED — both lanes RED', 'error');
-    toast('🚨 تم تفعيل وضع الطوارئ!', 'error');
-  } catch(e) {
-    sysLog('❌ Emergency activate failed: ' + e.message, 'error');
-    toast('فشل التفعيل: ' + e.message, 'error');
-  }
-}
-
-async function deactivateEmergency() {
-  try {
-    const batch = db.batch();
-    const now = firebase.firestore.FieldValue.serverTimestamp();
-
-    ['entry','exit'].forEach(lane => {
-      batch.set(db.collection('lanes_state').doc(lane), {
-        emergency: false,
-        override: false,
-        updatedAt: now
-      }, { merge: true });
-    });
-    await batch.commit();
-
-    isEmergencyActive = false;
-    document.getElementById('btn-emergency').classList.remove('active');
-    document.getElementById('btn-emergency').textContent = '⚠ طوارئ';
-    sysLog('✅ Emergency mode deactivated');
-    toast('تم إلغاء وضع الطوارئ / Emergency deactivated', 'success');
-  } catch(e) {
-    sysLog('❌ Emergency deactivate failed: ' + e.message, 'error');
-    toast('فشل الإلغاء: ' + e.message, 'error');
-  }
-}
-
-/* ═══════════════════════════
-   NOTIFICATIONS (FCM)
-═══════════════════════════ */
-function checkNotifPermission() {
-  if (!('Notification' in window)) return;
-  const btn = document.getElementById('btn-notif');
-  if (Notification.permission === 'granted') {
-    btn.classList.add('granted');
-    btn.textContent = '🔔 مفعّل';
-  }
-}
-
-async function requestNotifPerm() {
-  if (!('Notification' in window)) {
-    toast('المتصفح لا يدعم الإشعارات / Browser does not support notifications', 'error');
-    return;
-  }
-  const perm = await Notification.requestPermission();
-  const btn = document.getElementById('btn-notif');
-  if (perm === 'granted') {
-    btn.classList.add('granted');
-    btn.textContent = '🔔 مفعّل';
-    sysLog('✅ Notification permission granted');
-    toast('تم منح إذن الإشعارات / Notifications enabled', 'success');
-    initFCM();
-  } else {
-    sysLog('⚠ Notification permission denied');
-    toast('تم رفض الإشعارات / Notifications denied');
-  }
-}
-
-async function initFCM() {
-  // FCM integration — requires a service worker + VAPID key
-  // Your VAPID key is configured in the main app. Set it here too.
-  const VAPID_KEY = "YOUR_VAPID_KEY"; // ← replace with your key
-  try {
-    const msg = firebase.messaging();
-    const token = await msg.getToken({ vapidKey: VAPID_KEY });
-    if (token) {
-      sysLog('📱 FCM token obtained: ' + token.slice(0,20) + '…');
-      // Optionally save token to Firestore admin_tokens collection
+  if (type === 'hour') {
+    const hourly = new Array(24).fill(0);
+    allReports.forEach(r => { const h = new Date(r.tsMs).getHours(); hourly[h]++; });
+    const curH = new Date().getHours();
+    points = hourly.slice(0, curH+1);
+    labels = points.map((_,i) => String(i).padStart(2,'0') + 'h');
+  } else if (type === 'day') {
+    const daily = {};
+    for (let i=6; i>=0; i--) {
+      const d = new Date(); d.setDate(d.getDate()-i);
+      daily[d.toISOString().slice(0,10)] = 0;
     }
-    msg.onMessage(payload => {
-      sysLog('📨 FCM message received: ' + JSON.stringify(payload.notification));
-      const n = payload.notification;
-      if (n) new Notification(n.title, { body: n.body, icon: '/favicon.ico' });
-    });
-  } catch(e) {
-    sysLog('⚠ FCM init: ' + e.message + ' (may need service worker)', 'warn');
+    allReports.forEach(r => { const k = new Date(r.tsMs).toISOString().slice(0,10); if (k in daily) daily[k]++; });
+    points = Object.values(daily);
+    labels = Object.keys(daily).map(k => k.slice(5));
+  } else {
+    const weekly = new Array(4).fill(0);
+    const now = Date.now();
+    allReports.forEach(r => { const w = Math.floor((now - r.tsMs) / (7*24*3600*1000)); if (w<4) weekly[3-w]++; });
+    points = weekly;
+    labels = ['W-3','W-2','W-1','This week'];
+  }
+
+  if (!points.length) { svg.innerHTML = '<text x="300" y="75" text-anchor="middle" fill="rgba(255,255,255,.2)" font-size="14">No data yet</text>'; return; }
+  const max = Math.max(...points, 1);
+  const step = W / Math.max(points.length-1, 1);
+  const coords = points.map((v,i) => [i*step, H - (v/max)*(H-20) - 10]);
+  const path  = 'M ' + coords.map(c=>c.join(',')).join(' L ');
+  const area  = path + ` L ${coords[coords.length-1][0]},${H} L 0,${H} Z`;
+  const peakI = points.indexOf(Math.max(...points));
+
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#2563ff" stop-opacity=".3"/>
+        <stop offset="100%" stop-color="#2563ff" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${area}" fill="url(#cg)"/>
+    <path d="${path}" fill="none" stroke="#2563ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    ${coords.map((c,i) => `<circle cx="${c[0]}" cy="${c[1]}" r="${i===peakI?5:3}" fill="${i===peakI?'var(--red)':'#2563ff'}" style="cursor:pointer" onmouseenter="showTip(event,${points[i]},'${labels[i]||i}')" onmouseleave="hideTip()"/>`).join('')}
+  `;
+  if (xl && labels.length) {
+    const show = labels.length <= 12 ? labels : labels.filter((_,i) => i%Math.ceil(labels.length/8)===0);
+    xl.innerHTML = show.map(l => `<span>${l}</span>`).join('');
   }
 }
 
-/* ═══════════════════════════
-   CHARTS (Chart.js)
-═══════════════════════════ */
-const CHART_DEFAULTS = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      backgroundColor: 'rgba(13,17,23,.95)',
-      borderColor: '#1e2d3d',
-      borderWidth: 1,
-      titleColor: '#f0a500',
-      bodyColor: '#7a9ab8',
-      padding: 10,
-    }
-  },
-  scales: {
-    x: {
-      grid: { color: '#1e2d3d' },
-      ticks: { color: '#3d5168', font: { family: 'IBM Plex Mono', size: 9 } }
-    },
-    y: {
-      grid: { color: '#1e2d3d' },
-      ticks: { color: '#3d5168', font: { family: 'IBM Plex Mono', size: 9 }, stepSize: 1 },
-      beginAtZero: true,
-      title: { display: true, text: 'تقارير / Reports', color: '#3d5168', font: { size: 9 } }
-    }
-  }
+function showTip(e, val, lbl) {
+  const tip = document.getElementById('cTip');
+  if (!tip) return;
+  const rect = e.target.closest('.chart-area')?.getBoundingClientRect() || {left:0,top:0};
+  tip.style.display = 'block';
+  tip.style.left = (e.clientX - rect.left - 30) + 'px';
+  tip.style.top  = (e.clientY - rect.top  - 42) + 'px';
+  tip.textContent = lbl + ': ' + val + ' reports';
+}
+function hideTip() { const t = document.getElementById('cTip'); if(t) t.style.display='none'; }
+function switchChart(btn, type) {
+  document.querySelectorAll('.ctab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  buildChart(type);
+}
+
+// ─── TRAFFIC CONTROL ───
+async function setLane(lane, status, btn) {
+  const p = lane === 'entry' ? 'e' : 'x';
+  const colors = ['Grn','Org','Red'];
+  colors.forEach(c => document.getElementById(p+c)?.classList.remove('on'));
+  btn?.classList.add('on');
+  const s = ST[status];
+  const curEl = document.getElementById(p + 'Cur');
+  if (curEl) { curEl.textContent = s.label; curEl.style.color = s.color; }
+  renderLane(lane, status, Date.now());
+  try {
+    await setDoc(lanesRef[lane], { status, savedAt: Date.now(), cars: status==='red'?80:status==='orange'?45:15, density:status==='red'?.9:status==='orange'?.55:.2 }, { merge:true });
+    toast('✅ Firebase updated: ' + (lane==='entry'?'Entry':'Exit') + ' → ' + s.label);
+  } catch(e) { toast('❌ Write failed: ' + e.message); }
+}
+
+function toggleOverride() {
+  overrideOn = !overrideOn;
+  document.getElementById('ovToggle')?.classList.toggle('on', overrideOn);
+  document.getElementById('ovBar')?.classList.toggle('on', overrideOn);
+  toast(overrideOn ? '⚠️ Override active — reports ignored' : '✅ Override disabled — auto-detection');
+}
+
+function emergency() {
+  if (!confirm('Set BOTH lanes to RED immediately?')) return;
+  ['entry','exit'].forEach(lane => {
+    const p = lane === 'entry' ? 'e' : 'x';
+    ['Grn','Org','Red'].forEach(c => document.getElementById(p+c)?.classList.remove('on'));
+    document.getElementById(p+'Red')?.classList.add('on');
+    const cur = document.getElementById(p+'Cur');
+    if (cur) { cur.textContent='Heavy'; cur.style.color='var(--red)'; }
+    setDoc(lanesRef[lane], { status:'red', savedAt:Date.now(), cars:95, density:.95 }, { merge:true });
+  });
+  toast('🚨 Emergency mode — both lanes set to RED');
+}
+
+// ─── NOTIFICATIONS ───
+const TMPLS = {
+  urg:{ title:'🚨 تحذير عاجل', body:'ازدحام شديد في معبر الفنيدق — تجنب التوجه الآن' },
+  clr:{ title:'✅ المعبر مفتوح', body:'الطريق سالك الآن — وقت ممتاز للعبور' },
+  mod:{ title:'⚠️ حركة بطيئة', body:'ازدحام متوسط حالياً — خطط مسبقاً' },
+  cls:{ title:'🔒 المعبر مغلق', body:'تم إغلاق المعبر مؤقتاً — تابع التطبيق' }
 };
+function tpl(k) {
+  document.getElementById('nTitle').value = TMPLS[k].title;
+  document.getElementById('nBody').value  = TMPLS[k].body;
+}
+function sendNotif() {
+  const t = document.getElementById('nTitle').value;
+  const b = document.getElementById('nBody').value;
+  if (!t||!b) { toast('❌ Fill in title and message'); return; }
+  const lang = document.getElementById('nLang').value;
+  const hist = document.getElementById('nHist');
+  const noData = hist.querySelector('[colspan]');
+  if (noData) hist.innerHTML = '';
+  hist.insertAdjacentHTML('afterbegin', `<tr>
+    <td style="font-weight:700">${t}</td>
+    <td><span class="badge bg-grn">${lang}</span></td>
+    <td style="font-family:'JetBrains Mono';font-size:10px">${new Date().toLocaleTimeString('en-GB')}</td>
+    <td><span class="badge bg-grn">Sent</span></td>
+  </tr>`);
+  document.getElementById('nTitle').value = '';
+  document.getElementById('nBody').value  = '';
+  toast('🚀 Notification sent to ' + lang + ' users');
+}
 
-function initCharts() {
-  Chart.defaults.font.family = 'IBM Plex Mono';
-
-  // Hourly chart
-  hourlyChartInst = new Chart(document.getElementById('chart-hourly'), {
-    type: 'bar',
-    data: { labels: [], datasets: [{ data: [], backgroundColor: 'rgba(240,165,0,.4)', borderColor: '#f0a500', borderWidth: 1 }] },
-    options: { ...CHART_DEFAULTS,
-      plugins: { ...CHART_DEFAULTS.plugins,
-        tooltip: { ...CHART_DEFAULTS.plugins.tooltip,
-          callbacks: {
-            title: ctx => ctx[0].label + ':00',
-            label: ctx => `${ctx.parsed.y} تقارير / reports`
-          }
-        }
-      },
-      scales: { ...CHART_DEFAULTS.scales,
-        x: { ...CHART_DEFAULTS.scales.x, title: { display: true, text: 'الساعة / Hour', color: '#3d5168', font: {size:9} } }
-      }
-    }
+// ─── UTILS ───
+function setEl(id, val, cls, color) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (val !== '') el.textContent = val;
+  if (cls) el.className = cls;
+  if (color) el.style.color = color;
+}
+function clearFeed() {
+  ['ovFeed','liveFeed'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<div style="color:var(--dim);font-size:11px;padding:10px">Feed cleared</div>';
   });
-
-  // Daily chart
-  dailyChartInst = new Chart(document.getElementById('chart-daily'), {
-    type: 'line',
-    data: { labels: [], datasets: [{
-      data: [], borderColor: '#00e676', backgroundColor: 'rgba(0,230,118,.1)',
-      tension: .4, fill: true, pointBackgroundColor: '#00e676', pointRadius: 3
-    }]},
-    options: { ...CHART_DEFAULTS,
-      plugins: { ...CHART_DEFAULTS.plugins,
-        tooltip: { ...CHART_DEFAULTS.plugins.tooltip,
-          callbacks: { label: ctx => `${ctx.parsed.y} زيارة / visits` }
-        }
-      },
-      scales: { ...CHART_DEFAULTS.scales,
-        x: { ...CHART_DEFAULTS.scales.x, title: { display:true, text:'اليوم / Day', color:'#3d5168', font:{size:9} } }
-      }
-    }
-  });
-
-  // Weekly chart
-  weeklyChartInst = new Chart(document.getElementById('chart-weekly'), {
-    type: 'bar',
-    data: { labels: [], datasets: [{
-      data: [],
-      backgroundColor: ctx => {
-        const v = ctx.raw;
-        return v > 20 ? 'rgba(255,23,68,.5)' : v > 10 ? 'rgba(255,109,0,.5)' : 'rgba(41,121,255,.4)';
-      },
-      borderColor: ctx => {
-        const v = ctx.raw;
-        return v > 20 ? '#ff1744' : v > 10 ? '#ff6d00' : '#2979ff';
-      },
-      borderWidth: 1
-    }]},
-    options: { ...CHART_DEFAULTS,
-      plugins: { ...CHART_DEFAULTS.plugins,
-        tooltip: { ...CHART_DEFAULTS.plugins.tooltip,
-          callbacks: { label: ctx => `${ctx.parsed.y} تقرير / reports` }
-        }
-      },
-      scales: { ...CHART_DEFAULTS.scales,
-        x: { ...CHART_DEFAULTS.scales.x, title: { display:true, text:'اليوم / Day', color:'#3d5168', font:{size:9} } }
-      }
-    }
-  });
-
-  // Distribution donut
-  distChartInst = new Chart(document.getElementById('dist-chart'), {
-    type: 'doughnut',
-    data: {
-      labels: ['مريح / Easy', 'متوسط / Medium', 'مزدحم / Busy'],
-      datasets: [{
-        data: [0, 0, 0],
-        backgroundColor: ['rgba(0,230,118,.6)','rgba(255,145,0,.6)','rgba(255,23,68,.6)'],
-        borderColor:      ['#00e676','#ff9100','#ff1744'],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      cutout: '65%',
-      plugins: {
-        legend: { display: true, position: 'bottom', labels: { color: '#7a9ab8', font: { size: 9, family: 'IBM Plex Mono' }, boxWidth: 10 } },
-        tooltip: { ...CHART_DEFAULTS.plugins.tooltip,
-          callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} تقارير` }
-        }
-      }
-    }
-  });
-
-  sysLog('📊 Charts initialized');
 }
 
-function refreshHourlyChart(reports) {
-  const counts = new Array(24).fill(0);
-  const now = Date.now();
-  reports.filter(r => r.tsMs >= now - 24*3600*1000).forEach(r => {
-    if (r.tsMs) counts[new Date(r.tsMs).getHours()]++;
-  });
-  const labels = Array.from({length:24}, (_,i) => String(i).padStart(2,'0')+'h');
-  hourlyChartInst.data.labels = labels;
-  hourlyChartInst.data.datasets[0].data = counts;
-  hourlyChartInst.update('none');
+let _toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
 }
 
-async function refreshDailyChart() {
-  // Fetch last 14 days of daily_visits
-  if (!db) return;
-  try {
-    const days = [];
-    const counts = [];
-    const promises = [];
-    for (let i = 13; i >= 0; i--) {
-      const d = new Date(Date.now() - i * 86400000);
-      const key = d.toISOString().slice(0,10);
-      days.push(d.toLocaleDateString('ar-MA', { day:'numeric', month:'short' }));
-      promises.push(db.collection('daily_visits').doc(key).get());
-    }
-    const snaps = await Promise.all(promises);
-    snaps.forEach(s => counts.push(s.exists ? (s.data().count||0) : 0));
-    dailyChartInst.data.labels = days;
-    dailyChartInst.data.datasets[0].data = counts;
-    dailyChartInst.update('none');
-  } catch(e) {
-    sysLog('⚠ refreshDailyChart: ' + e.message, 'warn');
-  }
-}
-
-function updateWeeklyChart(labels, counts) {
-  weeklyChartInst.data.labels = labels;
-  weeklyChartInst.data.datasets[0].data = counts;
-  weeklyChartInst.update('none');
-}
-
-function refreshDistChart() {
-  const hours = parseInt(document.getElementById('dist-range').value) || 24;
-  const cutoff = Date.now() - hours * 3600 * 1000;
-  const filtered = reportCache.filter(r => r.tsMs >= cutoff);
-  const g = filtered.filter(r => r.status === 'green').length;
-  const o = filtered.filter(r => r.status === 'orange').length;
-  const r = filtered.filter(r => r.status === 'red').length;
-  distChartInst.data.datasets[0].data = [g, o, r];
-  distChartInst.update('none');
-}
-
-function switchTab(tab, btn) {
-  document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.chart-panel').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('panel-' + tab).classList.add('active');
-}
-
-/* ═══════════════════════════
-   SYSTEM LOG
-═══════════════════════════ */
-function sysLog(msg, level) {
-  const ts = new Date().toLocaleTimeString('ar-MA',{hour12:false});
-  const colors = { error:'#ff1744', warn:'#f0a500', '':'#7a9ab8' };
-  const color = colors[level||''] || '#7a9ab8';
-  const line = `<div style="color:${color};border-bottom:1px solid #1e2d3d;padding:2px 0"><span style="color:#3d5168">${ts}</span> ${msg}</div>`;
-  sysLogLines.unshift(line);
-  if (sysLogLines.length > 100) sysLogLines.pop();
-  const el = document.getElementById('sys-log');
-  if (el) el.innerHTML = sysLogLines.join('');
-}
-function clearSysLog() {
-  sysLogLines = [];
-  document.getElementById('sys-log').innerHTML = '';
-}
-function toggleDebug() {
-  const el = document.getElementById('debug-log');
-  el.classList.toggle('visible');
-}
-
-/* ═══════════════════════════
-   TOAST
-═══════════════════════════ */
-function toast(msg, type) {
-  const t = document.createElement('div');
-  t.className = 'toast' + (type ? ' ' + type : '');
-  t.textContent = msg;
-  document.getElementById('toast-container').appendChild(t);
-  setTimeout(() => t.remove(), 4200);
-}
-
-/* ═══════════════════════════
-   UTILS
-═══════════════════════════ */
-function todayKey() {
-  return new Date().toISOString().slice(0, 10);
-}
+// ─── WINDOW EXPORTS ───
+window.login=login; window.logout=logout; window.nav=nav;
+window.setLane=setLane; window.toggleOverride=toggleOverride; window.emergency=emergency;
+window.sendNotif=sendNotif; window.tpl=tpl; window.clearFeed=clearFeed;
+window.switchChart=switchChart; window.showTip=showTip; window.hideTip=hideTip;
+document.getElementById('pwIn').addEventListener('keydown', e => { if(e.key==='Enter') login(); });
 </script>
-
 </body>
 </html>
