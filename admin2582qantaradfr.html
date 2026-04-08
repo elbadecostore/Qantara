@@ -647,9 +647,8 @@ async function renderUsers() {
   const tbody = document.getElementById('uTable');
   if (!tbody) return;
 
-  // أولاً: نبني map من reports (userId field)
   const repMap = {};
-  allReports.forEach(r => {
+  allReports.forEach(function(r) {
     const uid = r.userId || r.uid;
     if (!uid) return;
     if (!repMap[uid]) repMap[uid] = { reports:0, last:0, lastStatus:'green' };
@@ -657,75 +656,51 @@ async function renderUsers() {
     if (r.tsMs > repMap[uid].last) { repMap[uid].last = r.tsMs; repMap[uid].lastStatus = r.status; }
   });
 
-  setEl('uUniq', Object.keys(repMap).length);
-
-  // ثانياً: نقرأ users collection للحصول على userNumber + streak
   let usersMap = {};
   try {
     const snap = await getDocs(usersCol);
-    snap.forEach(d => { usersMap[d.id] = d.data(); });
-  } catch(e) { console.warn('[Admin] users read error:', e.message); }
+    snap.forEach(function(d) { usersMap[d.id] = d.data(); });
+  } catch(e) { console.warn('[Admin] users error:', e.message); }
 
-  // دمج البيانات
-  const combined = Object.entries(repMap).map(([uid, rData]) => {
+  const combined = Object.entries(repMap).map(function(entry) {
+    const uid = entry[0], rData = entry[1];
     const uData = usersMap[uid] || {};
-    return {
-      uid,
-      userNumber:   uData.userNumber   || '—',
-      totalReports: uData.totalReports || rData.reports,
-      streakDays:   uData.streakDays   || 1,
-      lastStatus:   rData.lastStatus,
-      lastSeen:     uData.lastSeen     || rData.last,
-      createdAt:    uData.createdAt    || 0
-    };
+    return { uid, userNumber: uData.userNumber||'—', totalReports: uData.totalReports||rData.reports, streakDays: uData.streakDays||1, lastStatus: rData.lastStatus, lastSeen: uData.lastSeen||rData.last };
   });
 
-  // إضافة مستخدمين في users collection لكن ليس في reports اليوم
-  Object.entries(usersMap).forEach(([uid, u]) => {
-    if (!repMap[uid]) {
-      combined.push({
-        uid,
-        userNumber:   u.userNumber || '—',
-        totalReports: u.totalReports || 0,
-        streakDays:   u.streakDays || 1,
-        lastStatus:   'green',
-        lastSeen:     u.lastSeen || 0,
-        createdAt:    u.createdAt || 0
-      });
-    }
+  Object.entries(usersMap).forEach(function(entry) {
+    const uid = entry[0], u = entry[1];
+    if (!repMap[uid]) combined.push({ uid, userNumber: u.userNumber||'—', totalReports: u.totalReports||0, streakDays: u.streakDays||1, lastStatus:'green', lastSeen: u.lastSeen||0 });
   });
 
-  combined.sort((a,b) => b.totalReports - a.totalReports);
-
+  combined.sort(function(a,b) { return b.totalReports - a.totalReports; });
   setEl('uUniq', combined.length);
   setEl('uToday', allReports.length);
 
   if (!combined.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--dim);text-align:center;padding:16px">No users yet — waiting for first report</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--dim);text-align:center;padding:16px">No users yet</td></tr>';
     return;
   }
-
   tbody.innerHTML = '';
-  combined.slice(0,12).forEach((u, i) => {
-    const ago = u.lastSeen ? Math.round((Date.now() - u.lastSeen) / 60000) : null;
-    const agoTxt = ago === null ? '—' : ago < 1 ? 'just now' : ago < 60 ? ago + 'm ago' : Math.round(ago/60) + 'h ago';
-    const s = ST[u.lastStatus] || ST.green;
-    const streak = u.streakDays > 1 ? `🔥 ${u.streakDays}` : '1';
-    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i+1);
+  combined.slice(0,12).forEach(function(u, i) {
+    const ago    = u.lastSeen ? Math.round((Date.now()-u.lastSeen)/60000) : null;
+    const agoTxt = ago===null ? '—' : ago<1 ? 'just now' : ago<60 ? ago+'m ago' : Math.round(ago/60)+'h ago';
+    const s      = ST[u.lastStatus] || ST.green;
+    const streak = u.streakDays > 1 ? ('🔥 '+u.streakDays) : '1';
+    const medal  = i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
+    const stCls  = u.lastStatus==='green'?'grn':u.lastStatus==='orange'?'org':'red';
     const tr = document.createElement('tr');
-    tr.innerHTML = \`
-      <td style="font-weight:800;font-size:13px">\${medal}</td>
-      <td style="font-family:'JetBrains Mono';font-size:11px;color:var(--dim)">User #\${u.userNumber}</td>
-      <td style="font-family:'JetBrains Mono';font-size:10px;color:var(--dim)">\${u.uid.slice(0,14)}</td>
-      <td style="font-weight:800;color:var(--txt)">\${u.totalReports}</td>
-      <td style="font-weight:700;color:var(--org)">\${streak}</td>
-      <td><span class="badge bg-\${u.lastStatus==='green'?'grn':u.lastStatus==='orange'?'org':'red'}">\${s.emoji} \${s.label}</span></td>
-      <td style="color:var(--dim);font-size:11px">\${agoTxt}</td>
-    \`;
+    tr.innerHTML =
+      '<td style="font-weight:800">'+medal+'</td>'+
+      '<td style="font-family:monospace;font-size:11px;color:var(--dim)">User #'+u.userNumber+'</td>'+
+      '<td style="font-family:monospace;font-size:10px;color:var(--dim)">'+u.uid.slice(0,14)+'</td>'+
+      '<td style="font-weight:800">'+u.totalReports+'</td>'+
+      '<td style="color:var(--org);font-weight:700">'+streak+'</td>'+
+      '<td><span class="badge bg-'+stCls+'">'+s.emoji+' '+s.label+'</span></td>'+
+      '<td style="color:var(--dim);font-size:11px">'+agoTxt+'</td>';
     tbody.appendChild(tr);
   });
 }
-
 
 function renderDonut() {
   const r = allReports.filter(x => x.status === 'red').length;
