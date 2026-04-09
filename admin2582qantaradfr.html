@@ -172,6 +172,27 @@ tr:hover td{background:rgba(255,255,255,.02)}
 #toast{position:fixed;top:18px;right:18px;z-index:99999;background:#141e30;border:1px solid var(--b2);border-radius:11px;padding:11px 16px;font-size:12px;font-weight:600;color:var(--txt);box-shadow:0 8px 28px rgba(0,0,0,.5);transform:translateY(-140%);transition:transform .35s cubic-bezier(.16,1,.3,1);max-width:300px;pointer-events:none}
 #toast.show{transform:translateY(0)}
 
+/* USERS PAGE */
+.top5{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.top5-item{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--card2);border:1px solid var(--b1);border-radius:11px;transition:background .15s}
+.top5-item:hover{background:rgba(255,255,255,.04)}
+.top5-medal{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+.top5-info{flex:1;min-width:0}
+.top5-name{font-size:13px;font-weight:700}
+.top5-sub{font-size:10px;color:var(--mut);margin-top:2px}
+.top5-count{font-family:'JetBrains Mono';font-size:16px;font-weight:800;color:var(--txt);flex-shrink:0}
+.top5-bar-wrap{width:80px;height:4px;background:var(--b1);border-radius:99px;overflow:hidden;margin-top:4px}
+.top5-bar{height:100%;border-radius:99px;background:var(--blu)}
+.u-status{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px}
+.u-status.active{background:rgba(0,212,110,.1);color:var(--grn)}
+.u-status.inactive{background:rgba(255,255,255,.05);color:var(--dim)}
+.insight-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+
+/* CHART improvements */
+.chart-grid line{stroke:rgba(255,255,255,.04)}
+.chart-bar{transition:opacity .15s}
+.chart-bar:hover{opacity:1!important}
+
 /* Range */
 input[type=range]{flex:1;height:4px;border-radius:99px;background:var(--b2);outline:none;cursor:pointer;accent-color:var(--blu)}
 .rval{font-family:'JetBrains Mono';font-size:12px;font-weight:700;color:var(--blu);min-width:44px}
@@ -216,10 +237,10 @@ input[type=range]{flex:1;height:4px;border-radius:99px;background:var(--b2);outl
         <div style="font-size:10px;color:var(--dim);font-family:'JetBrains Mono'" id="ovTs">—</div>
       </div>
       <div class="g4">
-        <div class="kcard k-blu"><div class="k-ico">👥</div><div class="k-val" id="kUsers">—</div><div class="k-lbl">Online Now</div><div class="k-sub neutral" id="kUsersSub">Loading…</div></div>
-        <div class="kcard k-grn"><div class="k-ico">✅</div><div class="k-val" id="kConf">—</div><div class="k-lbl">Confirmations / 10min</div><div class="k-sub neutral">Last 10 minutes</div></div>
+        <div class="kcard k-blu"><div class="k-ico">🟢</div><div class="k-val" id="kUsers">—</div><div class="k-lbl">Online Now</div><div class="k-sub neutral" id="kUsersSub">Active &lt;90s</div></div>
+        <div class="kcard k-grn"><div class="k-ico">👤</div><div class="k-val" id="kTotalUsers">—</div><div class="k-lbl">Total Users</div><div class="k-sub neutral" id="kNewUsers">— new today</div></div>
         <div class="kcard k-cyn"><div class="k-ico">👁️</div><div class="k-val" id="kVisits">—</div><div class="k-lbl">Daily Visits</div><div class="k-sub up">Today</div></div>
-        <div class="kcard k-org"><div class="k-ico">📊</div><div class="k-val" id="kTotal">—</div><div class="k-lbl">Reports Today</div><div class="k-sub neutral" id="kTotalSub">24h window</div></div>
+        <div class="kcard k-org"><div class="k-ico">📊</div><div class="k-val" id="kTotal">—</div><div class="k-lbl">Reports Today</div><div class="k-sub neutral" id="kConf">— / 10min</div></div>
       </div>
       <div class="g2">
         <div class="card">
@@ -387,17 +408,30 @@ input[type=range]{flex:1;height:4px;border-radius:99px;background:var(--b2);outl
 
     <!-- USERS -->
     <div class="page" id="pg-users">
-      <div class="ph"><div><div class="pt">Users · المستخدمون</div><div class="ps">Top contributors & activity</div></div></div>
-      <div class="g3" style="margin-bottom:14px">
-        <div class="kcard k-blu" style="padding:12px"><div class="k-val" style="font-size:22px" id="uOnline">—</div><div class="k-lbl">Online now</div></div>
-        <div class="kcard k-grn" style="padding:12px"><div class="k-val" style="font-size:22px" id="uToday">—</div><div class="k-lbl">Reports today</div></div>
-        <div class="kcard k-org" style="padding:12px"><div class="k-val" style="font-size:22px" id="uUniq">—</div><div class="k-lbl">Unique contributors</div></div>
+      <div class="ph">
+        <div><div class="pt">Users Intelligence · ذكاء المستخدمين</div><div class="ps">Real-time user analytics from Firebase</div></div>
+        <div style="font-size:10px;color:var(--dim);font-family:'JetBrains Mono'" id="uLastUpdate">—</div>
+      </div>
+      <div class="insight-grid">
+        <div class="kcard k-blu" style="padding:12px"><div class="k-ico" style="font-size:16px">👥</div><div class="k-val" style="font-size:22px" id="uiTotal">—</div><div class="k-lbl">Total Users</div></div>
+        <div class="kcard k-grn" style="padding:12px"><div class="k-ico" style="font-size:16px">🟢</div><div class="k-val" style="font-size:22px" id="uiOnline">—</div><div class="k-lbl">Online Now</div></div>
+        <div class="kcard k-cyn" style="padding:12px"><div class="k-ico" style="font-size:16px">✨</div><div class="k-val" style="font-size:22px" id="uiNew">—</div><div class="k-lbl">New Today</div></div>
+        <div class="kcard k-org" style="padding:12px"><div class="k-ico" style="font-size:16px">🔄</div><div class="k-val" style="font-size:22px" id="uiReturn">—</div><div class="k-lbl">Returning Today</div></div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="sec">🏆 Top 5 Contributors</div>
+        <div class="top5" id="top5List" style="margin-top:10px"><div style="color:var(--dim);font-size:11px;padding:8px">Loading…</div></div>
       </div>
       <div class="card">
-        <div class="sec">Top Contributors (from reports)</div>
-        <div class="tbl-wrap" style="margin-top:8px">
-          <table><thead><tr><th>#</th><th>User #</th><th>ID</th><th>Reports</th><th>Streak 🔥</th><th>Status</th><th>Last Active</th></tr></thead>
-          <tbody id="uTable"><tr><td colspan="5" style="color:var(--dim);text-align:center;padding:16px">Loading from Firebase…</td></tr></tbody></table>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="sec" style="margin:0">All Users</div>
+          <div style="font-size:10px;color:var(--dim)" id="uTableCount">—</div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>#</th><th>User</th><th>Reports</th><th>Streak</th><th>Status</th><th>Last Active</th><th>Joined</th></tr></thead>
+            <tbody id="uTable"><tr><td colspan="7" style="color:var(--dim);text-align:center;padding:20px">Loading…</td></tr></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -457,6 +491,7 @@ const lanesRef   = { entry: doc(_db,'lanes_state','entry'), exit: doc(_db,'lanes
 const reportsCol = collection(_db,'reports');
 const onlineCol  = collection(_db,'online_users');
 const usersCol   = collection(_db,'users');
+let allUsers     = [];   // كاش users collection
 
 // ─── State ───
 const PW = 'qantara2025dfr';
@@ -534,6 +569,13 @@ function startListeners() {
     if (!overrideOn) renderLane('exit', d.status, d.savedAt);
   }, e => toast('⚠️ lanes_state error: ' + e.message));
 
+  // users — onSnapshot for real-time user data
+  onSnapshot(usersCol, snap => {
+    allUsers = [];
+    snap.forEach(d => allUsers.push({ id: d.id, ...d.data() }));
+    renderUsersPage();
+  }, e => toast('⚠️ users error: ' + e.message));
+
   // reports — onSnapshot for live feed
   onSnapshot(reportsCol, snap => {
     const WIN = 24 * 60 * 60 * 1000;
@@ -566,12 +608,12 @@ async function fetchPoll() {
     const onSnap = await getDocs(onlineCol);
     let online = 0;
     onSnap.forEach(d => { if (d.data().ts && Date.now() - d.data().ts < 90000) online++; });
-    const ou = Math.max(1, online);
-    setEl('kUsers',  ou);
-    setEl('lOnline', ou);
-    setEl('uOnline', ou);
-    setEl('mOnline', ou);
-    setEl('kUsersSub', ou + ' user' + (ou !== 1 ? 's' : '') + ' active');
+    const ou = Math.max(0, online);
+    setEl('kUsers',   ou);
+    setEl('lOnline',  ou);
+    setEl('uiOnline', ou);
+    setEl('mOnline',  ou);
+    setEl('kUsersSub', ou + ' active < 90s');
 
     // daily_visits
     const today = new Date().toISOString().slice(0,10);
@@ -579,7 +621,7 @@ async function fetchPoll() {
     const visits = vSnap.exists() ? (vSnap.data().count || 0) : 0;
     setEl('kVisits', visits.toLocaleString());
     setEl('mVisits', visits.toLocaleString());
-    renderUsers();
+    renderUsersPage();
   } catch(e) { toast('⚠️ Poll error: ' + e.message); }
 }
 
@@ -629,78 +671,104 @@ function renderFeed() {
 }
 
 function makeFI(r) {
-  const s = ST[r.status] || ST.green;
+  const s   = ST[r.status] || ST.green;
   const ago = Math.round((Date.now() - r.tsMs) / 60000);
+  const uData = r.userId ? allUsers.find(function(u){ return u.id === r.userId; }) : null;
+  const uLabel = uData ? ('User #'+(uData.userNumber||'?')) : (r.userId ? r.userId.slice(0,10) : 'Anon');
   const div = document.createElement('div');
   div.className = 'fi';
-  div.innerHTML = `
-    <div class="fi-dot ${s.dot}"></div>
-    <div class="fi-lane">${r.lane === 'entry' ? '⬆️ Entrada' : '⬇️ Salida'}</div>
-    <div class="fi-st" style="color:${s.color}">${s.label}</div>
-    <div class="fi-ago">${ago < 1 ? 'just now' : ago + 'm ago'}</div>
-    <div class="fi-pts">+${Math.round((r.w||1)*10)} ⭐</div>
-  `;
+  div.innerHTML =
+    '<div class="fi-dot '+s.dot+'"></div>' +
+    '<div class="fi-lane">'+(r.lane==='entry'?'⬆️ Entrada':'⬇️ Salida')+'</div>' +
+    '<div class="fi-st" style="color:'+s.color+'">'+s.label+'</div>' +
+    '<div style="font-size:10px;color:var(--dim);font-family:monospace;flex:1">'+uLabel+'</div>' +
+    '<div class="fi-ago">'+(ago<1?'just now':ago+'m ago')+'</div>' +
+    '<div class="fi-pts">+'+Math.round((r.w||1)*10)+' ⭐</div>';
   return div;
 }
 
-async function renderUsers() {
+function renderUsersPage() {
+  const today     = new Date().toISOString().slice(0,10);
+  const startDay  = new Date(); startDay.setHours(0,0,0,0);
+  const startTs   = startDay.getTime();
+
+  // ─── Smart KPIs ───
+  const total    = allUsers.length;
+  const newToday = allUsers.filter(u => u.createdAt >= startTs).length;
+  const retToday = allUsers.filter(u => u.lastSeen >= startTs && u.createdAt < startTs).length;
+
+  setEl('uiTotal',  total);
+  setEl('uiNew',    newToday);
+  setEl('uiReturn', retToday);
+  setEl('kTotalUsers', total);
+  setEl('kNewUsers',   newToday + ' new today');
+
+  // Overview sync
+  setEl('uToday',  allReports.length);
+  setEl('uUniq',   total);
+
+  // ─── Update timestamp ───
+  const now = new Date();
+  setEl('uLastUpdate', 'Updated ' + now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
+
+  // ─── Top 5 ───
+  const sorted = [...allUsers].sort((a,b) => (b.totalReports||0) - (a.totalReports||0));
+  const top5   = document.getElementById('top5List');
+  const maxRep = sorted[0]?.totalReports || 1;
+  const MEDALS = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+
+  if (top5 && sorted.length) {
+    top5.innerHTML = '';
+    sorted.slice(0,5).forEach(function(u, i) {
+      const pct = Math.round(((u.totalReports||0)/maxRep)*100);
+      const streak = u.streakDays > 1 ? ('🔥 ' + u.streakDays + 'd') : '';
+      const div = document.createElement('div');
+      div.className = 'top5-item';
+      div.innerHTML =
+        '<div class="top5-medal">' + MEDALS[i] + '</div>' +
+        '<div class="top5-info">' +
+          '<div class="top5-name">User #' + (u.userNumber||'?') + '</div>' +
+          '<div class="top5-bar-wrap"><div class="top5-bar" style="width:'+pct+'%;background:'+(i===0?'var(--gld)':i===1?'#c0c0c0':i===2?'#cd7f32':'var(--blu)')+'"></div></div>' +
+          '<div class="top5-sub">' + streak + (streak?'  ·  ':'') + 'joined ' + (u.createdAt?new Date(u.createdAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}):'?') + '</div>' +
+        '</div>' +
+        '<div class="top5-count">' + (u.totalReports||0) + ' rep</div>';
+      top5.appendChild(div);
+    });
+  }
+
+  // ─── Full table ───
   const tbody = document.getElementById('uTable');
+  setEl('uTableCount', total + ' users');
   if (!tbody) return;
 
-  const repMap = {};
-  allReports.forEach(function(r) {
-    const uid = r.userId || r.uid;
-    if (!uid) return;
-    if (!repMap[uid]) repMap[uid] = { reports:0, last:0, lastStatus:'green' };
-    repMap[uid].reports++;
-    if (r.tsMs > repMap[uid].last) { repMap[uid].last = r.tsMs; repMap[uid].lastStatus = r.status; }
-  });
-
-  let usersMap = {};
-  try {
-    const snap = await getDocs(usersCol);
-    snap.forEach(function(d) { usersMap[d.id] = d.data(); });
-  } catch(e) { console.warn('[Admin] users error:', e.message); }
-
-  const combined = Object.entries(repMap).map(function(entry) {
-    const uid = entry[0], rData = entry[1];
-    const uData = usersMap[uid] || {};
-    return { uid, userNumber: uData.userNumber||'—', totalReports: uData.totalReports||rData.reports, streakDays: uData.streakDays||1, lastStatus: rData.lastStatus, lastSeen: uData.lastSeen||rData.last };
-  });
-
-  Object.entries(usersMap).forEach(function(entry) {
-    const uid = entry[0], u = entry[1];
-    if (!repMap[uid]) combined.push({ uid, userNumber: u.userNumber||'—', totalReports: u.totalReports||0, streakDays: u.streakDays||1, lastStatus:'green', lastSeen: u.lastSeen||0 });
-  });
-
-  combined.sort(function(a,b) { return b.totalReports - a.totalReports; });
-  setEl('uUniq', combined.length);
-  setEl('uToday', allReports.length);
-
-  if (!combined.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--dim);text-align:center;padding:16px">No users yet</td></tr>';
+  if (!sorted.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--dim);text-align:center;padding:20px">No users yet</td></tr>';
     return;
   }
   tbody.innerHTML = '';
-  combined.slice(0,12).forEach(function(u, i) {
-    const ago    = u.lastSeen ? Math.round((Date.now()-u.lastSeen)/60000) : null;
-    const agoTxt = ago===null ? '—' : ago<1 ? 'just now' : ago<60 ? ago+'m ago' : Math.round(ago/60)+'h ago';
-    const s      = ST[u.lastStatus] || ST.green;
-    const streak = u.streakDays > 1 ? ('🔥 '+u.streakDays) : '1';
-    const medal  = i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
-    const stCls  = u.lastStatus==='green'?'grn':u.lastStatus==='orange'?'org':'red';
+  sorted.slice(0,100).forEach(function(u, i) {
+    const ago = u.lastSeen ? Math.round((Date.now()-u.lastSeen)/60000) : null;
+    const agoTxt = ago===null?'—':ago<1?'just now':ago<60?ago+'m':Math.round(ago/60)+'h ago';
+    const isActive = u.lastSeen && (Date.now()-u.lastSeen) < 120000;
+    const streak = (u.streakDays||1) > 1 ? ('🔥 '+(u.streakDays)) : '—';
+    const joined = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '—';
+    const isNew = u.createdAt >= startTs;
     const tr = document.createElement('tr');
     tr.innerHTML =
-      '<td style="font-weight:800">'+medal+'</td>'+
-      '<td style="font-family:monospace;font-size:11px;color:var(--dim)">User #'+u.userNumber+'</td>'+
-      '<td style="font-family:monospace;font-size:10px;color:var(--dim)">'+u.uid.slice(0,14)+'</td>'+
-      '<td style="font-weight:800">'+u.totalReports+'</td>'+
-      '<td style="color:var(--org);font-weight:700">'+streak+'</td>'+
-      '<td><span class="badge bg-'+stCls+'">'+s.emoji+' '+s.label+'</span></td>'+
-      '<td style="color:var(--dim);font-size:11px">'+agoTxt+'</td>';
+      '<td style="font-weight:800;color:var(--dim)">' + (i+1) + '</td>' +
+      '<td><div style="font-weight:700">User #'+(u.userNumber||'?')+'</div>' +
+        '<div style="font-family:monospace;font-size:9px;color:var(--dim)">'+(u.id||'').slice(0,14)+'</div>' +
+        (isNew?'<span style="font-size:9px;background:rgba(0,212,110,.12);color:var(--grn);padding:1px 6px;border-radius:99px;font-weight:700">NEW</span>':'') +
+      '</td>' +
+      '<td style="font-weight:800;font-family:JetBrains Mono,monospace">'+(u.totalReports||0)+'</td>' +
+      '<td style="font-weight:700;color:var(--org)">'+streak+'</td>' +
+      '<td><span class="u-status '+(isActive?'active':'inactive')+'">'+(isActive?'🟢 Active':'⚫ Inactive')+'</span></td>' +
+      '<td style="font-size:11px;color:var(--dim)">'+agoTxt+'</td>' +
+      '<td style="font-size:11px;color:var(--dim)">'+joined+'</td>';
     tbody.appendChild(tr);
   });
 }
+
 
 function renderDonut() {
   const r = allReports.filter(x => x.status === 'red').length;
