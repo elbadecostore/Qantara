@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Qantara Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06080f;--bg2:#090c18;--surf:#0f1422;--card:#131926;--card2:#171e2d;
+  --b1:rgba(255,255,255,.07);--b2:rgba(255,255,255,.13);
+  --txt:#e8ecf8;--mut:rgba(232,236,248,.45);--dim:rgba(232,236,248,.2);
+  --grn:#00d46e;--org:#ff8f00;--red:#ff3355;--blu:#2563ff;--cyn:#00c4ff;--gld:#ffd700;
+  --grn-b:rgba(0,212,110,.09);--org-b:rgba(255,143,0,.09);
+  --red-b:rgba(255,51,85,.09);--blu-b:rgba(37,99,255,.09);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Sora',sans-serif;background:var(--bg);color:var(--txt);overflow:hidden}
+
+/* LOGIN */
+#loginWrap{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center}
+.login-card{width:360px;padding:40px;background:var(--surf);border:1px solid var(--b2);border-radius:20px;box-shadow:0 40px 80px rgba(0,0,0,.7)}
+.login-card h1{font-size:26px;font-weight:800;letter-spacing:-.02em;text-align:center;margin-bottom:4px}
+.login-card p{font-size:10px;color:var(--mut);letter-spacing:.18em;text-transform:uppercase;text-align:center;margin-bottom:28px}
+.login-card input{width:100%;padding:12px 16px;background:var(--card);border:1px solid var(--b2);border-radius:10px;color:var(--txt);font-family:'Sora';font-size:14px;font-weight:600;outline:none;margin-bottom:12px;transition:border-color .2s}
+.login-card input:focus{border-color:var(--blu)}
+.login-card button{width:100%;padding:13px;background:linear-gradient(135deg,#2563ff,#1a4ff0);border:none;border-radius:10px;color:#fff;font-family:'Sora';font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.login-card button:hover{opacity:.88}
+.login-err{font-size:12px;color:var(--red);text-align:center;margin-top:10px;min-height:16px}
+
+/* LAYOUT */
+#dash{display:none;height:100vh;flex-direction:row}
+.sidebar{width:216px;flex-shrink:0;background:var(--surf);border-right:1px solid var(--b1);display:flex;flex-direction:column;padding:18px 0}
+.s-logo{padding:0 18px 18px;border-bottom:1px solid var(--b1);margin-bottom:10px}
+.s-logo h2{font-size:18px;font-weight:800;letter-spacing:-.02em}
+.s-logo span{font-size:9px;color:var(--mut);letter-spacing:.18em;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;cursor:pointer;font-size:12px;font-weight:600;color:var(--mut);transition:all .15s;border-right:2px solid transparent;user-select:none}
+.nav-item:hover{color:var(--txt);background:rgba(255,255,255,.03)}
+.nav-item.on{color:var(--txt);background:var(--blu-b);border-right-color:var(--blu)}
+.nav-ico{font-size:15px;width:20px;text-align:center}
+.s-foot{margin-top:auto;padding:14px 18px;border-top:1px solid var(--b1)}
+.live-dot{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--grn)}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:blink 1.5s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.s-clock{font-size:10px;color:var(--dim);font-family:'JetBrains Mono';margin-top:5px}
+
+.main{flex:1;overflow-y:auto;min-height:0;background:var(--bg2)}
+.main::-webkit-scrollbar{width:4px}
+.main::-webkit-scrollbar-thumb{background:var(--b2);border-radius:99px}
+
+.page{display:none;padding:22px}
+.page.on{display:block}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
+.pt{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.ps{font-size:11px;color:var(--mut);margin-top:3px}
+
+/* GRID */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--b1);border-radius:13px;padding:14px}
+.kcard{background:var(--card);border:1px solid var(--b1);border-radius:13px;padding:14px;position:relative;overflow:hidden}
+.kcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0}
+.kcard.k-blu::before{background:var(--blu)}
+.kcard.k-grn::before{background:var(--grn)}
+.kcard.k-org::before{background:var(--org)}
+.kcard.k-cyn::before{background:var(--cyn)}
+.kcard.k-red::before{background:var(--red)}
+.k-ico{font-size:20px;margin-bottom:8px}
+.k-val{font-size:28px;font-weight:800;letter-spacing:-.03em;font-family:'JetBrains Mono';line-height:1}
+.k-lbl{font-size:10px;color:var(--mut);margin-top:5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.k-sub{font-size:10px;margin-top:6px;font-weight:700}
+.k-sub.up{color:var(--grn)} .k-sub.neutral{color:var(--mut)} .k-sub.dn{color:var(--red)}
+
+/* SKELETON */
+.skel{background:linear-gradient(90deg,var(--card) 25%,var(--card2) 50%,var(--card) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* LANE STATUS */
+.ls{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--card2);border:1px solid var(--b1);border-radius:10px;margin-bottom:8px}
+.ls-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.ls-dot.grn{background:var(--grn);box-shadow:0 0 8px rgba(0,212,110,.5)}
+.ls-dot.org{background:var(--org);box-shadow:0 0 8px rgba(255,143,0,.5)}
+.ls-dot.red{background:var(--red);box-shadow:0 0 8px rgba(255,51,85,.5)}
+.ls-name{font-size:12px;font-weight:700}
+.ls-val{margin-right:auto;font-size:11px;color:var(--mut)}
+.ls-time{font-size:10px;color:var(--dim);font-family:'JetBrains Mono'}
+
+/* FEED */
+.feed{display:flex;flex-direction:column;gap:7px;max-height:340px;overflow-y:auto}
+.fi{display:flex;align-items:center;gap:9px;padding:9px 12px;background:var(--card2);border:1px solid var(--b1);border-radius:9px;font-size:12px;animation:fadeSlide .3s ease}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.fi-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.fi-dot.grn{background:var(--grn)} .fi-dot.org{background:var(--org)} .fi-dot.red{background:var(--red)}
+.fi-lane{font-weight:700}
+.fi-st{font-weight:700;font-size:11px}
+.fi-ago{margin-right:auto;color:var(--dim);font-family:'JetBrains Mono';font-size:10px}
+.fi-pts{color:var(--gld);font-weight:700;font-size:10px}
+
+/* CHART */
+.chart-wrap{background:var(--card);border:1px solid var(--b1);border-radius:13px;padding:14px;margin-bottom:16px}
+.chart-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.chart-title{font-size:13px;font-weight:700}
+.chart-tabs{display:flex;gap:3px}
+.ctab{padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;color:var(--mut);background:transparent;border:1px solid transparent;transition:all .15s}
+.ctab.on{background:var(--blu-b);color:var(--blu);border-color:rgba(37,99,255,.3)}
+.chart-area{height:150px;position:relative}
+.chart-svg{width:100%;height:100%}
+.chart-tooltip{position:absolute;background:rgba(15,20,34,.95);border:1px solid var(--b2);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;pointer-events:none;display:none;white-space:nowrap;z-index:10}
+
+/* CONTROLS */
+.sbtn-row{display:flex;gap:8px;margin-bottom:12px}
+.sbtn{flex:1;padding:12px 8px;border-radius:11px;border:2px solid transparent;cursor:pointer;font-family:'Sora';font-size:12px;font-weight:700;transition:all .2s;text-align:center}
+.sbtn.s-grn{background:var(--grn-b);border-color:rgba(0,212,110,.2);color:var(--grn)}
+.sbtn.s-grn.on,.sbtn.s-grn:hover{background:rgba(0,212,110,.18);border-color:var(--grn);box-shadow:0 0 18px rgba(0,212,110,.2)}
+.sbtn.s-org{background:var(--org-b);border-color:rgba(255,143,0,.2);color:var(--org)}
+.sbtn.s-org.on,.sbtn.s-org:hover{background:rgba(255,143,0,.18);border-color:var(--org);box-shadow:0 0 18px rgba(255,143,0,.2)}
+.sbtn.s-red{background:var(--red-b);border-color:rgba(255,51,85,.2);color:var(--red)}
+.sbtn.s-red.on,.sbtn.s-red:hover{background:rgba(255,51,85,.18);border-color:var(--red);box-shadow:0 0 18px rgba(255,51,85,.2)}
+
+/* TOGGLE */
+.trow{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--b1)}
+.trow:last-child{border-bottom:none}
+.tlbl{font-size:13px;font-weight:600}
+.tsub{font-size:11px;color:var(--mut);margin-top:2px}
+.toggle{width:38px;height:21px;background:var(--b2);border-radius:99px;position:relative;cursor:pointer;transition:background .25s;flex-shrink:0}
+.toggle.on{background:var(--blu)}
+.toggle::after{content:'';position:absolute;top:2.5px;left:2.5px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .25s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.toggle.on::after{transform:translateX(17px)}
+
+/* BTN */
+.btn{padding:8px 16px;border-radius:8px;cursor:pointer;font-family:'Sora';font-size:12px;font-weight:700;transition:all .15s;border:none}
+.btn-pri{background:var(--blu);color:#fff}
+.btn-pri:hover{background:#1a4ff0}
+.btn-dng{background:var(--red-b);color:var(--red);border:1px solid rgba(255,51,85,.25)}
+.btn-dng:hover{background:rgba(255,51,85,.16)}
+.btn-gst{background:var(--card2);color:var(--txt);border:1px solid var(--b2)}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:8px 12px;text-align:right;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--b1)}
+td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.03)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700}
+.bg-grn{background:var(--grn-b);color:var(--grn)}
+.bg-org{background:var(--org-b);color:var(--org)}
+.bg-red{background:var(--red-b);color:var(--red)}
+
+/* MISC */
+.sec{font-size:10px;font-weight:700;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+.divider{height:1px;background:var(--b1);margin:14px 0}
+.override-bar{display:none;padding:9px 13px;border-radius:9px;background:rgba(255,143,0,.1);border:1px solid rgba(255,143,0,.3);color:var(--org);font-size:12px;font-weight:700;margin-bottom:12px;align-items:center;gap:8px}
+.override-bar.on{display:flex}
+.notif-ta{width:100%;padding:11px;background:var(--card2);border:1px solid var(--b2);border-radius:9px;color:var(--txt);font-family:'Sora';font-size:13px;resize:none;outline:none;height:75px}
+.notif-ta:focus{border-color:var(--blu)}
+.notif-in{width:100%;padding:10px 12px;background:var(--card2);border:1px solid var(--b2);border-radius:9px;color:var(--txt);font-family:'Sora';font-size:13px;font-weight:600;outline:none;margin-bottom:8px}
+.notif-in:focus{border-color:var(--blu)}
+.donut-wrap{display:flex;align-items:center;gap:16px}
+.donut-leg{display:flex;flex-direction:column;gap:7px}
+.dleg{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600}
+.ddot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.mini-bars{display:flex;align-items:flex-end;gap:2px;height:46px}
+.mbar{flex:1;border-radius:2px 2px 0 0;min-height:2px;background:var(--blu);opacity:.55;cursor:pointer;transition:opacity .15s}
+.mbar:hover{opacity:1}
+.mbar.peak{background:var(--red);opacity:.75}
+
+/* TOAST */
+#toast{position:fixed;top:18px;right:18px;z-index:99999;background:#141e30;border:1px solid var(--b2);border-radius:11px;padding:11px 16px;font-size:12px;font-weight:600;color:var(--txt);box-shadow:0 8px 28px rgba(0,0,0,.5);transform:translateY(-140%);transition:transform .35s cubic-bezier(.16,1,.3,1);max-width:300px;pointer-events:none}
+#toast.show{transform:translateY(0)}
+
+/* USERS PAGE */
+.top5{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.top5-item{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--card2);border:1px solid var(--b1);border-radius:11px;transition:background .15s}
+.top5-item:hover{background:rgba(255,255,255,.04)}
+.top5-medal{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+.top5-info{flex:1;min-width:0}
+.top5-name{font-size:13px;font-weight:700}
+.top5-sub{font-size:10px;color:var(--mut);margin-top:2px}
+.top5-count{font-family:'JetBrains Mono';font-size:16px;font-weight:800;color:var(--txt);flex-shrink:0}
+.top5-bar-wrap{width:80px;height:4px;background:var(--b1);border-radius:99px;overflow:hidden;margin-top:4px}
+.top5-bar{height:100%;border-radius:99px;background:var(--blu)}
+.u-status{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px}
+.u-status.active{background:rgba(0,212,110,.1);color:var(--grn)}
+.u-status.inactive{background:rgba(255,255,255,.05);color:var(--dim)}
+.insight-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+
+/* CHART improvements */
+.chart-grid line{stroke:rgba(255,255,255,.04)}
+.chart-bar{transition:opacity .15s}
+.chart-bar:hover{opacity:1!important}
+
+/* Range */
+input[type=range]{flex:1;height:4px;border-radius:99px;background:var(--b2);outline:none;cursor:pointer;accent-color:var(--blu)}
+.rval{font-family:'JetBrains Mono';font-size:12px;font-weight:700;color:var(--blu);min-width:44px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginWrap">
+  <div class="login-card">
+    <h1>🌉 Qantara</h1>
+    <p>Admin Control Center</p>
+    <input type="password" id="pwIn" placeholder="Password · كلمة المرور" onkeydown="if(event.key==='Enter')login()">
+    <button onclick="login()">تسجيل الدخول · Login</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dash">
+  <div class="sidebar">
+    <div class="s-logo"><h2>🌉 Qantara</h2><span>Admin Panel</span></div>
+    <div class="nav-item on"  onclick="nav('overview')"><span class="nav-ico">📊</span>Overview</div>
+    <div class="nav-item"     onclick="nav('analytics')"><span class="nav-ico">📈</span>Analytics</div>
+    <div class="nav-item"     onclick="nav('live')"><span class="nav-ico">🔴</span>Live Feed</div>
+    <div class="nav-item"     onclick="nav('control')"><span class="nav-ico">🎛️</span>Traffic Control</div>
+    <div class="nav-item"     onclick="nav('notifs')"><span class="nav-ico">🔔</span>Notifications</div>
+    <div class="nav-item"     onclick="nav('users')"><span class="nav-ico">👥</span>Users</div>
+    <div class="nav-item"     onclick="nav('settings')"><span class="nav-ico">⚙️</span>Settings</div>
+    <div class="s-foot">
+      <div class="live-dot"><div class="dot"></div>Firebase Connected</div>
+      <div class="s-clock" id="sClock"></div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- OVERVIEW -->
+    <div class="page on" id="pg-overview">
+      <div class="ph">
+        <div><div class="pt">Overview · نظرة عامة</div><div class="ps">Tarajal Border — Live monitoring</div></div>
+        <div style="font-size:10px;color:var(--dim);font-family:'JetBrains Mono'" id="ovTs">—</div>
+      </div>
+      <div class="g4">
+        <div class="kcard k-blu"><div class="k-ico">🟢</div><div class="k-val" id="kUsers">—</div><div class="k-lbl">Online Now</div><div class="k-sub neutral" id="kUsersSub">Active &lt;90s</div></div>
+        <div class="kcard k-grn"><div class="k-ico">👤</div><div class="k-val" id="kTotalUsers">—</div><div class="k-lbl">Total Users</div><div class="k-sub neutral" id="kNewUsers">— new today</div></div>
+        <div class="kcard k-cyn"><div class="k-ico">👁️</div><div class="k-val" id="kVisits">—</div><div class="k-lbl">Daily Visits</div><div class="k-sub up">Today</div></div>
+        <div class="kcard k-org"><div class="k-ico">📊</div><div class="k-val" id="kTotal">—</div><div class="k-lbl">Reports Today</div><div class="k-sub neutral" id="kConf">— / 10min</div></div>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="sec">Current Lane Status · حالة الممرين</div>
+          <div class="ls"><div class="ls-dot red" id="eDot"></div><div class="ls-name">⬆️ Entrada Ceuta</div><div class="ls-val" id="eVal">—</div><div class="ls-time" id="eTime">—</div></div>
+          <div class="ls"><div class="ls-dot grn" id="xDot"></div><div class="ls-name">⬇️ Salida Fnideq</div><div class="ls-val" id="xVal">—</div><div class="ls-time" id="xTime">—</div></div>
+        </div>
+        <div class="card">
+          <div class="sec">Hourly Activity</div>
+          <div class="mini-bars" id="miniBars"></div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px">
+            <span style="font-size:9px;color:var(--dim);font-family:'JetBrains Mono'">00:00</span>
+            <span style="font-size:9px;color:var(--dim);font-family:'JetBrains Mono'">Now</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="sec" style="margin:0">Recent Confirmations</div>
+          <button class="btn btn-gst" style="padding:3px 10px;font-size:10px" onclick="nav('live')">View all →</button>
+        </div>
+        <div class="feed" id="ovFeed"><div style="color:var(--dim);font-size:11px;padding:10px">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="page" id="pg-analytics">
+      <div class="ph"><div><div class="pt">Analytics · تحليلات</div><div class="ps">Traffic patterns & insights</div></div></div>
+      <div class="chart-wrap">
+        <div class="chart-hd">
+          <div class="chart-title">Reports Volume</div>
+          <div class="chart-tabs">
+            <div class="ctab on" onclick="switchChart(this,'hour')">Hourly</div>
+            <div class="ctab" onclick="switchChart(this,'day')">Daily</div>
+            <div class="ctab" onclick="switchChart(this,'week')">Weekly</div>
+          </div>
+        </div>
+        <div class="chart-area" id="chartArea">
+          <svg class="chart-svg" id="chartSvg" viewBox="0 0 600 150" preserveAspectRatio="none"></svg>
+          <div class="chart-tooltip" id="cTip"></div>
+        </div>
+        <div id="chartXLabels" style="display:flex;justify-content:space-between;margin-top:4px;font-size:9px;color:var(--dim);font-family:'JetBrains Mono'"></div>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="sec">Status Distribution (Today)</div>
+          <div class="donut-wrap" style="margin-top:8px">
+            <svg width="90" height="90" viewBox="0 0 90 90" style="flex-shrink:0">
+              <circle cx="45" cy="45" r="34" fill="none" stroke="var(--b2)" stroke-width="12"/>
+              <circle cx="45" cy="45" r="34" fill="none" stroke="var(--red)"   stroke-width="12" id="dRed"  stroke-dasharray="0 214" stroke-dashoffset="0" transform="rotate(-90 45 45)" style="transition:stroke-dasharray .6s ease"/>
+              <circle cx="45" cy="45" r="34" fill="none" stroke="var(--org)" stroke-width="12" id="dOrg"  stroke-dasharray="0 214" stroke-dashoffset="0" transform="rotate(-90 45 45)" style="transition:stroke-dasharray .6s ease"/>
+              <circle cx="45" cy="45" r="34" fill="none" stroke="var(--grn)"  stroke-width="12" id="dGrn"  stroke-dasharray="0 214" stroke-dashoffset="0" transform="rotate(-90 45 45)" style="transition:stroke-dasharray .6s ease"/>
+            </svg>
+            <div class="donut-leg">
+              <div class="dleg"><div class="ddot" style="background:var(--red)"></div><span id="dRedLbl">🔴 Heavy — —%</span></div>
+              <div class="dleg"><div class="ddot" style="background:var(--org)"></div><span id="dOrgLbl">🟠 Moderate — —%</span></div>
+              <div class="dleg"><div class="ddot" style="background:var(--grn)"></div><span id="dGrnLbl">🟢 Clear — —%</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sec">Key Metrics</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">Reports today</span><span style="font-weight:700;font-family:'JetBrains Mono'" id="mTotal">—</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">Online users</span><span style="font-weight:700;font-family:'JetBrains Mono'" id="mOnline">—</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">Daily visits</span><span style="font-weight:700;font-family:'JetBrains Mono'" id="mVisits">—</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">Confirmations / 10min</span><span style="font-weight:700;font-family:'JetBrains Mono'" id="mConf10">—</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">Entry lane status</span><span style="font-weight:700" id="mEntry">—</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">Exit lane status</span><span style="font-weight:700" id="mExit">—</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE FEED -->
+    <div class="page" id="pg-live">
+      <div class="ph">
+        <div><div class="pt">Live Feed · تغذية مباشرة</div><div class="ps">Real-time confirmations stream</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="live-dot" style="font-size:11px"><div class="dot"></div>Live</div>
+          <button class="btn btn-gst" onclick="clearFeed()">Clear</button>
+        </div>
+      </div>
+      <div class="g3" style="margin-bottom:14px">
+        <div class="kcard k-grn" style="padding:12px"><div class="k-val" style="font-size:22px" id="lTotal">—</div><div class="k-lbl">Total today</div></div>
+        <div class="kcard k-blu" style="padding:12px"><div class="k-val" style="font-size:22px" id="lOnline">—</div><div class="k-lbl">Online now</div></div>
+        <div class="kcard k-org" style="padding:12px"><div class="k-val" style="font-size:22px" id="lLast10">—</div><div class="k-lbl">Last 10 min</div></div>
+      </div>
+      <div class="card"><div class="sec">Confirmations Feed</div><div class="feed" id="liveFeed" style="max-height:420px"><div style="color:var(--dim);font-size:11px;padding:10px">Loading…</div></div></div>
+    </div>
+
+    <!-- TRAFFIC CONTROL -->
+    <div class="page" id="pg-control">
+      <div class="ph"><div><div class="pt">Traffic Control · التحكم في الحركة</div><div class="ps">Manual override & status management</div></div></div>
+      <div class="override-bar" id="ovBar">⚠️ Override Mode Active — user reports are being ignored<button class="btn btn-dng" style="padding:3px 10px;font-size:10px;margin-right:auto" onclick="toggleOverride()">Disable</button></div>
+      <div class="g2">
+        <div class="card">
+          <div class="sec">Entry Lane ⬆️ دخول سبتة</div>
+          <div class="sbtn-row">
+            <button class="sbtn s-grn" id="eGrn" onclick="setLane('entry','green',this)">🟢 Clear</button>
+            <button class="sbtn s-org" id="eOrg" onclick="setLane('entry','orange',this)">🟠 Moderate</button>
+            <button class="sbtn s-red on" id="eRed" onclick="setLane('entry','red',this)">🔴 Heavy</button>
+          </div>
+          <div style="font-size:11px;color:var(--mut)">Current: <span id="eCur" style="font-weight:700;color:var(--red)">Heavy</span></div>
+        </div>
+        <div class="card">
+          <div class="sec">Exit Lane ⬇️ خروج الفنيدق</div>
+          <div class="sbtn-row">
+            <button class="sbtn s-grn on" id="xGrn" onclick="setLane('exit','green',this)">🟢 Clear</button>
+            <button class="sbtn s-org" id="xOrg" onclick="setLane('exit','orange',this)">🟠 Moderate</button>
+            <button class="sbtn s-red" id="xRed" onclick="setLane('exit','red',this)">🔴 Heavy</button>
+          </div>
+          <div style="font-size:11px;color:var(--mut)">Current: <span id="xCur" style="font-weight:700;color:var(--grn)">Clear</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="trow">
+          <div><div class="tlbl">Override Mode</div><div class="tsub">Manually force status — ignore user reports</div></div>
+          <div class="toggle" id="ovToggle" onclick="toggleOverride()"></div>
+        </div>
+        <div class="trow" style="border:none">
+          <div><div class="tlbl" style="color:var(--red)">Emergency Mode 🚨</div><div class="tsub">Set BOTH lanes to RED immediately</div></div>
+          <button class="btn btn-dng" onclick="emergency()">Activate Emergency</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="page" id="pg-notifs">
+      <div class="ph"><div><div class="pt">Notifications · إشعارات</div><div class="ps">Push notifications to users</div></div></div>
+      <div class="g2">
+        <div class="card">
+          <div class="sec">Send Notification</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <input class="notif-in" type="text" id="nTitle" placeholder="العنوان · Title">
+            <textarea class="notif-ta" id="nBody" placeholder="الرسالة · Message"></textarea>
+            <div style="display:flex;gap:8px">
+              <select id="nLang" style="flex:1;padding:8px 10px;background:var(--card2);border:1px solid var(--b2);border-radius:8px;color:var(--txt);font-family:'Sora';font-size:12px;outline:none">
+                <option value="all">All users</option>
+                <option value="ar">Arabic</option>
+                <option value="es">Spanish</option>
+              </select>
+              <button class="btn btn-pri" onclick="sendNotif()">Send 🚀</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sec">Quick Templates</div>
+          <div style="display:flex;flex-direction:column;gap:7px;margin-top:8px">
+            <button class="btn btn-gst" style="text-align:right;width:100%" onclick="tpl('urg')">🚨 ازدحام شديد — تجنب المعبر</button>
+            <button class="btn btn-gst" style="text-align:right;width:100%" onclick="tpl('clr')">✅ الطريق مفتوح — وقت ممتاز</button>
+            <button class="btn btn-gst" style="text-align:right;width:100%" onclick="tpl('mod')">⚠️ حركة بطيئة — خطط مسبقاً</button>
+            <button class="btn btn-gst" style="text-align:right;width:100%" onclick="tpl('cls')">🔒 المعبر مغلق مؤقتاً</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sec">Notification History</div>
+        <div class="tbl-wrap" style="margin-top:8px">
+          <table><thead><tr><th>Title</th><th>Target</th><th>Time</th><th>Status</th></tr></thead>
+          <tbody id="nHist"><tr><td colspan="4" style="color:var(--dim);text-align:center;padding:16px">No notifications sent yet</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page" id="pg-users">
+      <div class="ph">
+        <div><div class="pt">Users Intelligence · ذكاء المستخدمين</div><div class="ps">Real-time user analytics from Firebase</div></div>
+        <div style="font-size:10px;color:var(--dim);font-family:'JetBrains Mono'" id="uLastUpdate">—</div>
+      </div>
+      <div class="insight-grid">
+        <div class="kcard k-blu" style="padding:12px"><div class="k-ico" style="font-size:16px">👥</div><div class="k-val" style="font-size:22px" id="uiTotal">—</div><div class="k-lbl">Total Users</div></div>
+        <div class="kcard k-grn" style="padding:12px"><div class="k-ico" style="font-size:16px">🟢</div><div class="k-val" style="font-size:22px" id="uiOnline">—</div><div class="k-lbl">Online Now</div></div>
+        <div class="kcard k-cyn" style="padding:12px"><div class="k-ico" style="font-size:16px">✨</div><div class="k-val" style="font-size:22px" id="uiNew">—</div><div class="k-lbl">New Today</div></div>
+        <div class="kcard k-org" style="padding:12px"><div class="k-ico" style="font-size:16px">🔄</div><div class="k-val" style="font-size:22px" id="uiReturn">—</div><div class="k-lbl">Returning Today</div></div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="sec">🏆 Top 5 Contributors</div>
+        <div class="top5" id="top5List" style="margin-top:10px"><div style="color:var(--dim);font-size:11px;padding:8px">Loading…</div></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="sec" style="margin:0">All Users</div>
+          <div style="font-size:10px;color:var(--dim)" id="uTableCount">—</div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>#</th><th>User</th><th>Reports</th><th>Streak</th><th>Status</th><th>Last Active</th><th>Joined</th></tr></thead>
+            <tbody id="uTable"><tr><td colspan="7" style="color:var(--dim);text-align:center;padding:20px">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="pg-settings">
+      <div class="ph"><div><div class="pt">Settings · الإعدادات</div><div class="ps">System configuration</div></div></div>
+      <div class="g2">
+        <div class="card">
+          <div class="sec">Polling & Performance</div>
+          <div class="trow">
+            <div><div class="tlbl">Polling Interval</div><div class="tsub">How often to refresh data</div></div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="range" min="30" max="300" step="30" value="60" id="polR" oninput="document.getElementById('polV').textContent=this.value+'s'">
+              <div class="rval" id="polV">60s</div>
+            </div>
+          </div>
+          <div class="trow" style="border:none">
+            <div><div class="tlbl">Pause on Hidden Tab</div><div class="tsub">Stop polling when tab is in background</div></div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sec">Features</div>
+          <div class="trow"><div><div class="tlbl">Push Notifications (FCM)</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="trow"><div><div class="tlbl">Online Users Counter 👥</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="trow"><div><div class="tlbl">Google Analytics GA4</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="trow" style="border:none"><div><div class="tlbl">Smart Notifications AI</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="trow"><div><div class="tlbl" style="color:var(--red)">Logout · تسجيل الخروج</div></div><button class="btn btn-dng" onclick="logout()">Logout →</button></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /dash -->
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp }    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getFirestore, collection, getDocs, getDoc, doc, setDoc, onSnapshot }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+// ─── Firebase ───
+const _app = initializeApp({
+  apiKey:            'AIzaSyCxVDBRV20xCo8sYmlnKt67ggh8HY3KxF8',
+  authDomain:        'qantara-live.firebaseapp.com',
+  projectId:         'qantara-live',
+  storageBucket:     'qantara-live.firebasestorage.app',
+  messagingSenderId: '219692468615',
+  appId:             '1:219692468615:web:4598dd00cb99afa38a6b22'
+});
+const _db = getFirestore(_app);
+const lanesRef   = { entry: doc(_db,'lanes_state','entry'), exit: doc(_db,'lanes_state','exit') };
+const reportsCol = collection(_db,'reports');
+const onlineCol  = collection(_db,'online_users');
+const usersCol   = collection(_db,'users');
+let allUsers     = [];   // كاش users collection
+
+// ─── State ───
+const PW = 'qantara2025dfr';
+let laneStatus = { entry:'green', exit:'green' };
+let overrideOn = false;
+let allReports = [];
+let pollingTimer = null;
+let chartMode = 'hour';
+
+// ─── AUTH ───
+function login() {
+  const pw = document.getElementById('pwIn').value;
+  if (pw === PW) {
+    document.getElementById('loginWrap').style.display = 'none';
+    document.getElementById('dash').style.display = 'flex';
+    init();
+  } else {
+    document.getElementById('loginErr').textContent = '❌ Wrong password · كلمة المرور خاطئة';
+    document.getElementById('pwIn').value = '';
+    setTimeout(() => document.getElementById('loginErr').textContent = '', 2500);
+  }
+}
+function logout() {
+  location.reload();
+}
+
+// ─── NAV ───
+function nav(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('on'));
+  document.getElementById('pg-' + id).classList.add('on');
+  const pages = ['overview','analytics','live','control','notifs','users','settings'];
+  document.querySelectorAll('.nav-item')[pages.indexOf(id)]?.classList.add('on');
+}
+
+// ─── INIT ───
+function init() {
+  startClock();
+  startListeners();
+  buildMiniBars();
+  startPolling();
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) { fetchPoll(); }
+  });
+}
+
+// ─── CLOCK ───
+function startClock() {
+  function tick() {
+    const t = new Date().toLocaleTimeString('en-GB');
+    const el = document.getElementById('sClock');
+    if (el) el.textContent = t;
+    const ov = document.getElementById('ovTs');
+    if (ov) ov.textContent = 'Updated ' + t;
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+// ─── REAL-TIME LISTENERS (onSnapshot) ───
+function startListeners() {
+  // lanes_state — entry
+  onSnapshot(lanesRef.entry, snap => {
+    if (!snap.exists()) return;
+    const d = snap.data();
+    laneStatus.entry = d.status || 'green';
+    if (!overrideOn) renderLane('entry', d.status, d.savedAt);
+  }, e => toast('⚠️ lanes_state error: ' + e.message));
+
+  // lanes_state — exit
+  onSnapshot(lanesRef.exit, snap => {
+    if (!snap.exists()) return;
+    const d = snap.data();
+    laneStatus.exit = d.status || 'green';
+    if (!overrideOn) renderLane('exit', d.status, d.savedAt);
+  }, e => toast('⚠️ lanes_state error: ' + e.message));
+
+  // users — onSnapshot for real-time user data
+  onSnapshot(usersCol, snap => {
+    allUsers = [];
+    snap.forEach(d => allUsers.push({ id: d.id, ...d.data() }));
+    renderUsersPage();
+  }, e => toast('⚠️ users error: ' + e.message));
+
+  // reports — onSnapshot for live feed
+  onSnapshot(reportsCol, snap => {
+    const WIN = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    allReports = [];
+    snap.forEach(d => {
+      const f = d.data();
+      if (f.tsMs && (now - f.tsMs) < WIN) allReports.push(f);
+    });
+    allReports.sort((a, b) => b.tsMs - a.tsMs);
+    renderFeed();
+    renderKPIs();
+    renderUsers();
+    renderDonut();
+    buildChart(chartMode);
+  }, e => toast('⚠️ reports error: ' + e.message));
+}
+
+// ─── POLLING (online_users, daily_visits) ───
+function startPolling() {
+  fetchPoll();
+  pollingTimer = setInterval(() => {
+    if (!document.hidden) fetchPoll();
+  }, 60000);
+}
+
+async function fetchPoll() {
+  try {
+    // online_users
+    const onSnap = await getDocs(onlineCol);
+    let online = 0;
+    onSnap.forEach(d => { if (d.data().ts && Date.now() - d.data().ts < 90000) online++; });
+    const ou = Math.max(0, online);
+    setEl('kUsers',   ou);
+    setEl('lOnline',  ou);
+    setEl('uiOnline', ou);
+    setEl('mOnline',  ou);
+    setEl('kUsersSub', ou + ' active < 90s');
+
+    // daily_visits
+    const today = new Date().toISOString().slice(0,10);
+    const vSnap = await getDoc(doc(_db, 'daily_visits', today));
+    const visits = vSnap.exists() ? (vSnap.data().count || 0) : 0;
+    setEl('kVisits', visits.toLocaleString());
+    setEl('mVisits', visits.toLocaleString());
+    renderUsersPage();
+  } catch(e) { toast('⚠️ Poll error: ' + e.message); }
+}
+
+// ─── RENDER ───
+const ST = {
+  green:  { label:'Clear',    color:'var(--grn)', dot:'grn', wait:'30–60m', emoji:'🟢' },
+  orange: { label:'Moderate', color:'var(--org)', dot:'org', wait:'1–2h',   emoji:'🟠' },
+  red:    { label:'Heavy',    color:'var(--red)', dot:'red', wait:'2–4h',   emoji:'🔴' }
+};
+
+function renderLane(lane, status, savedAt) {
+  const s = ST[status] || ST.green;
+  const pfx = lane === 'entry' ? 'e' : 'x';
+  setEl(pfx + 'Dot',  '', 'ls-dot ' + s.dot);
+  setEl(pfx + 'Val',  s.emoji + ' ' + s.label + ' — ' + s.wait);
+  setEl(pfx + 'Time', savedAt ? new Date(savedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '—');
+  // analytics sync
+  setEl('m' + (lane === 'entry' ? 'Entry' : 'Exit'), s.emoji + ' ' + s.label, '', s.color);
+}
+
+function renderKPIs() {
+  const now = Date.now();
+  const total = allReports.length;
+  const last10 = allReports.filter(r => now - r.tsMs < 600000).length;
+  setEl('kTotal',  total);
+  setEl('lTotal',  total);
+  setEl('uToday',  total);
+  setEl('mTotal',  total);
+  setEl('kConf',   last10);
+  setEl('lLast10', last10);
+  setEl('mConf10', last10);
+}
+
+function renderFeed() {
+  const feeds = ['ovFeed','liveFeed'];
+  const items = allReports.slice(0, 10);
+  feeds.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = '';
+    if (!items.length) {
+      el.innerHTML = '<div style="color:var(--dim);font-size:11px;padding:10px">No reports in last 24h</div>';
+      return;
+    }
+    items.forEach(r => el.appendChild(makeFI(r)));
+  });
+}
+
+function makeFI(r) {
+  const s   = ST[r.status] || ST.green;
+  const ago = Math.round((Date.now() - r.tsMs) / 60000);
+  const uData = r.userId ? allUsers.find(function(u){ return u.id === r.userId; }) : null;
+  const uLabel = uData ? ('User #'+(uData.userNumber||'?')) : (r.userId ? r.userId.slice(0,10) : 'Anon');
+  const div = document.createElement('div');
+  div.className = 'fi';
+  div.innerHTML =
+    '<div class="fi-dot '+s.dot+'"></div>' +
+    '<div class="fi-lane">'+(r.lane==='entry'?'⬆️ Entrada':'⬇️ Salida')+'</div>' +
+    '<div class="fi-st" style="color:'+s.color+'">'+s.label+'</div>' +
+    '<div style="font-size:10px;color:var(--dim);font-family:monospace;flex:1">'+uLabel+'</div>' +
+    '<div class="fi-ago">'+(ago<1?'just now':ago+'m ago')+'</div>' +
+    '<div class="fi-pts">+'+Math.round((r.w||1)*10)+' ⭐</div>';
+  return div;
+}
+
+function renderUsersPage() {
+  const today     = new Date().toISOString().slice(0,10);
+  const startDay  = new Date(); startDay.setHours(0,0,0,0);
+  const startTs   = startDay.getTime();
+
+  // ─── Smart KPIs ───
+  const total    = allUsers.length;
+  const newToday = allUsers.filter(u => u.createdAt >= startTs).length;
+  const retToday = allUsers.filter(u => u.lastSeen >= startTs && u.createdAt < startTs).length;
+
+  setEl('uiTotal',  total);
+  setEl('uiNew',    newToday);
+  setEl('uiReturn', retToday);
+  setEl('kTotalUsers', total);
+  setEl('kNewUsers',   newToday + ' new today');
+
+  // Overview sync
+  setEl('uToday',  allReports.length);
+  setEl('uUniq',   total);
+
+  // ─── Update timestamp ───
+  const now = new Date();
+  setEl('uLastUpdate', 'Updated ' + now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
+
+  // ─── Top 5 ───
+  const sorted = [...allUsers].sort((a,b) => (b.totalReports||0) - (a.totalReports||0));
+  const top5   = document.getElementById('top5List');
+  const maxRep = sorted[0]?.totalReports || 1;
+  const MEDALS = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+
+  if (top5 && sorted.length) {
+    top5.innerHTML = '';
+    sorted.slice(0,5).forEach(function(u, i) {
+      const pct = Math.round(((u.totalReports||0)/maxRep)*100);
+      const streak = u.streakDays > 1 ? ('🔥 ' + u.streakDays + 'd') : '';
+      const div = document.createElement('div');
+      div.className = 'top5-item';
+      div.innerHTML =
+        '<div class="top5-medal">' + MEDALS[i] + '</div>' +
+        '<div class="top5-info">' +
+          '<div class="top5-name">User #' + (u.userNumber||'?') + '</div>' +
+          '<div class="top5-bar-wrap"><div class="top5-bar" style="width:'+pct+'%;background:'+(i===0?'var(--gld)':i===1?'#c0c0c0':i===2?'#cd7f32':'var(--blu)')+'"></div></div>' +
+          '<div class="top5-sub">' + streak + (streak?'  ·  ':'') + 'joined ' + (u.createdAt?new Date(u.createdAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}):'?') + '</div>' +
+        '</div>' +
+        '<div class="top5-count">' + (u.totalReports||0) + ' rep</div>';
+      top5.appendChild(div);
+    });
+  }
+
+  // ─── Full table ───
+  const tbody = document.getElementById('uTable');
+  setEl('uTableCount', total + ' users');
+  if (!tbody) return;
+
+  if (!sorted.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--dim);text-align:center;padding:20px">No users yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '';
+  sorted.slice(0,100).forEach(function(u, i) {
+    const ago = u.lastSeen ? Math.round((Date.now()-u.lastSeen)/60000) : null;
+    const agoTxt = ago===null?'—':ago<1?'just now':ago<60?ago+'m':Math.round(ago/60)+'h ago';
+    const isActive = u.lastSeen && (Date.now()-u.lastSeen) < 120000;
+    const streak = (u.streakDays||1) > 1 ? ('🔥 '+(u.streakDays)) : '—';
+    const joined = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '—';
+    const isNew = u.createdAt >= startTs;
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td style="font-weight:800;color:var(--dim)">' + (i+1) + '</td>' +
+      '<td><div style="font-weight:700">User #'+(u.userNumber||'?')+'</div>' +
+        '<div style="font-family:monospace;font-size:9px;color:var(--dim)">'+(u.id||'').slice(0,14)+'</div>' +
+        (isNew?'<span style="font-size:9px;background:rgba(0,212,110,.12);color:var(--grn);padding:1px 6px;border-radius:99px;font-weight:700">NEW</span>':'') +
+      '</td>' +
+      '<td style="font-weight:800;font-family:JetBrains Mono,monospace">'+(u.totalReports||0)+'</td>' +
+      '<td style="font-weight:700;color:var(--org)">'+streak+'</td>' +
+      '<td><span class="u-status '+(isActive?'active':'inactive')+'">'+(isActive?'🟢 Active':'⚫ Inactive')+'</span></td>' +
+      '<td style="font-size:11px;color:var(--dim)">'+agoTxt+'</td>' +
+      '<td style="font-size:11px;color:var(--dim)">'+joined+'</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+
+function renderDonut() {
+  const r = allReports.filter(x => x.status === 'red').length;
+  const o = allReports.filter(x => x.status === 'orange').length;
+  const g = allReports.filter(x => x.status === 'green').length;
+  const tot = r + o + g || 1;
+  const C = 2 * Math.PI * 34;
+  const rPct = r/tot, oPct = o/tot, gPct = g/tot;
+  const rA = C*rPct, oA = C*oPct, gA = C*gPct;
+  const dR = document.getElementById('dRed');
+  const dO = document.getElementById('dOrg');
+  const dG = document.getElementById('dGrn');
+  if (dR) { dR.setAttribute('stroke-dasharray', `${rA} ${C-rA}`); dR.setAttribute('stroke-dashoffset','0'); }
+  if (dO) { dO.setAttribute('stroke-dasharray', `${oA} ${C-oA}`); dO.setAttribute('stroke-dashoffset', `${-rA}`); }
+  if (dG) { dG.setAttribute('stroke-dasharray', `${gA} ${C-gA}`); dG.setAttribute('stroke-dashoffset', `${-(rA+oA)}`); }
+  setEl('dRedLbl', `🔴 Heavy — ${Math.round(rPct*100)}%`);
+  setEl('dOrgLbl', `🟠 Moderate — ${Math.round(oPct*100)}%`);
+  setEl('dGrnLbl', `🟢 Clear — ${Math.round(gPct*100)}%`);
+}
+
+// ─── MINI BARS ───
+function buildMiniBars() {
+  const wrap = document.getElementById('miniBars');
+  if (!wrap) return;
+  const h = new Date().getHours();
+  const hourly = new Array(24).fill(0);
+  allReports.forEach(r => {
+    const rh = new Date(r.tsMs).getHours();
+    if (rh <= h) hourly[rh]++;
+  });
+  const max = Math.max(...hourly, 1);
+  wrap.innerHTML = '';
+  for (let i = 0; i <= h; i++) {
+    const bar = document.createElement('div');
+    const pct = Math.max(4, Math.round((hourly[i]/max)*100));
+    bar.className = 'mbar' + (i === h ? ' peak' : '');
+    bar.style.height = pct + '%';
+    bar.title = `${String(i).padStart(2,'0')}:00 — ${hourly[i]} reports`;
+    wrap.appendChild(bar);
+  }
+}
+
+// ─── CHART ───
+function buildChart(type) {
+  chartMode = type;
+  const svg = document.getElementById('chartSvg');
+  const xl  = document.getElementById('chartXLabels');
+  if (!svg) return;
+  const W=600, H=150;
+  let points=[], labels=[];
+
+  if (type === 'hour') {
+    const hourly = new Array(24).fill(0);
+    allReports.forEach(r => { const h = new Date(r.tsMs).getHours(); hourly[h]++; });
+    const curH = new Date().getHours();
+    points = hourly.slice(0, curH+1);
+    labels = points.map((_,i) => String(i).padStart(2,'0') + 'h');
+  } else if (type === 'day') {
+    const daily = {};
+    for (let i=6; i>=0; i--) {
+      const d = new Date(); d.setDate(d.getDate()-i);
+      daily[d.toISOString().slice(0,10)] = 0;
+    }
+    allReports.forEach(r => { const k = new Date(r.tsMs).toISOString().slice(0,10); if (k in daily) daily[k]++; });
+    points = Object.values(daily);
+    labels = Object.keys(daily).map(k => k.slice(5));
+  } else {
+    const weekly = new Array(4).fill(0);
+    const now = Date.now();
+    allReports.forEach(r => { const w = Math.floor((now - r.tsMs) / (7*24*3600*1000)); if (w<4) weekly[3-w]++; });
+    points = weekly;
+    labels = ['W-3','W-2','W-1','This week'];
+  }
+
+  if (!points.length) { svg.innerHTML = '<text x="300" y="75" text-anchor="middle" fill="rgba(255,255,255,.2)" font-size="14">No data yet</text>'; return; }
+  const max = Math.max(...points, 1);
+  const step = W / Math.max(points.length-1, 1);
+  const coords = points.map((v,i) => [i*step, H - (v/max)*(H-20) - 10]);
+  const path  = 'M ' + coords.map(c=>c.join(',')).join(' L ');
+  const area  = path + ` L ${coords[coords.length-1][0]},${H} L 0,${H} Z`;
+  const peakI = points.indexOf(Math.max(...points));
+
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#2563ff" stop-opacity=".3"/>
+        <stop offset="100%" stop-color="#2563ff" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${area}" fill="url(#cg)"/>
+    <path d="${path}" fill="none" stroke="#2563ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    ${coords.map((c,i) => `<circle cx="${c[0]}" cy="${c[1]}" r="${i===peakI?5:3}" fill="${i===peakI?'var(--red)':'#2563ff'}" style="cursor:pointer" onmouseenter="showTip(event,${points[i]},'${labels[i]||i}')" onmouseleave="hideTip()"/>`).join('')}
+  `;
+  if (xl && labels.length) {
+    const show = labels.length <= 12 ? labels : labels.filter((_,i) => i%Math.ceil(labels.length/8)===0);
+    xl.innerHTML = show.map(l => `<span>${l}</span>`).join('');
+  }
+}
+
+function showTip(e, val, lbl) {
+  const tip = document.getElementById('cTip');
+  if (!tip) return;
+  const rect = e.target.closest('.chart-area')?.getBoundingClientRect() || {left:0,top:0};
+  tip.style.display = 'block';
+  tip.style.left = (e.clientX - rect.left - 30) + 'px';
+  tip.style.top  = (e.clientY - rect.top  - 42) + 'px';
+  tip.textContent = lbl + ': ' + val + ' reports';
+}
+function hideTip() { const t = document.getElementById('cTip'); if(t) t.style.display='none'; }
+function switchChart(btn, type) {
+  document.querySelectorAll('.ctab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  buildChart(type);
+}
+
+// ─── TRAFFIC CONTROL ───
+async function setLane(lane, status, btn) {
+  const p = lane === 'entry' ? 'e' : 'x';
+  const colors = ['Grn','Org','Red'];
+  colors.forEach(c => document.getElementById(p+c)?.classList.remove('on'));
+  btn?.classList.add('on');
+  const s = ST[status];
+  const curEl = document.getElementById(p + 'Cur');
+  if (curEl) { curEl.textContent = s.label; curEl.style.color = s.color; }
+  renderLane(lane, status, Date.now());
+  try {
+    await setDoc(lanesRef[lane], { status, savedAt: Date.now(), cars: status==='red'?80:status==='orange'?45:15, density:status==='red'?.9:status==='orange'?.55:.2 }, { merge:true });
+    toast('✅ Firebase updated: ' + (lane==='entry'?'Entry':'Exit') + ' → ' + s.label);
+  } catch(e) { toast('❌ Write failed: ' + e.message); }
+}
+
+function toggleOverride() {
+  overrideOn = !overrideOn;
+  document.getElementById('ovToggle')?.classList.toggle('on', overrideOn);
+  document.getElementById('ovBar')?.classList.toggle('on', overrideOn);
+  toast(overrideOn ? '⚠️ Override active — reports ignored' : '✅ Override disabled — auto-detection');
+}
+
+function emergency() {
+  if (!confirm('Set BOTH lanes to RED immediately?')) return;
+  ['entry','exit'].forEach(lane => {
+    const p = lane === 'entry' ? 'e' : 'x';
+    ['Grn','Org','Red'].forEach(c => document.getElementById(p+c)?.classList.remove('on'));
+    document.getElementById(p+'Red')?.classList.add('on');
+    const cur = document.getElementById(p+'Cur');
+    if (cur) { cur.textContent='Heavy'; cur.style.color='var(--red)'; }
+    setDoc(lanesRef[lane], { status:'red', savedAt:Date.now(), cars:95, density:.95 }, { merge:true });
+  });
+  toast('🚨 Emergency mode — both lanes set to RED');
+}
+
+// ─── NOTIFICATIONS ───
+const TMPLS = {
+  urg:{ title:'🚨 تحذير عاجل', body:'ازدحام شديد في معبر الفنيدق — تجنب التوجه الآن' },
+  clr:{ title:'✅ المعبر مفتوح', body:'الطريق سالك الآن — وقت ممتاز للعبور' },
+  mod:{ title:'⚠️ حركة بطيئة', body:'ازدحام متوسط حالياً — خطط مسبقاً' },
+  cls:{ title:'🔒 المعبر مغلق', body:'تم إغلاق المعبر مؤقتاً — تابع التطبيق' }
+};
+function tpl(k) {
+  document.getElementById('nTitle').value = TMPLS[k].title;
+  document.getElementById('nBody').value  = TMPLS[k].body;
+}
+function sendNotif() {
+  const t = document.getElementById('nTitle').value;
+  const b = document.getElementById('nBody').value;
+  if (!t||!b) { toast('❌ Fill in title and message'); return; }
+  const lang = document.getElementById('nLang').value;
+  const hist = document.getElementById('nHist');
+  const noData = hist.querySelector('[colspan]');
+  if (noData) hist.innerHTML = '';
+  hist.insertAdjacentHTML('afterbegin', `<tr>
+    <td style="font-weight:700">${t}</td>
+    <td><span class="badge bg-grn">${lang}</span></td>
+    <td style="font-family:'JetBrains Mono';font-size:10px">${new Date().toLocaleTimeString('en-GB')}</td>
+    <td><span class="badge bg-grn">Sent</span></td>
+  </tr>`);
+  document.getElementById('nTitle').value = '';
+  document.getElementById('nBody').value  = '';
+  toast('🚀 Notification sent to ' + lang + ' users');
+}
+
+// ─── UTILS ───
+function setEl(id, val, cls, color) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (val !== '') el.textContent = val;
+  if (cls) el.className = cls;
+  if (color) el.style.color = color;
+}
+function clearFeed() {
+  ['ovFeed','liveFeed'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<div style="color:var(--dim);font-size:11px;padding:10px">Feed cleared</div>';
+  });
+}
+
+let _toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ─── WINDOW EXPORTS ───
+window.login=login; window.logout=logout; window.nav=nav;
+window.setLane=setLane; window.toggleOverride=toggleOverride; window.emergency=emergency;
+window.sendNotif=sendNotif; window.tpl=tpl; window.clearFeed=clearFeed;
+window.switchChart=switchChart; window.showTip=showTip; window.hideTip=hideTip;
+document.getElementById('pwIn').addEventListener('keydown', e => { if(e.key==='Enter') login(); });
+</script>
+</body>
+</html>
