@@ -220,7 +220,7 @@ function toggleDetails() {
 <div class="details-panel" id="detailsPanel">
 <div class="stats">
 <div class="sc"><div class="sc-ico">📊</div><div class="sc-val" id="stRep">—</div><div class="sc-lbl"><span data-ar>تقرير/24س</span><span data-es>inf./24h</span></div></div>
-<div class="sc"><div class="sc-ico">🎯</div><div class="sc-val" id="stRel">—%</div><div class="sc-lbl"><span data-ar>موثوقية</span><span data-es>Fiabilidad</span></div></div>
+<div class="sc"><div class="sc-ico">👁️</div><div class="sc-val" id="stVisits">—</div><div class="sc-lbl"><span data-ar>زيارات/24س</span><span data-es>Visitas/24h</span></div></div>
 <div class="sc"><div class="sc-ico">🕐</div><div class="sc-val" id="stTime">—</div><div class="sc-lbl"><span data-ar>آخر تحديث</span><span data-es>Última act.</span></div></div>
 </div>
 <div class="tl">
@@ -265,9 +265,7 @@ function toggleDetails() {
 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
     Facebook
   </a>
-<a href="/cdn-cgi/l/email-protection#1564747b617467743b797c6370557278747c793b767a78">
-<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-<span class="__cf_email__" data-cfemail="cbbaaaa5bfaab9aae5a7a2bdae8baca6aaa2a7e5a8a4a6">[email&#160;protected]</span></a>
+<a href="mailto:qantara.live@gmail.com"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>qantara.live@gmail.com</a>
 </div>
 <div class="footer"><span data-ar>بيانات مجتمعية · الفنيدق / سبتة · Beta v1</span><span data-es>Datos comunitarios · Fnideq / Ceuta · Beta v1</span></div>
 <button class="about-btn" onclick="document.getElementById('aboutOverlay').classList.add('open')"><span data-ar>ℹ️ عن التطبيق</span><span data-es>ℹ️ Sobre la app</span></button>
@@ -280,7 +278,7 @@ function toggleDetails() {
 <div class="about-row"><span class="about-row-ico">👥</span><span><span data-ar>بيانات مجتمعية — يساهم فيها المستخدمون بتقاريرهم الحية.</span><span data-es>Datos comunitarios — los usuarios comparten reportes en tiempo real.</span></span></div>
 <div class="about-row"><span class="about-row-ico">🤖</span><span><span data-ar>يعتمد على تحليل الأنماط التاريخية + التقارير الحية لتوقع الازدحام.</span><span data-es>Analiza patrones históricos + reportes en vivo para predecir el tráfico.</span></span></div>
 <div class="about-row"><span class="about-row-ico">🔒</span><span><span data-ar>لا نجمع معلومات شخصية، فقط تقارير مجهولة.</span><span data-es>No recopilamos datos personales, solo reportes anónimos.</span></span></div>
-<div class="about-row"><span class="about-row-ico">📧</span><span><a href="/cdn-cgi/l/email-protection#4d3c2c23392c3f2c6321243b280d2a202c2421632e2220" style="color:var(--muted)"><span class="__cf_email__" data-cfemail="ddacbcb3a9bcafbcf3b1b4abb89dbab0bcb4b1f3beb2b0">[email&#160;protected]</span></a></span></div>
+<div class="about-row"><span class="about-row-ico">📧</span><span><a href="mailto:qantara.live@gmail.com" style="color:var(--muted)">qantara.live@gmail.com</a></span></div>
 <div class="about-divider"></div>
 <div style="text-align:center;font-size:10px;color:var(--muted);opacity:.5">Beta v1 · 2025</div>
 <button class="about-close" onclick="document.getElementById('aboutOverlay').classList.remove('open')"><span data-ar>إغلاق</span><span data-es>Cerrar</span></button>
@@ -931,8 +929,8 @@ const ETAEngine = (() => {
 
     const eta = Math.round(baseETA * densityMod);
 
-    const MIN_ETA = { green: 30, orange: 61,  red: 121 };
-    const MAX_ETA = { green: 59, orange: 119, red: 240 };
+    const MIN_ETA = { green: 30, orange: 60,  red: 120 };
+    const MAX_ETA = { green: 60, orange: 120, red: 240 };
     return Math.max(MIN_ETA[status], Math.min(MAX_ETA[status], eta));
   }
 
@@ -1419,7 +1417,7 @@ function applyLane(lane, {status, count, rel}) {
     document.documentElement.style.setProperty('--sb', cfg.bg);
     $('pillTxt').textContent = (lang==='es'?'Entrada: ':'دخول: ') + lbl;
     $('stRep').textContent = (count > 0) ? count : '—';
-    $('stRel').textContent = (count > 0) ? Math.round((rel ?? 0) * 100) + '%' : '—';
+    // stRel محذوف — الآن stVisits يتحدث من daily_visits
     Map.setEntryStatus(status);
     if($('eRep'))$('eRep').textContent=count>0?(lang==='es'?`👥 ${count} usuarios confirmaron el estado`:`👥 ${count} مستخدمون أكدوا الحالة`):'';
   } else {
@@ -2132,11 +2130,15 @@ function updatePredCard(liveStatusEntry, liveStatusExit, rel) {
                     : rel > 0.1 ? (isAR ? '📊 أنماط تاريخية + تقارير محدودة' : '📊 Patrones + datos parciales')
                     :              (isAR ? '📈 أنماط تاريخية فقط' : '📈 Solo patrones históricos');
 
-  const nowLvl = LVL[clamp(liveAvg)];
+  // الحالة الحقيقية من lanes فقط — لا averages
+  const nowE   = LVL[clamp(liveE)];
+  const nowX   = LVL[clamp(liveX)];
+  // نعرض الحالة الأسوأ بين الممرين كحالة عامة
+  const nowLvl = LVL[clamp(Math.max(liveE, liveX))];
   $('predNowDot').style.background = nowLvl.color;
   $('predNowVal').textContent = isAR ? nowLvl.ar : nowLvl.es;
   $('predNowVal').style.color = nowLvl.color;
-  $('predNowConf').textContent = rel > 0.3 ? (isAR ? `(${Math.round(rel*100)}% ثقة)` : `(${Math.round(rel*100)}% conf.)`) : '';
+  $('predNowConf').textContent = '';
 
   const set = (id, barId, lvl) => {
     const L = LVL[clamp(lvl)];
@@ -2651,6 +2653,24 @@ setLang(lang);
 
   initUser();
   startListeners();
+
+  // ══ Daily Visits — يُعدّ زيارات اليوم بتوقيت المغرب ══
+  (async function() {
+    try {
+      var _today   = new Date().toLocaleDateString('en-CA');
+      var _vRef    = doc(_db, 'daily_visits', _today);
+      var _vs      = await getDoc(_vRef);
+      var _cnt     = _vs.exists() ? (_vs.data().count || 0) : 0;
+      await setDoc(_vRef, { count: _cnt + 1, date: _today }, { merge: true });
+      var _vEl     = document.getElementById('stVisits');
+      if (_vEl) _vEl.textContent = (_cnt + 1).toLocaleString();
+      onSnap(_vRef, function(s) {
+        var el = document.getElementById('stVisits');
+        if (s.exists() && el) el.textContent = (s.data().count || 0).toLocaleString();
+      });
+    } catch(e) { console.warn('[Q] visits:', e.message); }
+  })();
+
 })();
 
 if ('serviceWorker' in navigator) {
