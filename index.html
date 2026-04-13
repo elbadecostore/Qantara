@@ -337,7 +337,8 @@ function toggleDetails() {
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getFirestore, collection, addDoc, getDocs, onSnapshot, serverTimestamp,
-         doc, setDoc, getDoc, updateDoc, increment, runTransaction, onSnapshot as onSnap }
+         doc, setDoc, getDoc, updateDoc, increment, runTransaction,
+         query, where, onSnapshot as onSnap }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const _app = initializeApp({
@@ -2737,27 +2738,44 @@ function _showGemReward(totalReports, streak, levelUp, newLevel) {
 // ══ IN-APP MESSAGES (من لوحة التحكم) ══
 let _inAppTimer = null;
 function _listenInAppMessages() {
-  if (!_userId) return;
+  if (!_userId) {
+    console.warn('[Q] _listenInAppMessages: no userId yet');
+    return;
+  }
+  console.log('[Q] Listening as:', _userId);
   try {
-    const msgsCol = collection(_db, 'in_app_messages');
-    onSnap(
-      msgsCol,
-      snap => {
-        snap.docChanges().forEach(change => {
-          if (change.type === 'added') {
-            const d = change.doc.data();
-            if (d.toUserId === _userId && !d.read) {
-              _showInAppMessage(d.message || '');
-              // mark as read using updateDoc already imported
-              updateDoc(change.doc.ref, { read: true }).catch(() => {});
-            }
+    const _msgsRef = collection(_db, 'in_app_messages');
+    const _q       = query(_msgsRef, where('toUserId', '==', _userId));
+
+    onSnap(_q, function(snap) {
+      snap.docChanges().forEach(function(change) {
+        if (change.type === 'added') {
+          const d = change.doc.data();
+          console.log('[Q] New message received:', d);
+          if (!d.read) {
+            _showInAppMessage(d.message || '');
+            // mark read
+            updateDoc(change.doc.ref, {
+              read:   true,
+              readAt: Date.now()
+            }).catch(function(e){ console.warn('[Q] markRead:', e.message); });
           }
+        }
+      });
+    }, function(e) {
+      console.warn('[Q] inAppMessages listener error:', e.message);
+      // Fallback: listen without filter for debug
+      onSnap(collection(_db, 'in_app_messages'), function(snap) {
+        snap.forEach(function(d) {
+          console.log('[Q] DEBUG MESSAGE (no filter):', d.data());
         });
-      },
-      () => {}
-    );
-  } catch(e) { console.warn('[Q] inAppMessages:', e.message); }
+      });
+    });
+  } catch(e) {
+    console.warn('[Q] _listenInAppMessages init error:', e.message);
+  }
 }
+
 
 function _showInAppMessage(text) {
   const el  = document.getElementById('inAppMsg');
