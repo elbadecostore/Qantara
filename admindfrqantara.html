@@ -193,6 +193,37 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .chart-bar{transition:opacity .15s}
 .chart-bar:hover{opacity:1!important}
 
+/* LEVELS PAGE */
+.lvl-overview{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:16px}
+.lvl-card{background:var(--card2);border:1px solid var(--b1);border-radius:11px;padding:12px 8px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.lvl-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0}
+.lvl-card:hover{background:rgba(255,255,255,.05);transform:translateY(-2px)}
+.lvl-card.active{box-shadow:0 0 0 1px rgba(255,255,255,.15)}
+.lvl-ico{font-size:22px;margin-bottom:6px}
+.lvl-name{font-size:9px;font-weight:700;color:var(--mut);letter-spacing:.04em;margin-bottom:4px}
+.lvl-count{font-size:18px;font-weight:800;font-family:'JetBrains Mono'}
+.lvl-sub{font-size:9px;color:var(--dim);margin-top:2px}
+.lvl-range{font-size:8px;color:var(--dim);margin-top:3px;font-family:'JetBrains Mono'}
+
+.lvl-detail{background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:14px;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.lvl-detail-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--b1)}
+.lvl-detail-title{font-size:15px;font-weight:800}
+.lvl-detail-sub{font-size:11px;color:var(--mut);margin-top:2px}
+.send-msg-wrap{display:flex;gap:7px;margin-top:6px}
+.send-msg-input{flex:1;padding:7px 10px;background:var(--card2);border:1px solid var(--b2);border-radius:8px;color:var(--txt);font-family:'Sora';font-size:12px;outline:none}
+.send-msg-input:focus{border-color:var(--blu)}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.fbtn{padding:5px 12px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--b2);background:transparent;color:var(--mut);transition:all .15s;font-family:'Sora'}
+.fbtn.on{background:var(--blu-b);color:var(--blu);border-color:rgba(37,99,255,.3)}
+.search-input{padding:5px 11px;background:var(--card2);border:1px solid var(--b2);border-radius:7px;color:var(--txt);font-family:'Sora';font-size:12px;outline:none;width:160px}
+.search-input:focus{border-color:var(--blu)}
+
+/* Level badges inline */
+.lvl-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:700}
+
 /* Range */
 input[type=range]{flex:1;height:4px;border-radius:99px;background:var(--b2);outline:none;cursor:pointer;accent-color:var(--blu)}
 .rval{font-family:'JetBrains Mono';font-size:12px;font-weight:700;color:var(--blu);min-width:44px}
@@ -221,6 +252,7 @@ input[type=range]{flex:1;height:4px;border-radius:99px;background:var(--b2);outl
     <div class="nav-item"     onclick="nav('control')"><span class="nav-ico">🎛️</span>Traffic Control</div>
     <div class="nav-item"     onclick="nav('notifs')"><span class="nav-ico">🔔</span>Notifications</div>
     <div class="nav-item"     onclick="nav('users')"><span class="nav-ico">👥</span>Users</div>
+    <div class="nav-item"     onclick="nav('levels')"><span class="nav-ico">🏆</span>Levels</div>
     <div class="nav-item"     onclick="nav('settings')"><span class="nav-ico">⚙️</span>Settings</div>
     <div class="s-foot">
       <div class="live-dot"><div class="dot"></div>Firebase Connected</div>
@@ -436,6 +468,48 @@ input[type=range]{flex:1;height:4px;border-radius:99px;background:var(--b2);outl
       </div>
     </div>
 
+    <!-- LEVELS -->
+    <div class="page" id="pg-levels">
+      <div class="ph">
+        <div><div class="pt">Levels Management · إدارة المستويات</div><div class="ps">Users distributed by level — click a card to see details</div></div>
+        <div style="font-size:10px;color:var(--dim);font-family:'JetBrains Mono'" id="lvlTs">—</div>
+      </div>
+
+      <!-- Overview cards 7 levels -->
+      <div class="lvl-overview" id="lvlOverview">
+        <div style="color:var(--dim);font-size:11px;padding:10px">Loading…</div>
+      </div>
+
+      <!-- Search + filters -->
+      <div class="filter-bar">
+        <input class="search-input" id="usrSearch" placeholder="🔍 Search User #ID…" oninput="filterUsers()">
+        <button class="fbtn on"  id="fAll"    onclick="setFilter('all')">All</button>
+        <button class="fbtn"     id="fOnline" onclick="setFilter('online')">🟢 Online</button>
+        <button class="fbtn"     id="fNew"    onclick="setFilter('new')">✨ New Today</button>
+        <span style="font-size:10px;color:var(--dim);margin-right:auto" id="filterCount">— users</span>
+      </div>
+
+      <!-- Level detail + users table -->
+      <div class="lvl-detail" id="lvlDetail">
+        <div class="lvl-detail-header">
+          <div>
+            <div class="lvl-detail-title" id="lvlDetailTitle">All Users</div>
+            <div class="lvl-detail-sub" id="lvlDetailSub">Select a level card above to filter</div>
+          </div>
+          <button class="btn bg2" style="margin-right:auto;padding:4px 10px;font-size:10px" onclick="setFilter('all')">Show All</button>
+        </div>
+        <div class="tw">
+          <table>
+            <thead><tr>
+              <th>#</th><th>User</th><th>Level</th><th>Reports</th><th>Streak</th>
+              <th>Status</th><th>Last Active</th><th>Action</th>
+            </tr></thead>
+            <tbody id="lvlTable"><tr><td colspan="8" style="color:var(--dim);text-align:center;padding:18px">Loading users from Firebase…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- SETTINGS -->
     <div class="page" id="pg-settings">
       <div class="ph"><div><div class="pt">Settings · الإعدادات</div><div class="ps">System configuration</div></div></div>
@@ -474,7 +548,7 @@ input[type=range]{flex:1;height:4px;border-radius:99px;background:var(--b2);outl
 
 <script type="module">
 import { initializeApp }    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import { getFirestore, collection, getDocs, getDoc, doc, setDoc, onSnapshot }
+import { getFirestore, collection, getDocs, getDoc, addDoc, doc, setDoc, onSnapshot }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 // ─── Firebase ───
@@ -491,6 +565,30 @@ const lanesRef   = { entry: doc(_db,'lanes_state','entry'), exit: doc(_db,'lanes
 const reportsCol = collection(_db,'reports');
 const onlineCol  = collection(_db,'online_users');
 const usersCol   = collection(_db,'users');
+const msgsCol    = collection(_db,'in_app_messages');
+
+// ── Levels definition (same as main app) ──
+const ADMIN_LEVELS = [
+  { min:0,   max:4,   ar:'مستخدم جديد',    icon:'🌱', color:'#64748b', lvl:1 },
+  { min:5,   max:14,  ar:'مساهم',           icon:'🤝', color:'#00d46e', lvl:2 },
+  { min:15,  max:39,  ar:'مستخدم نشيط',    icon:'⚡', color:'#00c4ff', lvl:3 },
+  { min:40,  max:99,  ar:'مراقب الطريق',   icon:'👁️', color:'#ff8f00', lvl:4 },
+  { min:100, max:249, ar:'عين قنطرة',       icon:'🎯', color:'#ff3355', lvl:5 },
+  { min:250, max:499, ar:'خبير الازدحام',  icon:'🏆', color:'#ffd700', lvl:6 },
+  { min:500, max:Infinity, ar:'نخبة قنطرة', icon:'👑', color:'#e879f9', lvl:7 },
+];
+
+function getLevel(totalReports) {
+  const n = totalReports || 0;
+  for (let i = ADMIN_LEVELS.length - 1; i >= 0; i--) {
+    if (n >= ADMIN_LEVELS[i].min) return ADMIN_LEVELS[i];
+  }
+  return ADMIN_LEVELS[0];
+}
+
+// Active level filter state
+let _activeFilter   = 'all';
+let _activeLevelNum = null;
 let allUsers     = [];   // كاش users collection
 
 // ─── State ───
@@ -523,7 +621,8 @@ function nav(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('on'));
   document.getElementById('pg-' + id).classList.add('on');
-  const pages = ['overview','analytics','live','control','notifs','users','settings'];
+  if (id === 'levels') { setTimeout(renderLevelsPage, 50); }
+  const pages = ['overview','analytics','live','control','notifs','users','levels','settings'];
   document.querySelectorAll('.nav-item')[pages.indexOf(id)]?.classList.add('on');
 }
 
@@ -572,8 +671,9 @@ function startListeners() {
   // users — onSnapshot for real-time user data
   onSnapshot(usersCol, snap => {
     allUsers = [];
-    snap.forEach(d => allUsers.push({ id: d.id, ...d.data() }));
+    snap.forEach(d => allUsers.push(Object.assign({ _id: d.id }, d.data())));
     renderUsersPage();
+    if (document.getElementById('pg-levels')?.classList.contains('on')) renderLevelsPage();
   }, e => toast('⚠️ users error: ' + e.message));
 
   // reports — onSnapshot for live feed
@@ -975,11 +1075,151 @@ function toast(msg) {
 }
 
 // ─── WINDOW EXPORTS ───
+// ══ LEVELS PAGE ══
+function renderLevelsPage() {
+  var now    = Date.now();
+  var tod    = new Date(); tod.setHours(0,0,0,0);
+  var startTs = tod.getTime();
+  var ts     = document.getElementById('lvlTs');
+  if (ts) ts.textContent = 'Updated ' + new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+
+  var overview = document.getElementById('lvlOverview');
+  if (overview) {
+    overview.innerHTML = '';
+    ADMIN_LEVELS.forEach(function(lvl) {
+      var users   = allUsers.filter(function(u){ return (u.level || getLevel(u.totalReports||0).lvl) === lvl.lvl; });
+      var online  = users.filter(function(u){ return u.lastActive && (now - u.lastActive) < 90000; }).length;
+      var isAct   = _activeLevelNum === lvl.lvl;
+      var card    = document.createElement('div');
+      card.className = 'lvl-card' + (isAct ? ' active' : '');
+      var onlinePart = online ? '<div style="font-size:9px;color:var(--grn);margin-top:2px">' + online + ' online</div>' : '';
+      var maxPart = lvl.max === Infinity ? lvl.min + '+' : lvl.min + '-' + lvl.max;
+      card.innerHTML =
+        '<div style="position:absolute;top:0;left:0;right:0;height:2px;background:' + lvl.color + ';border-radius:2px 2px 0 0"></div>' +
+        '<div class="lvl-ico">' + lvl.icon + '</div>' +
+        '<div class="lvl-name" style="color:' + lvl.color + '">L' + lvl.lvl + '</div>' +
+        '<div class="lvl-count">' + users.length + '</div>' +
+        '<div style="font-size:9px;color:' + lvl.color + ';margin-top:2px;font-weight:700">' + lvl.ar + '</div>' +
+        '<div class="lvl-range">' + maxPart + '</div>' +
+        onlinePart;
+      card.onclick = function() { filterByLevel(lvl.lvl); };
+      overview.appendChild(card);
+    });
+  }
+  renderLevelsTable();
+}
+
+
+function filterByLevel(lvlNum) {
+  _activeLevelNum = _activeLevelNum === lvlNum ? null : lvlNum;
+  _activeFilter   = 'all';
+  ['fAll','fOnline','fNew'].forEach(function(id){ var b=document.getElementById(id); if(b)b.classList.remove('on'); });
+  var fa = document.getElementById('fAll'); if(fa) fa.classList.add('on');
+  const lvl = ADMIN_LEVELS.find(function(l){ return l.lvl === lvlNum; });
+  const dt  = document.getElementById('lvlDetailTitle');
+  const ds  = document.getElementById('lvlDetailSub');
+  if (dt && lvl) dt.textContent = lvl.icon + ' Level ' + lvlNum + ' — ' + lvl.ar;
+  if (ds && lvl) ds.textContent = 'Reports: ' + lvl.min + (lvl.max===Infinity?'+':'–'+lvl.max);
+  renderLevelsPage();
+}
+
+function setFilter(type) {
+  _activeFilter   = type;
+  _activeLevelNum = null;
+  ['fAll','fOnline','fNew'].forEach(function(id){ var b=document.getElementById(id); if(b)b.classList.remove('on'); });
+  var btn = document.getElementById('f'+type.charAt(0).toUpperCase()+type.slice(1));
+  if (btn) btn.classList.add('on');
+  const dt = document.getElementById('lvlDetailTitle');
+  const ds = document.getElementById('lvlDetailSub');
+  if (dt) dt.textContent = type==='online'?'🟢 Online Users':type==='new'?'✨ New Today':'All Users';
+  if (ds) ds.textContent = type==='online'?'Active < 90s':type==='new'?'Joined today':'All users sorted by reports';
+  renderLevelsTable();
+}
+
+function filterUsers() { renderLevelsTable(); }
+
+function renderLevelsTable() {
+  const tbody  = document.getElementById('lvlTable');
+  const cntEl  = document.getElementById('filterCount');
+  if (!tbody)  return;
+  const now    = Date.now();
+  const today  = new Date(); today.setHours(0,0,0,0);
+  const startTs = today.getTime();
+  const search  = (document.getElementById('usrSearch')?.value || '').toLowerCase();
+
+  // filter
+  let filtered = allUsers.slice();
+  if (_activeLevelNum) filtered = filtered.filter(function(u){ return (u.level || getLevel(u.totalReports||0).lvl) === _activeLevelNum; });
+  if (_activeFilter === 'online') filtered = filtered.filter(function(u){ return u.lastActive && (now - u.lastActive) < 90000; });
+  if (_activeFilter === 'new')    filtered = filtered.filter(function(u){ return u.createdAt >= startTs; });
+  if (search) filtered = filtered.filter(function(u){ return String(u.userNumber||'').includes(search) || (u._id||'').toLowerCase().includes(search); });
+
+  // sort by reports
+  filtered.sort(function(a,b){ return (b.totalReports||0) - (a.totalReports||0); });
+
+  if (cntEl) cntEl.textContent = filtered.length + ' users';
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="color:var(--dim);text-align:center;padding:18px">No users found</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '';
+  filtered.slice(0,100).forEach(function(u, i) {
+    const now2    = Date.now();
+    const lvlData = getLevel(u.totalReports || 0);
+    const isOnline = u.lastActive && (now2 - u.lastActive) < 90000;
+    const ago     = u.lastActive ? Math.round((now2 - u.lastActive) / 60000) : null;
+    const agoTxt  = ago === null ? '—' : ago < 1 ? 'just now' : ago < 60 ? ago+'m ago' : Math.round(ago/60)+'h ago';
+    const streak  = (u.streakDays||1) > 1 ? '🔥 '+u.streakDays : '—';
+    const isNew   = u.createdAt && u.createdAt >= startTs;
+    const tr      = document.createElement('tr');
+    tr.innerHTML =
+      '<td style="font-weight:800;color:var(--dim)">'+(i+1)+'</td>'+
+      '<td>'+
+        (isNew?'<span style="font-size:8px;background:rgba(0,212,110,.12);color:var(--grn);padding:1px 5px;border-radius:99px;font-weight:700;margin-left:4px">NEW</span>':'')+
+        '<span style="font-weight:700">User #'+(u.userNumber||'?')+'</span>'+
+        '<div style="font-family:monospace;font-size:9px;color:var(--dim)">'+(u._id||'').slice(0,14)+'</div>'+
+      '</td>'+
+      '<td><span class="lvl-badge" style="background:'+lvlData.color+'20;color:'+lvlData.color+';border:1px solid '+lvlData.color+'40">'+lvlData.icon+' L'+lvlData.lvl+' '+lvlData.ar+'</span></td>'+
+      '<td style="font-weight:800;font-family:monospace">'+(u.totalReports||0)+'</td>'+
+      '<td style="color:var(--org);font-weight:700">'+streak+'</td>'+
+      '<td><span class="ust '+(isOnline?'act':'ina')+'">'+(isOnline?'🟢 Online':'⚫ Offline')+'</span></td>'+
+      '<td style="font-size:11px;color:var(--dim)">'+agoTxt+'</td>'+
+      '<td><button class="btn bg2" style="padding:3px 9px;font-size:10px" onclick="openSendMsg(this)">📩 Send</button></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+// ── Send In-App Message ──
+let _msgUid = null, _msgUnum = null;
+function openSendMsg(btn) {
+  var tr   = btn.closest('tr');
+  _msgUid  = tr ? tr.dataset.uid  : '';
+  _msgUnum = tr ? tr.dataset.unum : '?';
+  var txt  = prompt('📩 Send message to User #' + _msgUnum + ':');
+  if (txt && txt.trim()) sendInAppMsg(txt.trim());
+}
+
+async function sendInAppMsg(text) {
+  if (!_msgUid || !text) return;
+  try {
+    await addDoc(msgsCol, {
+      toUserId:  _msgUid,
+      message:   text,
+      createdAt: Date.now(),
+      read:      false
+    });
+    toast('📩 Message sent to User #' + _msgUnum);
+  } catch(e) { toast('❌ Error: ' + e.message); }
+}
+
 window.login=login; window.logout=logout; window.nav=nav;
-window.setLane=setLane; window.toggleOverride=toggleOverride; window.emergency=emergency;
+window.setFilter=setFilter; window.filterUsers=filterUsers; window.filterByLevel=filterByLevel;
+window.openSendMsg=openSendMsg; window.switchChart=switchChart;
+window.setLane=setLane; window.toggleOv=toggleOv; window.emergency=emergency;
 window.sendNotif=sendNotif; window.tpl=tpl; window.clearFeed=clearFeed;
-window.switchChart=switchChart; window.showTip=showTip; window.hideTip=hideTip;
-document.getElementById('pwIn').addEventListener('keydown', e => { if(e.key==='Enter') login(); });
+window.showTip=showTip; window.hideTip=hideTip;
+document.getElementById('pwIn').addEventListener('keydown', function(e){ if(e.key==='Enter') login(); });
 </script>
 </body>
 </html>
