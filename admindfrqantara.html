@@ -880,6 +880,8 @@ function renderUsersPage() {
     const joined = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '—';
     const isNew = u.createdAt >= startTs;
     const tr = document.createElement('tr');
+    tr.dataset.uid  = u._id  || '';
+    tr.dataset.unum = String(u.userNumber || '?');
     tr.innerHTML =
       '<td style="font-weight:800;color:var(--dim)">' + (i+1) + '</td>' +
       '<td><div style="font-weight:700">User #'+(u.userNumber||'?')+'</div>' +
@@ -932,7 +934,7 @@ function buildMiniBars() {
     const pct = Math.max(4, Math.round((hourly[i]/max)*100));
     bar.className = 'mbar' + (i === h ? ' peak' : '');
     bar.style.height = pct + '%';
-    bar.title = `${String(i).padStart(2,'0')}:00 — ${hourly[i]} reports`;
+    bar.title = String(i).padStart(2,"0") + ":00 — " + hourly[i] + " reports";
     wrap.appendChild(bar);
   }
 }
@@ -974,23 +976,25 @@ function buildChart(type) {
   const step = W / Math.max(points.length-1, 1);
   const coords = points.map((v,i) => [i*step, H - (v/max)*(H-20) - 10]);
   const path  = 'M ' + coords.map(c=>c.join(',')).join(' L ');
-  const area  = path + ` L ${coords[coords.length-1][0]},${H} L 0,${H} Z`;
-  const peakI = points.indexOf(Math.max(...points));
+  const area  = path + ' L ' + coords[coords.length-1][0] + ',' + H + ' L 0,' + H + ' Z';
+  var pathHtml = '<path d="' + area + '" fill="url(#cg)"/>' +
+                 '<path d="' + path + '" fill="none" stroke="var(--blu)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
 
-  svg.innerHTML = `
-    <defs>
-      <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#2563ff" stop-opacity=".3"/>
-        <stop offset="100%" stop-color="#2563ff" stop-opacity="0"/>
-      </linearGradient>
-    </defs>
-    <path d="${area}" fill="url(#cg)"/>
-    <path d="${path}" fill="none" stroke="#2563ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    ${coords.map((c,i) => `<circle cx="${c[0]}" cy="${c[1]}" r="${i===peakI?5:3}" fill="${i===peakI?'var(--red)':'#2563ff'}" style="cursor:pointer" onmouseenter="showTip(event,${points[i]},'${labels[i]||i}')" onmouseleave="hideTip()"/>`).join('')}
-  `;
+    var svgHtml = '';
+  svgHtml += '<defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--blu)" stop-opacity=".3"/><stop offset="100%" stop-color="var(--blu)" stop-opacity="0"/></linearGradient></defs>';
+  [0,.25,.5,.75,1].forEach(function(f){ var gy=H-f*(H-20)-10; svgHtml += '<line x1="0" y1="'+gy+'" x2="600" y2="'+gy+'" stroke="rgba(255,255,255,.04)" stroke-width="1"/>'; });
+  svgHtml += pathHtml;
+  var peakI = points.indexOf(Math.max.apply(null,points));
+  coords.forEach(function(co,ci){
+    var r2 = ci===peakI?5:3;
+    var fc = ci===peakI?'var(--red)':'#2563ff';
+    var lb = labels[ci]||String(ci);
+    svgHtml += '<circle cx="'+co[0]+'" cy="'+co[1]+'" r="'+r2+'" fill="'+fc+'" style="cursor:pointer" onmouseenter="showTip(event,'+points[ci]+',&quot;'+lb+'&quot;)" onmouseleave="hideTip()"/>';
+  });
+  svg.innerHTML = svgHtml;
   if (xl && labels.length) {
     const show = labels.length <= 12 ? labels : labels.filter((_,i) => i%Math.ceil(labels.length/8)===0);
-    xl.innerHTML = show.map(l => `<span>${l}</span>`).join('');
+    xl.innerHTML = show.map(function(l){ return '<span>' + l + '</span>'; }).join('');
   }
 }
 
@@ -1065,12 +1069,13 @@ function sendNotif() {
   const hist = document.getElementById('nHist');
   const noData = hist.querySelector('[colspan]');
   if (noData) hist.innerHTML = '';
-  hist.insertAdjacentHTML('afterbegin', `<tr>
-    <td style="font-weight:700">${t}</td>
-    <td><span class="badge bg-grn">${lang}</span></td>
-    <td style="font-family:'JetBrains Mono';font-size:10px">${new Date().toLocaleTimeString('en-GB')}</td>
-    <td><span class="badge bg-grn">Sent</span></td>
-  </tr>`);
+  hist.insertAdjacentHTML('afterbegin',
+    '<tr>' +
+    '<td style="font-weight:700">' + t + '</td>' +
+    '<td><span class="badge bg-grn">' + lang + '</span></td>' +
+    '<td style="font-family:monospace;font-size:10px">' + new Date().toLocaleTimeString('en-GB') + '</td>' +
+    '<td><span class="badge bg-grn">Sent</span></td>' +
+    '</tr>');
   document.getElementById('nTitle').value = '';
   document.getElementById('nBody').value  = '';
   toast('🚀 Notification sent to ' + lang + ' users');
@@ -1199,6 +1204,8 @@ function renderLevelsTable() {
     const streak  = (u.streakDays||1) > 1 ? '🔥 '+u.streakDays : '—';
     const isNew   = u.createdAt && u.createdAt >= startTs;
     const tr      = document.createElement('tr');
+    tr.dataset.uid  = u._id  || '';
+    tr.dataset.unum = String(u.userNumber || '?');
     tr.innerHTML =
       '<td style="font-weight:800;color:var(--dim)">'+(i+1)+'</td>'+
       '<td>'+
@@ -1222,7 +1229,8 @@ function openSendMsg(btn) {
   var tr   = btn.closest('tr');
   _msgUid  = tr ? tr.dataset.uid  : '';
   _msgUnum = tr ? tr.dataset.unum : '?';
-  var txt  = prompt('📩 Send message to User #' + _msgUnum + ':');
+  console.log('[Admin] Sending to userId:', _msgUid, '| User #' + _msgUnum);
+  var txt  = prompt('📩 Send message to User #' + _msgUnum + ' (ID: ' + _msgUid + ')');
   if (txt && txt.trim()) sendInAppMsg(txt.trim());
 }
 
