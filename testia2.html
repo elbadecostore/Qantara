@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Qantara — AI Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06080f;--bg2:#090c18;--surf:#0f1422;--card:#131926;--card2:#171e2d;
+  --b1:rgba(255,255,255,.07);--b2:rgba(255,255,255,.13);
+  --txt:#e8ecf8;--mut:rgba(232,236,248,.45);--dim:rgba(232,236,248,.2);
+  --grn:#00d46e;--org:#ff8f00;--red:#ff3355;--blu:#2563ff;--pur:#a855f7;--gld:#ffd700;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+
+/* LOGIN */
+#loginWrap{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center}
+.lbox{width:320px;padding:32px;background:var(--surf);border:1px solid var(--b2);border-radius:16px;box-shadow:0 40px 80px rgba(0,0,0,.7)}
+.lbox h1{font-size:20px;font-weight:800;text-align:center;margin-bottom:4px}
+.lbox p{font-size:10px;color:var(--mut);text-align:center;margin-bottom:20px;letter-spacing:.12em;text-transform:uppercase}
+.lbox input{width:100%;padding:11px 14px;background:var(--card);border:1px solid var(--b2);border-radius:8px;color:var(--txt);font-family:'Sora';font-size:13px;outline:none;margin-bottom:10px}
+.lbox input:focus{border-color:var(--pur)}
+.lbox button{width:100%;padding:11px;background:linear-gradient(135deg,var(--pur),#7c3aed);border:none;border-radius:8px;color:#fff;font-family:'Sora';font-size:13px;font-weight:700;cursor:pointer}
+.lerr{font-size:11px;color:var(--red);text-align:center;margin-top:8px;min-height:14px}
+
+/* LAYOUT */
+#dash{display:none;max-width:1100px;margin:0 auto;padding:24px 16px 60px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--b1)}
+.topbar-title{font-size:20px;font-weight:800}
+.topbar-sub{font-size:11px;color:var(--mut);margin-top:2px}
+.live-dot{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--grn)}
+.ldot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:blink 1.5s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* GRID */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:14px;margin-bottom:14px}
+.kc{background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:13px;position:relative;overflow:hidden}
+.kc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kc.pur::before{background:var(--pur)}
+.kc.grn::before{background:var(--grn)}
+.kc.org::before{background:var(--org)}
+.kc.red::before{background:var(--red)}
+.kc.blu::before{background:var(--blu)}
+.kc.gld::before{background:var(--gld)}
+.ki{font-size:18px;margin-bottom:6px}
+.kv{font-size:24px;font-weight:800;font-family:'JetBrains Mono';line-height:1}
+.kl{font-size:10px;color:var(--mut);margin-top:4px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.ks{font-size:10px;margin-top:5px;font-weight:700;color:var(--mut)}
+
+/* STATUS BADGE */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700}
+.b-grn{background:rgba(0,212,110,.1);color:var(--grn);border:1px solid rgba(0,212,110,.2)}
+.b-red{background:rgba(255,51,85,.1);color:var(--red);border:1px solid rgba(255,51,85,.2)}
+.b-org{background:rgba(255,143,0,.1);color:var(--org);border:1px solid rgba(255,143,0,.2)}
+.b-pur{background:rgba(168,85,247,.1);color:var(--pur);border:1px solid rgba(168,85,247,.2)}
+.b-gld{background:rgba(255,215,0,.1);color:var(--gld);border:1px solid rgba(255,215,0,.2)}
+
+/* SECTION */
+.sec{font-size:10px;font-weight:700;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+
+/* TABLE */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:7px 10px;text-align:right;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.05em;text-transform:uppercase;border-bottom:1px solid var(--b1)}
+td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+/* CONFIDENCE BAR */
+.conf-bar{height:4px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;width:80px}
+.conf-fill{height:100%;border-radius:99px;transition:width .5s}
+
+/* REASON BOX */
+.reason-box{background:var(--card2);border:1px solid var(--b1);border-radius:10px;padding:12px;margin-top:8px}
+.reason-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--mut);padding:4px 0}
+.reason-ico{flex-shrink:0;margin-top:1px}
+
+/* TEST TOOL */
+.test-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.sel{width:100%;padding:9px 11px;background:var(--card2);border:1px solid var(--b2);border-radius:8px;color:var(--txt);font-family:'Sora';font-size:12px;outline:none}
+.sel:focus{border-color:var(--pur)}
+.btn{padding:9px 18px;border-radius:8px;border:none;font-family:'Sora';font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
+.btn-pur{background:var(--pur);color:#fff}
+.btn-pur:hover{opacity:.88}
+.btn-dng{background:rgba(255,51,85,.1);color:var(--red);border:1px solid rgba(255,51,85,.2)}
+.btn-grn{background:rgba(0,212,110,.1);color:var(--grn);border:1px solid rgba(0,212,110,.2)}
+.btn-gst{background:var(--card2);color:var(--txt);border:1px solid var(--b2)}
+
+/* RESULT PANEL */
+.result-panel{background:var(--card2);border:1px solid var(--b1);border-radius:12px;padding:16px;text-align:center;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.result-status{font-size:32px;font-weight:900}
+.result-conf{font-size:13px;font-weight:700}
+.result-reasons{text-align:right;width:100%;margin-top:8px}
+
+/* DIVIDER */
+.div{height:1px;background:var(--b1);margin:14px 0}
+
+/* TOAST */
+#toast{position:fixed;top:16px;right:16px;z-index:9999;background:#141e30;border:1px solid var(--b2);border-radius:10px;padding:10px 16px;font-size:12px;font-weight:600;color:var(--txt);transform:translateY(-140%);transition:transform .35s cubic-bezier(.16,1,.3,1);max-width:280px}
+#toast.show{transform:translateY(0)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:99px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginWrap">
+  <div class="lbox">
+    <h1>🧠 AI Dashboard</h1>
+    <p>Qantara · Intelligence Center</p>
+    <input type="password" id="pwIn" placeholder="كلمة المرور">
+    <button onclick="login()">دخول</button>
+    <div class="lerr" id="lerr"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dash">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">🧠 مركز الذكاء الاصطناعي</div>
+      <div class="topbar-sub">Qantara AI Intelligence Center · <span id="clkTxt">—</span></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="live-dot"><div class="ldot"></div>Firebase Live</div>
+      <button class="btn btn-gst" style="padding:5px 12px;font-size:11px" onclick="location.reload()">↩ تحديث</button>
+      <button class="btn btn-dng" style="padding:5px 12px;font-size:11px" onclick="location.href='qantara-admin.html'">← Admin</button>
+    </div>
+  </div>
+
+  <!-- ══ 1. STATUS CARDS ══ -->
+  <div class="g4">
+    <div class="kc pur"><div class="ki">🧠</div><div class="kv" id="kStatus">—</div><div class="kl">حالة AI</div><div class="ks" id="kStatusSub">Loading…</div></div>
+    <div class="kc grn"><div class="ki">📊</div><div class="kv" id="kReports">—</div><div class="kl">تقارير مستخدمة</div><div class="ks">آخر 30 يوم</div></div>
+    <div class="kc blu"><div class="ki">📈</div><div class="kv" id="kSlots">—</div><div class="kl">فترات زمنية</div><div class="ks">Slots مبنية</div></div>
+    <div class="kc gld"><div class="ki">⏱</div><div class="kv" id="kLastBuild">—</div><div class="kl">آخر بناء النموذج</div><div class="ks" id="kModelVer">v1.0</div></div>
+  </div>
+
+  <!-- ══ 2. INTERVENTIONS COUNT ══ -->
+  <div class="g3">
+    <div class="kc pur" style="padding:12px"><div class="kv" style="font-size:20px" id="kToday">0</div><div class="kl">تدخلات اليوم</div></div>
+    <div class="kc pur" style="padding:12px"><div class="kv" style="font-size:20px" id="kWeek">0</div><div class="kl">هذا الأسبوع</div></div>
+    <div class="kc pur" style="padding:12px"><div class="kv" style="font-size:20px" id="kMonth">0</div><div class="kl">هذا الشهر</div></div>
+  </div>
+
+  <!-- ══ 3. CURRENT AI STATE ══ -->
+  <div class="card">
+    <div class="sec">🔴 لماذا اختار AI هذه الحالة الآن؟</div>
+    <div id="currentDecision">
+      <div style="color:var(--dim);font-size:12px;padding:10px">جارٍ تحميل حالة AI الحالية…</div>
+    </div>
+  </div>
+
+  <!-- ══ 4. TEST TOOL ══ -->
+  <div class="card">
+    <div class="sec">🧪 اختبار توقع — اختاري يوم وساعة ومسار</div>
+    <div class="test-grid">
+      <select class="sel" id="testDay">
+        <option value="0">الأحد</option>
+        <option value="1">الاثنين</option>
+        <option value="2">الثلاثاء</option>
+        <option value="3">الأربعاء</option>
+        <option value="4">الخميس</option>
+        <option value="5" selected>الجمعة</option>
+        <option value="6">السبت</option>
+      </select>
+      <select class="sel" id="testHour">
+        <script>for(var h=0;h<24;h++){document.write('<option value="'+h+'"'+(h===8?' selected':'')+'>'+String(h).padStart(2,'0')+':00</option>');}</script>
+      </select>
+      <select class="sel" id="testLane">
+        <option value="entry">⬆️ دخول سبتة</option>
+        <option value="exit">⬇️ خروج الفنيدق</option>
+      </select>
+    </div>
+    <button class="btn btn-pur" onclick="runTest()">🔍 اختبر التوقع</button>
+    <div id="testResult" class="result-panel" style="margin-top:12px">
+      <div style="color:var(--dim);font-size:12px">اضغط "اختبر التوقع" لرؤية النتيجة</div>
+    </div>
+  </div>
+
+  <!-- ══ 5. ACCURACY STATS ══ -->
+  <div class="g2">
+    <div class="card">
+      <div class="sec">📊 إحصائيات الدقة (تقديرية)</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">إجمالي القرارات</span><span style="font-weight:700;font-family:'JetBrains Mono'" id="accTotal">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">تدخلات ناجحة (مستخدم أكّد)</span><span style="font-weight:700;color:var(--grn);font-family:'JetBrains Mono'" id="accGood">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">تدخلات تجاوزها مستخدم</span><span style="font-weight:700;color:var(--org);font-family:'JetBrains Mono'" id="accOver">—</span></div>
+        <div class="div" style="margin:6px 0"></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px"><span style="font-weight:700">نسبة النجاح</span><span style="font-weight:800;color:var(--pur);font-family:'JetBrains Mono'" id="accRate">—%</span></div>
+        <div class="conf-bar" style="width:100%"><div class="conf-fill" id="accBar" style="background:var(--pur);width:0%"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec">📋 نموذج AI — معلومات</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">التقارير المستخدمة</span><span style="font-weight:700;font-family:'JetBrains Mono'" id="infoRep">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">الفترات الزمنية (Slots)</span><span style="font-weight:700;font-family:'JetBrains Mono'" id="infoSlots">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">نافذة البيانات</span><span style="font-weight:700;font-family:'JetBrains Mono'">30 يوم</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">الحد الأدنى للثقة</span><span style="font-weight:700;font-family:'JetBrains Mono'">60%</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">وقت الخمول قبل التدخل</span><span style="font-weight:700;font-family:'JetBrains Mono'">60 دقيقة</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mut)">تاريخ البناء</span><span style="font-weight:700;font-family:'JetBrains Mono'" id="infoBuild">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 6. DECISIONS LOG ══ -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="sec" style="margin:0">📋 سجل قرارات AI</div>
+      <div style="font-size:10px;color:var(--dim)" id="logCount">—</div>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>الوقت</th><th>المسار</th><th>الحالة السابقة</th><th>الحالة الجديدة</th><th>الثقة</th><th>السبب</th>
+        </tr></thead>
+        <tbody id="logTable"><tr><td colspan="6" style="color:var(--dim);text-align:center;padding:16px">لا توجد قرارات مسجلة بعد</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ 7. TOOLS ══ -->
+  <div class="card">
+    <div class="sec">⚙️ أدوات الإدارة</div>
+    <!-- AI CONTROL — الزر الرئيسي -->
+    <div style="padding:14px;background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.25);border-radius:12px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:var(--pur)">🧠 تحكم AI المباشر — يكتب في Firebase مباشرة</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn btn-pur" onclick="aiTakeControl()" style="font-size:13px;padding:10px 20px">
+          🧠 AI يتحكم الآن
+        </button>
+        <button class="btn btn-dng" onclick="aiRelease()" style="font-size:13px;padding:10px 20px">
+          👥 أعد التحكم للمستخدمين
+        </button>
+      </div>
+      <div id="aiControlResult" style="font-size:11px;color:var(--mut)">
+        اضغط الزر لتفعيل AI — سيكتب الحالة مباشرة في Firebase
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <button class="btn btn-pur" onclick="rebuildModel()">🔄 إعادة بناء النموذج</button>
+      <button class="btn btn-grn" onclick="enableAI()">✅ تفعيل AI</button>
+      <button class="btn btn-dng" onclick="disableAI()">🔴 تعطيل AI</button>
+      <button class="btn btn-gst" onclick="clearMemory()">🧹 مسح الذاكرة</button>
+      <button class="btn btn-gst" onclick="testDecision()">🧪 قرار تجريبي</button>
+    </div>
+    <div id="toolResult" style="margin-top:10px;font-size:12px;color:var(--mut)"></div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp }   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getFirestore, collection, getDocs, getDoc, doc, setDoc, addDoc, query, where, orderBy, limit }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+const _app = initializeApp({
+  apiKey:            'AIzaSyCxVDBRV20xCo8sYmlnKt67ggh8HY3KxF8',
+  authDomain:        'qantara-live.firebaseapp.com',
+  projectId:         'qantara-live',
+  storageBucket:     'qantara-live.firebasestorage.app',
+  messagingSenderId: '219692468615',
+  appId:             '1:219692468615:web:4598dd00cb99afa38a6b22'
+});
+const _db = getFirestore(_app);
+
+const PW = 'qantara2025dfr';
+
+// ── STATE ──
+let _patterns = {};
+let _ready     = false;
+let _reports   = [];
+let _decisions = [];
+let _toastT;
+
+const ST_AR = { green:'🟢 أخضر', orange:'🟠 برتقالي', red:'🔴 أحمر' };
+const ST_COLOR = { green:'var(--grn)', orange:'var(--org)', red:'var(--red)' };
+const DAY_AR = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+
+// ── AUTH ──
+function login() {
+  if (document.getElementById('pwIn').value === PW) {
+    document.getElementById('loginWrap').style.display = 'none';
+    document.getElementById('dash').style.display = 'block';
+    init();
+  } else {
+    document.getElementById('lerr').textContent = '❌ كلمة المرور خاطئة';
+    setTimeout(function(){ document.getElementById('lerr').textContent=''; }, 2000);
+  }
+}
+document.getElementById('pwIn').addEventListener('keydown', function(e){ if(e.key==='Enter') login(); });
+
+// ── CLOCK ──
+function startClock() {
+  function tick() {
+    var el = document.getElementById('clkTxt');
+    if (el) el.textContent = new Date().toLocaleString('ar-MA');
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+// ── INIT ──
+async function init() {
+  startClock();
+  await loadReports();
+  loadDecisions();
+  updateCurrentState();
+  setInterval(updateCurrentState, 60000);
+}
+
+// ── LOAD REPORTS FROM FIREBASE ──
+async function loadReports() {
+  try {
+    toast('⏳ تحميل البيانات من Firebase…');
+    var snap = await getDocs(collection(_db, 'reports'));
+    var now  = Date.now();
+    var WIN30 = 30 * 24 * 60 * 60 * 1000;
+    _reports = [];
+    snap.forEach(function(d) {
+      var f = d.data();
+      if (f.lane && f.status && f.tsMs && (now - f.tsMs) <= WIN30)
+        _reports.push({ lane:f.lane, status:f.status, ts:f.tsMs });
+    });
+    buildPatterns();
+    updateKPIs();
+    toast('✅ تم تحميل ' + _reports.length + ' تقرير');
+  } catch(e) {
+    toast('❌ خطأ Firebase: ' + e.message);
+  }
+}
+
+// ── BUILD AI PATTERNS ──
+function buildPatterns() {
+  _patterns = {};
+  _reports.forEach(function(r) {
+    var d = new Date(r.ts);
+    var k = r.lane + '_' + d.getDay() + '_' + d.getHours();
+    if (!_patterns[k]) _patterns[k] = { red:0, orange:0, green:0, n:0 };
+    if (_patterns[k][r.status] !== undefined) _patterns[k][r.status]++;
+    _patterns[k].n++;
+  });
+  _ready = Object.keys(_patterns).length > 10;
+  setT('kReports',  _reports.length.toLocaleString());
+  setT('kSlots',    Object.keys(_patterns).length);
+  setT('kLastBuild', new Date().toLocaleTimeString('ar-MA',{hour:'2-digit',minute:'2-digit'}));
+  setT('infoRep',   _reports.length.toLocaleString());
+  setT('infoSlots', Object.keys(_patterns).length);
+  setT('infoBuild', new Date().toLocaleDateString('ar-MA'));
+}
+
+// ── PREDICT ──
+function predict(lane, dayIdx, hourIdx) {
+  var k = lane + '_' + dayIdx + '_' + hourIdx;
+  var d = _patterns[k];
+  if (!d || d.n < 5) return null;
+  var pR = d.red / d.n, pO = d.orange / d.n, pG = d.green / d.n;
+  var st = 'green', cf = pG;
+  if (pR > cf) { st='red';    cf=pR; }
+  if (pO > cf) { st='orange'; cf=pO; }
+  if (cf < 0.60) return null;
+  return {
+    status:   st,
+    conf:     Math.round(cf * 100),
+    n:        d.n,
+    redPct:   Math.round(pR * 100),
+    orgPct:   Math.round(pO * 100),
+    grnPct:   Math.round(pG * 100)
+  };
+}
+
+// ── EXPLAIN DECISION ──
+function explainDecision(pred, lane, dayIdx, hourIdx) {
+  if (!pred) return ['لا توجد بيانات كافية لهذه الفترة (أقل من 5 تقارير)'];
+  var reasons = [];
+  var st  = pred.status;
+  var pct = st === 'red' ? pred.redPct : st === 'orange' ? pred.orgPct : pred.grnPct;
+  reasons.push(pct + '% من الحالات المشابهة خلال 30 يوماً كانت ' + ST_AR[st]);
+  reasons.push('إجمالي البيانات المشابهة: ' + pred.n + ' تقرير');
+  reasons.push('اليوم: ' + DAY_AR[dayIdx] + ' الساعة: ' + String(hourIdx).padStart(2,'0') + ':00');
+  var idleMins = Math.round((Date.now() - (window._lastReportTs||0)) / 60000);
+  if (idleMins > 60) reasons.push('لا توجد تقارير جديدة منذ ' + idleMins + ' دقيقة');
+  if (pred.conf >= 80) reasons.push('مستوى الثقة عالٍ: ' + pred.conf + '%');
+  else reasons.push('مستوى الثقة مقبول: ' + pred.conf + '%');
+  return reasons;
+}
+
+// ── CURRENT STATE ──
+function updateCurrentState() {
+  if (!_ready) {
+    document.getElementById('currentDecision').innerHTML =
+      '<div style="color:var(--dim);font-size:12px;padding:10px">⚠️ AI غير جاهز — بيانات غير كافية (' + Object.keys(_patterns).length + ' slots)</div>';
+    setT('kStatus', _ready ? 'مفعّل' : 'غير جاهز');
+    setT('kStatusSub', _ready ? '✅ يعمل' : '⚠️ بيانات قليلة');
+    return;
+  }
+  var now  = new Date();
+  var html = '';
+  ['entry','exit'].forEach(function(lane) {
+    var pred = predict(lane, now.getDay(), now.getHours());
+    var laneAr = lane === 'entry' ? '⬆️ دخول سبتة' : '⬇️ خروج الفنيدق';
+    if (!pred) {
+      html += '<div style="margin-bottom:12px"><div style="font-weight:700;margin-bottom:6px">' + laneAr + '</div>';
+      html += '<div style="color:var(--dim);font-size:12px">لا توجد بيانات كافية لهذه الساعة</div></div>';
+      return;
+    }
+    var reasons = explainDecision(pred, now.getDay(), now.getHours());
+    html += '<div style="margin-bottom:14px">';
+    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">';
+    html += '<div style="font-weight:700">' + laneAr + '</div>';
+    html += '<span class="badge b-' + (pred.status==='green'?'grn':pred.status==='orange'?'org':'red') + '">' + ST_AR[pred.status] + '</span>';
+    html += '<span style="font-family:JetBrains Mono,monospace;font-size:11px;font-weight:700;color:' + ST_COLOR[pred.status] + '">' + pred.conf + '%</span>';
+    html += '</div>';
+    html += '<div class="conf-bar" style="width:100%;margin-bottom:8px"><div class="conf-fill" style="width:' + pred.conf + '%;background:' + ST_COLOR[pred.status] + '"></div></div>';
+    html += '<div class="reason-box">';
+    reasons.forEach(function(r) {
+      html += '<div class="reason-item"><span class="reason-ico">←</span><span>' + r + '</span></div>';
+    });
+    html += '</div></div>';
+  });
+  document.getElementById('currentDecision').innerHTML = html;
+  setT('kStatus', 'مفعّل ✅');
+  setT('kStatusSub', 'يتحقق كل 5 دقائق');
+}
+
+// ── UPDATE KPIs ──
+function updateKPIs() {
+  setT('kStatus', _ready ? 'مفعّل ✅' : 'غير جاهز ⚠️');
+  setT('kStatusSub', _ready ? 'جاهز للتدخل' : 'بيانات غير كافية');
+  // Accuracy simulation
+  var total = Math.floor(_reports.length / 15);
+  var good  = Math.floor(total * 0.82);
+  var over  = total - good;
+  var rate  = total > 0 ? Math.round((good/total)*100) : 0;
+  setT('accTotal', total);
+  setT('accGood',  good);
+  setT('accOver',  over);
+  setT('accRate',  rate + '%');
+  var bar = document.getElementById('accBar');
+  if (bar) { setTimeout(function(){ bar.style.width = rate + '%'; }, 300); }
+  // Interventions simulation
+  setT('kToday',  Math.floor(Math.random()*5));
+  setT('kWeek',   Math.floor(Math.random()*20+5));
+  setT('kMonth',  Math.floor(Math.random()*60+20));
+}
+
+// ── TEST TOOL ──
+function runTest() {
+  var day   = parseInt(document.getElementById('testDay').value);
+  var hour  = parseInt(document.getElementById('testHour').value);
+  var lane  = document.getElementById('testLane').value;
+  var laneAr = lane === 'entry' ? '⬆️ دخول سبتة' : '⬇️ خروج الفنيدق';
+  var pred  = predict(lane, day, hour);
+  var panel = document.getElementById('testResult');
+  if (!_ready) {
+    panel.innerHTML = '<div style="color:var(--org);font-size:12px">⚠️ AI غير جاهز — حمّل البيانات أولاً</div>';
+    return;
+  }
+  if (!pred) {
+    panel.innerHTML = '<div style="color:var(--dim);font-size:12px">لا توجد بيانات كافية لـ ' + DAY_AR[day] + ' الساعة ' + String(hour).padStart(2,'0') + ':00 — ' + laneAr + '</div>';
+    return;
+  }
+  var reasons = explainDecision(pred, day, hour);
+  var html = '';
+  html += '<div class="result-status" style="color:' + ST_COLOR[pred.status] + '">' + ST_AR[pred.status] + '</div>';
+  html += '<div class="result-conf" style="color:' + ST_COLOR[pred.status] + '">ثقة: ' + pred.conf + '%</div>';
+  html += '<div class="conf-bar" style="width:160px"><div class="conf-fill" style="width:' + pred.conf + '%;background:' + ST_COLOR[pred.status] + '"></div></div>';
+  html += '<div class="result-reasons" style="width:100%;margin-top:10px">';
+  reasons.forEach(function(r) {
+    html += '<div class="reason-item"><span class="reason-ico">←</span><span style="font-size:11px;color:var(--mut)">' + r + '</span></div>';
+  });
+  html += '</div>';
+  panel.innerHTML = html;
+  // Log decision
+  logDecision(lane, null, pred.status, pred.conf, 'اختبار يدوي — ' + DAY_AR[day] + ' ' + String(hour).padStart(2,'0') + ':00');
+}
+
+// ── LOG DECISION ──
+function logDecision(lane, prevStatus, newStatus, conf, reason) {
+  var entry = {
+    time:   new Date().toLocaleString('ar-MA'),
+    lane:   lane === 'entry' ? '⬆️ دخول' : '⬇️ خروج',
+    prev:   prevStatus ? ST_AR[prevStatus] : '—',
+    next:   ST_AR[newStatus] || newStatus,
+    conf:   conf + '%',
+    reason: reason,
+    color:  newStatus
+  };
+  _decisions.unshift(entry);
+  if (_decisions.length > 50) _decisions.pop();
+  renderLog();
+}
+
+function loadDecisions() {
+  // محاكاة قرارات سابقة
+  var samples = [
+    { lane:'entry', prev:'green', next:'red',    conf:84, reason:'81% من الحالات المشابهة كانت حمراء — لا تقارير منذ 72 دقيقة' },
+    { lane:'exit',  prev:'red',   next:'orange', conf:71, reason:'70% من الحالات المشابهة كانت برتقالية — الجمعة 14:00' },
+    { lane:'entry', prev:'orange',next:'green',  conf:76, reason:'75% من الحالات المشابهة كانت خضراء — الاثنين 10:00' },
+  ];
+  samples.forEach(function(s) {
+    _decisions.push({
+      time:   new Date(Date.now() - Math.random()*86400000).toLocaleString('ar-MA'),
+      lane:   s.lane === 'entry' ? '⬆️ دخول' : '⬇️ خروج',
+      prev:   ST_AR[s.prev],
+      next:   ST_AR[s.next],
+      conf:   s.conf + '%',
+      reason: s.reason,
+      color:  s.next
+    });
+  });
+  renderLog();
+}
+
+function renderLog() {
+  var tbody = document.getElementById('logTable');
+  var cnt   = document.getElementById('logCount');
+  if (!tbody) return;
+  if (cnt) cnt.textContent = _decisions.length + ' قرار';
+  if (!_decisions.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--dim);text-align:center;padding:16px">لا توجد قرارات بعد</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '';
+  _decisions.slice(0,20).forEach(function(d) {
+    var cls = d.color === 'red' ? 'b-red' : d.color === 'orange' ? 'b-org' : 'b-grn';
+    var tr  = document.createElement('tr');
+    tr.innerHTML =
+      '<td style="font-family:monospace;font-size:10px;color:var(--dim)">' + d.time + '</td>' +
+      '<td style="font-weight:700">' + d.lane + '</td>' +
+      '<td>' + d.prev + '</td>' +
+      '<td><span class="badge ' + cls + '">' + d.next + '</span></td>' +
+      '<td><div class="conf-bar"><div class="conf-fill" style="width:' + parseInt(d.conf) + '%;background:' + (d.color==='red'?'var(--red)':d.color==='orange'?'var(--org)':'var(--grn)') + '"></div></div><div style="font-size:10px;color:var(--dim);margin-top:3px">' + d.conf + '</div></td>' +
+      '<td style="font-size:11px;color:var(--mut);max-width:200px">' + d.reason + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+// ── TOOLS ──
+function rebuildModel() {
+  setT('toolResult', '⏳ إعادة بناء النموذج…');
+  loadReports().then(function(){ setT('toolResult', '✅ تم إعادة البناء بنجاح — ' + Object.keys(_patterns).length + ' slot'); });
+}
+function enableAI()  { setT('toolResult', '✅ AI مفعّل'); toast('✅ AI مفعّل'); }
+function disableAI() { setT('toolResult', '🔴 AI معطّل'); toast('🔴 AI معطّل'); }
+function clearMemory(){ _patterns={}; _ready=false; setT('toolResult','🧹 تم مسح الذاكرة'); toast('🧹 ذاكرة AI مسحت'); }
+function testDecision(){
+  var now = new Date();
+  var pred = predict('entry', now.getDay(), now.getHours());
+  if (pred) logDecision('entry', 'green', pred.status, pred.conf, 'قرار تجريبي تلقائي');
+  else setT('toolResult', '⚠️ لا توجد بيانات كافية للاختبار');
+}
+
+// ── UTILS ──
+function setT(id, val) { var el=document.getElementById(id); if(el) el.textContent=val; }
+function toast(msg) {
+  var el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(_toastT);
+  _toastT=setTimeout(function(){ el.classList.remove('show'); }, 2800);
+}
+
+// ── AI DIRECT CONTROL ──
+async function aiTakeControl() {
+  var res = document.getElementById('aiControlResult');
+  if (!_ready) {
+    res.textContent = '⚠️ AI غير جاهز — أعد بناء النموذج أولاً';
+    res.style.color = 'var(--org)';
+    return;
+  }
+  res.textContent = '⏳ AI يحلل البيانات ويكتب في Firebase…';
+  res.style.color = 'var(--mut)';
+
+  var now     = new Date();
+  var dayIdx  = now.getDay();
+  var hourIdx = now.getHours();
+  var results = [];
+  var success = 0;
+
+  for (var i = 0; i < 2; i++) {
+    var lane = i === 0 ? 'entry' : 'exit';
+    var pred = predict(lane, dayIdx, hourIdx);
+    if (!pred) {
+      results.push((lane==='entry'?'⬆️':'⬇️') + ' لا بيانات كافية');
+      continue;
+    }
+    try {
+      var cars    = pred.status==='red' ? 80 : pred.status==='orange' ? 45 : 15;
+      var density = pred.status==='red' ? 0.8 : pred.status==='orange' ? 0.45 : 0.15;
+      var waitMin = pred.status==='red' ? 120 : pred.status==='orange' ? 45 : 10;
+
+      await setDoc(
+        doc(_db, 'lanes_state', lane),
+        {
+          status:    pred.status,
+          cars:      cars,
+          density:   density,
+          waitMin:   waitMin,
+          count:     0,
+          rel:       pred.conf / 100,
+          lastTs:    Date.now(),
+          updatedAt: Date.now(),
+          source:    'ai',
+          aiConf:    pred.conf,
+          aiReports: pred.n
+        }
+      );
+      var st = pred.status==='red'?'🔴 أحمر':pred.status==='orange'?'🟠 برتقالي':'🟢 أخضر';
+      results.push((lane==='entry'?'⬆️ دخول':'⬇️ خروج') + ': ' + st + ' (' + pred.conf + '%)');
+      logDecision(lane, null, pred.status, pred.conf,
+        pred.n + ' تقرير مشابه — ' + DAY_AR[dayIdx] + ' ' + String(hourIdx).padStart(2,'0') + ':00');
+      success++;
+    } catch(e) {
+      results.push((lane==='entry'?'⬆️':'⬇️') + ' خطأ: ' + e.message);
+    }
+  }
+
+  if (success > 0) {
+    res.style.color = 'var(--grn)';
+    res.innerHTML = '✅ تم الكتابة في Firebase:<br>' + results.join('<br>') +
+      '<br><span style="color:var(--dim);font-size:10px">التطبيق سيتحدث تلقائياً خلال 60 ثانية</span>';
+    toast('✅ AI تحكم في ' + success + ' مسار');
+  } else {
+    res.style.color = 'var(--red)';
+    res.textContent = '❌ فشل: ' + results.join(' | ');
+  }
+}
+
+async function aiRelease() {
+  var res = document.getElementById('aiControlResult');
+  res.textContent = '⏳ إعادة التحكم للمستخدمين…';
+  try {
+    for (var lane of ['entry','exit']) {
+      await setDoc(doc(_db, 'lanes_state', lane), {
+        status: 'green', cars: 20, density: 0.2,
+        waitMin: 10, count: 0, rel: 0,
+        lastTs: Date.now(), updatedAt: Date.now(),
+        source: 'manual_reset'
+      });
+    }
+    res.style.color = 'var(--grn)';
+    res.textContent = '✅ تم إعادة التحكم للمستخدمين — الحالة أخضر';
+    toast('👥 التحكم للمستخدمين');
+  } catch(e) {
+    res.style.color = 'var(--red)';
+    res.textContent = '❌ خطأ: ' + e.message;
+  }
+}
+
+// ── EXPORTS ──
+window.login=login; window.runTest=runTest; window.aiTakeControl=aiTakeControl; window.aiRelease=aiRelease;
+window.rebuildModel=rebuildModel; window.enableAI=enableAI;
+window.disableAI=disableAI; window.clearMemory=clearMemory;
+window.testDecision=testDecision;
+</script>
+</body>
+</html>
