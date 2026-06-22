@@ -125,6 +125,7 @@
 <div class="gem-msg" id="gemMsg"><div class="gem-msg-inner"><span id="gemMsgTxt">شكراً 🌉</span><span class="gem-pts" id="gemMsgPts">+5 ⭐</span></div></div>
 <div class="gem-lvlup" id="gemLvlUp"><div class="gem-lvlup-inner"><span id="gemLvlTxt">🆙 مستوى جديد!</span></div></div>
 <div class="inapp-msg" id="inAppMsg"><div class="inapp-msg-inner"><div class="inapp-msg-ico">📩</div><div class="inapp-msg-txt" id="inAppMsgTxt"></div></div></div>
+<div id="aiBadgeWrap" style="display:none;align-items:center;justify-content:center;gap:6px;padding:5px 14px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);border-radius:99px;font-size:11px;font-weight:700;color:#a78bfa;margin:4px 16px 2px"><span>🧠</span><span data-ar>الذكاء الاصطناعي يتحكم</span><span data-es>Control IA</span></div>
 <div id="app"><div class="shell">
 <div class="topbar">
 <div class="lang-pick" id="langPick">
@@ -141,6 +142,13 @@
 <div style="display:flex;align-items:center;gap:8px">
 <button id="repBtn" onclick="toggleRepPopup()">⭐ <span id="repPts">0</span></button>
 <div class="live-pill" id="livePill"><div class="ldot"></div><span id="pillTxt">—</span></div>
+<div id="aiToggle" style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:5px">
+  <span style="font-size:9px;font-weight:700;color:#00d46e" id="aiLblLeft">👥</span>
+  <div id="aiTrack" style="width:36px;height:18px;border-radius:99px;background:#00d46e;position:relative;transition:background .3s;flex-shrink:0;cursor:default">
+    <div id="aiThumb" style="position:absolute;top:2px;left:20px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .3s;box-shadow:0 1px 3px rgba(0,0,0,.3)"></div>
+  </div>
+  <span style="font-size:9px;font-weight:700;color:rgba(255,255,255,.3)" id="aiLblRight">🧠</span>
+</div>
 </div>
 </div>
 <div id="repPopup">
@@ -449,6 +457,111 @@ async function updateUserActivity() {
 }
 
 const reportsCol = collection(_db, 'reports');
+
+/* ═══════════════════════════════════════════
+   🧠 QANTARA AI — Auto Traffic Control
+   يكتب في Firebase تلقائياً بعد 60 دقيقة
+   ═══════════════════════════════════════════ */
+var _AI = { p:{}, ready:false, on:false };
+
+function _aiBuild(docs) {
+  var p = {};
+  docs.forEach(function(r) {
+    if (!r.ts||!r.status||!r.lane) return;
+    var d=new Date(r.ts), k=r.lane+'_'+d.getDay()+'_'+d.getHours();
+    if (!p[k]) p[k]={red:0,orange:0,green:0,n:0};
+    if (p[k][r.status]!==undefined) p[k][r.status]++;
+    p[k].n++;
+  });
+  _AI.p     = p;
+  _AI.ready = Object.keys(p).length > 10;
+  console.log('[AI] Ready:', _AI.ready, '|', Object.keys(p).length, 'slots |', docs.length, 'reports');
+}
+
+function _aiPredict(lane) {
+  if (!_AI.ready) return null;
+  var now = new Date();
+  // ابحث ±3 ساعات إذا لم يوجد slot للساعة الحالية
+  for (var delta = 0; delta <= 3; delta++) {
+    for (var sign = 0; sign <= 1; sign++) {
+      var h = ((now.getHours() + (sign===0?delta:-delta)) + 24) % 24;
+      var k = lane + '_' + now.getDay() + '_' + h;
+      var d = _AI.p[k];
+      if (d && d.n >= 1) {
+        var pR=d.red/d.n, pO=d.orange/d.n, pG=d.green/d.n;
+        var st='green', cf=pG;
+        if (pR>cf){st='red';cf=pR;} if (pO>cf){st='orange';cf=pO;}
+        if (cf < 0.55) return null;
+        return { status:st, conf:Math.round(cf*100), n:d.n };
+      }
+    }
+  }
+  // fallback: أي slot لهذا المسار
+  var best=null, bestN=0;
+  Object.keys(_AI.p).forEach(function(k){
+    if (k.startsWith(lane) && _AI.p[k].n > bestN) { bestN=_AI.p[k].n; best=_AI.p[k]; }
+  });
+  if (!best) return null;
+  var pR=best.red/best.n, pO=best.orange/best.n, pG=best.green/best.n;
+  var st='green',cf=pG;
+  if (pR>cf){st='red';cf=pR;} if (pO>cf){st='orange';cf=pO;}
+  if (cf < 0.55) return null;
+  return { status:st, conf:Math.round(cf*100), n:best.n };
+}
+
+async function _runAICheck() {
+  if (!_AI.ready) return;
+  var idle = Date.now() - (window._lastReportTs || 0);
+  if (idle < 3600000) {
+    // مستخدمون نشطون — AI يتراجع
+    if (_AI.on) {
+      _AI.on = false;
+      _aiShowBadge(false);
+      console.log('[AI] Stepped back — users active');
+    }
+    return;
+  }
+  // 60+ دقيقة بدون تبليغ — AI يكتب في Firebase
+  var now = new Date();
+  var activated = false;
+  for (var i = 0; i < 2; i++) {
+    var lane = i===0 ? 'entry' : 'exit';
+    var pred = _aiPredict(lane);
+    if (!pred) continue;
+    try {
+      var cars    = pred.status==='red'?80:pred.status==='orange'?45:15;
+      var density = pred.status==='red'?0.8:pred.status==='orange'?0.45:0.15;
+      var waitMin = pred.status==='red'?120:pred.status==='orange'?45:10;
+      await setDoc(lanesRef[lane], {
+        status:    pred.status,
+        cars:      cars,
+        density:   density,
+        waitMin:   waitMin,
+        count:     0,
+        rel:       pred.conf/100,
+        lastTs:    Date.now(),
+        updatedAt: Date.now(),
+        source:    'ai',
+        aiConf:    pred.conf,
+        aiReports: pred.n
+      });
+      console.log('[AI] ✅ Wrote to Firebase:', lane, pred.status, pred.conf+'%');
+      activated = true;
+    } catch(e) {
+      console.warn('[AI] Firebase write error:', e.message);
+    }
+  }
+  if (activated) {
+    _AI.on = true;
+    _aiShowBadge(true);
+  }
+}
+
+function _aiShowBadge(show) {
+  var el = document.getElementById('aiBadgeWrap');
+  if (el) el.style.display = show ? 'flex' : 'none';
+  if (typeof _updateAIToggle === 'function') _updateAIToggle(show);
+}
 const historyCol  = collection(_db, 'lane_reports_history');
 const lanesRef   = {
   entry: doc(_db, 'lanes_state', 'entry'),
@@ -1115,6 +1228,11 @@ const Cool = {
 
 function fbAddReport(lane, status, weight) {
   const w = weight || 1.0;
+  if (_AI && _AI.on) {
+    _AI.on = false;
+    _aiShowBadge(false);
+    console.log('[AI] User reported — AI stepped back');
+  }
   updateUserActivity();
   return addDoc(reportsCol, {
     status, lane,
@@ -1706,7 +1824,7 @@ async function boot() {
 
     setBtn(Cool.get());
     loadReputation();
-    setInterval(() => setFbUI(), 30000);
+    setInterval(function(){ if(!document.hidden) setFbUI(); }, 60000);
     setInterval(updateDebug, 1000);
 setInterval(updateDecayTimer, 1000);
   }
@@ -1735,7 +1853,7 @@ setInterval(updateDecayTimer, 1000);
       } catch(e) { console.warn('[Q] _loadLanes:', e.message); }
     }
     _loadLanes();
-    setInterval(_loadLanes, 30000);
+    setInterval(function(){ if(!document.hidden) _loadLanes(); }, 60000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) _loadLanes(); });
   }
 
@@ -2051,12 +2169,15 @@ function startListeners() {
     if (document.hidden) return;
     try {
       const snap = await getDocs(reportsCol);
-      const now = Date.now(), docs = [];
+      const now = Date.now(), docs = [], aiDocs = [];
+      const AI30 = 30*24*60*60*1000;
       snap.forEach(d => {
         const f = d.data();
-        if (f.lane && f.status && f.tsMs && (now - f.tsMs) <= WIN_MS)
-          docs.push({ lane:f.lane, status:f.status, ts:f.tsMs, w:f.w });
+        if (!f.lane||!f.status||!f.tsMs) return;
+        if (now-f.tsMs <= AI30) aiDocs.push({lane:f.lane,status:f.status,ts:f.tsMs});
+        if (now-f.tsMs <= WIN_MS) docs.push({lane:f.lane,status:f.status,ts:f.tsMs,w:f.w});
       });
+      if (aiDocs.length > 0) _aiBuild(aiDocs);
       if (docs.length) _lastDataTs = now;
       setFbUI(true, snap.size);
       applyDocs(docs);
@@ -2069,7 +2190,7 @@ function startListeners() {
   }
 
   _loadReports();
-  setInterval(_loadReports, 30000);
+  setInterval(function(){ if(!document.hidden) _loadReports(); }, 120000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) _loadReports(); });
 
 }
@@ -2855,6 +2976,9 @@ setLang(lang);
   initUser();
   startListeners();
   _listenInAppMessages();
+  // AI check: بعد 20 ثانية ثم كل 5 دقائق
+  setTimeout(_runAICheck, 20000);
+  setInterval(function(){ if(!document.hidden) _runAICheck(); }, 300000);
 
   // ══ Daily Visits — يُعدّ زيارات اليوم بتوقيت المغرب ══
   (async function() {
@@ -2891,6 +3015,23 @@ window.addEventListener('beforeinstallprompt', e => {
   const btn = document.getElementById('btnInstall');
   if (btn) btn.classList.add('visible');
 });
+
+function _updateAIToggle(isAI) {
+  var track=document.getElementById('aiTrack');
+  var thumb=document.getElementById('aiThumb');
+  var left =document.getElementById('aiLblLeft');
+  var right=document.getElementById('aiLblRight');
+  if (!track) return;
+  if (isAI) {
+    track.style.background='#ff3355'; if(thumb)thumb.style.left='2px';
+    if(left){left.style.color='rgba(255,255,255,.3)';left.textContent='👥';}
+    if(right){right.style.color='#ff3355';right.textContent='🧠 AI';}
+  } else {
+    track.style.background='#00d46e'; if(thumb)thumb.style.left='20px';
+    if(left){left.style.color='#00d46e';left.textContent='👥';}
+    if(right){right.style.color='rgba(255,255,255,.3)';right.textContent='🧠';}
+  }
+}
 
 window.installApp = async function() {
   if (!_installPrompt) return;
