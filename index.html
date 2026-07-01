@@ -88,7 +88,60 @@
   .btn-share{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:8px;padding:12px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:rgba(238,240,250,.5);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit;letter-spacing:.02em}
   .btn-share:active{background:rgba(255,255,255,.08);color:rgba(238,240,250,.8);transform:scale(.98)}
   .btn-share svg{flex-shrink:0;opacity:.6}
-</style>
+
+/* ══ FAB FLOATING BUTTON ══ */
+#fab{position:fixed;bottom:80px;left:20px;width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#7c3aed);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 6px 20px rgba(168,85,247,.4);transition:all .25s cubic-bezier(.16,1,.3,1);z-index:1000}
+#fab:hover{transform:scale(1.08)}
+#fab.open{transform:rotate(45deg)}
+#fabMenu{position:fixed;bottom:142px;left:16px;display:flex;flex-direction:column;gap:9px;opacity:0;pointer-events:none;transform:translateY(16px) scale(.95);transition:all .3s cubic-bezier(.16,1,.3,1);z-index:999}
+#fabMenu.open{opacity:1;pointer-events:all;transform:translateY(0) scale(1)}
+.fab-item{display:flex;align-items:center;gap:9px;cursor:pointer}
+.fab-ico-btn{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;box-shadow:0 4px 14px rgba(0,0,0,.35);transition:transform .2s;border:none;cursor:pointer}
+.fab-ico-btn:hover{transform:scale(1.1)}
+.fab-ico-ai{background:linear-gradient(135deg,#a855f7,#7c3aed)}
+.fab-ico-wa{background:#25D366}
+.fab-ico-bug{background:rgba(255,51,85,.15);border:1px solid rgba(255,51,85,.3)!important}
+.fab-lbl{background:rgba(8,11,20,.93);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:5px 11px;font-size:11px;font-weight:700;color:#eef0fa;white-space:nowrap;backdrop-filter:blur(12px)}
+/* CHAT PANEL */
+#chatPanel{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;height:82vh;background:#111520;border-top:1px solid rgba(255,255,255,.13);border-radius:20px 20px 0 0;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .4s cubic-bezier(.16,1,.3,1);z-index:1100;overflow:hidden}
+#chatPanel.open{transform:translateY(0)}
+.chat-hdr{display:flex;align-items:center;gap:10px;padding:13px 15px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.chat-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.chat-nm{font-size:13px;font-weight:700;color:#eef0fa}
+.chat-st{font-size:10px;color:#00d46e;margin-top:1px}
+.chat-x{margin-right:auto;background:none;border:none;color:rgba(238,240,250,.4);font-size:18px;cursor:pointer;padding:4px;line-height:1}
+.chat-msgs{flex:1;overflow-y:auto;padding:13px;display:flex;flex-direction:column;gap:9px}
+.chat-msgs::-webkit-scrollbar{width:3px}
+.chat-msgs::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:99px}
+.cmsg{max-width:83%;padding:9px 12px;border-radius:12px;font-size:12px;line-height:1.65;white-space:pre-line}
+.cmsg-bot{background:#161d2c;border:1px solid rgba(255,255,255,.07);align-self:flex-start;border-radius:4px 12px 12px 12px;color:#eef0fa}
+.cmsg-user{background:linear-gradient(135deg,#a855f7,#7c3aed);align-self:flex-end;border-radius:12px 4px 12px 12px;color:#fff}
+.typing-wrap{display:flex;gap:4px;align-items:center;padding:10px 12px}
+.tdot{width:6px;height:6px;border-radius:50%;background:rgba(238,240,250,.4);animation:tdot .9s ease infinite}
+.tdot:nth-child(2){animation-delay:.15s}.tdot:nth-child(3){animation-delay:.3s}
+@keyframes tdot{0%,100%{transform:translateY(0);opacity:.3}50%{transform:translateY(-4px);opacity:1}}
+.chat-quick{padding:7px 12px;display:flex;gap:6px;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
+.chat-quick::-webkit-scrollbar{display:none}
+.cq-btn{padding:5px 11px;border-radius:99px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.25);color:#a855f7;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;transition:background .15s;flex-shrink:0}
+.cq-btn:hover{background:rgba(168,85,247,.2)}
+.chat-inp-wrap{display:flex;align-items:center;gap:7px;padding:9px 11px;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.chat-inp{flex:1;padding:8px 12px;background:#161d2c;border:1px solid rgba(255,255,255,.13);border-radius:99px;color:#eef0fa;font-family:inherit;font-size:12px;outline:none}
+.chat-inp:focus{border-color:#a855f7}
+.chat-snd{width:34px;height:34px;border-radius:50%;background:#a855f7;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+/* BUG PANEL */
+#bugPanel{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:#111520;border-top:1px solid rgba(255,255,255,.13);border-radius:20px 20px 0 0;transform:translateY(100%);transition:transform .4s cubic-bezier(.16,1,.3,1);z-index:1100;padding:20px}
+#bugPanel.open{transform:translateY(0)}
+.bug-ttl{font-size:14px;font-weight:800;margin-bottom:3px}
+.bug-sub{font-size:11px;color:rgba(238,240,250,.4);margin-bottom:13px}
+.bug-ta{width:100%;padding:10px;background:#161d2c;border:1px solid rgba(255,255,255,.13);border-radius:10px;color:#eef0fa;font-family:inherit;font-size:12px;resize:none;height:80px;outline:none}
+.bug-ta:focus{border-color:#ff3355}
+.bug-row{display:flex;gap:8px;margin-top:10px}
+.bug-ok{flex:1;padding:10px;border-radius:8px;border:none;background:#ff3355;color:#fff;font-family:inherit;font-weight:700;font-size:12px;cursor:pointer}
+.bug-cn{padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:none;color:rgba(238,240,250,.45);font-family:inherit;font-size:12px;cursor:pointer}
+/* OVERLAY */
+#fabOv{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1050;opacity:0;pointer-events:none;transition:opacity .3s}
+#fabOv.on{opacity:1;pointer-events:all}
+</style></style>
 <div id="intro">
 <div id="intro-line"></div>
 <div id="intro-logo-wrap">
@@ -304,7 +357,10 @@ function toggleDetails() {
 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
     Facebook
   </a>
-<a href="/cdn-cgi/l/email-protection#2554444b514457440b494c5340654248444c490b464a48"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span class="__cf_email__" data-cfemail="2e5f4f405a4f5c4f004247584b6e49434f4742004d4143">[email&#160;protected]</span></a>
+<a href="mailto:qantara.app@gmail.com" target="_blank" rel="noopener">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+    Email
+  </a>
 </div>
 <div class="footer"><span data-ar>بيانات مجتمعية · الفنيدق / سبتة · Beta v1</span><span data-es>Datos comunitarios · Fnideq / Ceuta · Beta v1</span></div>
 <button class="about-btn" onclick="document.getElementById('aboutOverlay').classList.add('open')"><span data-ar>ℹ️ عن التطبيق</span><span data-es>ℹ️ Sobre la app</span></button>
@@ -317,7 +373,7 @@ function toggleDetails() {
 <div class="about-row"><span class="about-row-ico">👥</span><span><span data-ar>بيانات مجتمعية — يساهم فيها المستخدمون بتقاريرهم الحية.</span><span data-es>Datos comunitarios — los usuarios comparten reportes en tiempo real.</span></span></div>
 <div class="about-row"><span class="about-row-ico">🤖</span><span><span data-ar>يعتمد على تحليل الأنماط التاريخية + التقارير الحية لتوقع الازدحام.</span><span data-es>Analiza patrones históricos + reportes en vivo para predecir el tráfico.</span></span></div>
 <div class="about-row"><span class="about-row-ico">🔒</span><span><span data-ar>لا نجمع معلومات شخصية، فقط تقارير مجهولة.</span><span data-es>No recopilamos datos personales, solo reportes anónimos.</span></span></div>
-<div class="about-row"><span class="about-row-ico">📧</span><span><a href="/cdn-cgi/l/email-protection#abdacac5dfcad9ca85c7c2ddceebccc6cac2c785c8c4c6" style="color:var(--muted)"><span class="__cf_email__" data-cfemail="d2a3b3bca6b3a0b3fcbebba4b792b5bfb3bbbefcb1bdbf">[email&#160;protected]</span></a></span></div>
+<div class="about-row"><span class="about-row-ico">📧</span><span><a href="mailto:qantara.app@gmail.com" style="color:var(--muted)">qantara.app@gmail.com</a></span></div>
 <div class="about-divider"></div>
 <div style="text-align:center;font-size:10px;color:var(--muted);opacity:.5">Beta v1 · 2025</div>
 <button class="about-close" onclick="document.getElementById('aboutOverlay').classList.remove('open')"><span data-ar>إغلاق</span><span data-es>Cerrar</span></button>
@@ -1523,11 +1579,14 @@ function pickLang(l) {
 
 function setLang(l) {
   lang = l;
+  window._qLang = l; // متاح لـ FAB script
   document.body.classList.toggle('es', l === 'es');
   document.documentElement.setAttribute('dir', l === 'es' ? 'ltr' : 'rtl');
   document.documentElement.setAttribute('lang', l === 'es' ? 'es' : 'ar');
   Map._updateTooltips();
   _refreshLangUI();
+  // تحديث FAB حسب اللغة
+  if (typeof fabUpdateLang === 'function') fabUpdateLang(l);
 }
 
 function _refreshLangUI() {
@@ -3043,6 +3102,271 @@ window.installApp = async function() {
   }
   _installPrompt = null;
 };
+</script>
+
+<!-- ══ FAB FLOATING ACTION BUTTON ══ -->
+<button id="fab" onclick="fabToggle()">💬</button>
+
+<div id="fabMenu">
+  <div class="fab-item" onclick="fabOpenChat()">
+    <div class="fab-lbl" id="fabLbl0"><span data-ar>تحدث مع AI قنطرة 🧠</span><span data-es style="display:none">Habla con IA Qantara 🧠</span></div>
+    <button class="fab-ico-btn fab-ico-ai">🧠</button>
+  </div>
+  <div class="fab-item" onclick="fabOpenWA()">
+    <div class="fab-lbl" id="fabLbl1"><span data-ar>انضم لمجموعة واتساب</span><span data-es style="display:none">Únete al grupo de WhatsApp</span></div>
+    <button class="fab-ico-btn fab-ico-wa">📱</button>
+  </div>
+  <div class="fab-item" onclick="fabOpenBug()">
+    <div class="fab-lbl" id="fabLbl2"><span data-ar>أبلغ عن مشكلة</span><span data-es style="display:none">Reportar un problema</span></div>
+    <button class="fab-ico-btn fab-ico-bug" style="color:#ff3355">🐛</button>
+  </div>
+</div>
+
+<div id="fabOv" onclick="fabCloseAll()"></div>
+
+<!-- CHAT -->
+<div id="chatPanel">
+  <div class="chat-hdr">
+    <div class="chat-av">🧠</div>
+    <div><div class="chat-nm">فريق قنطرة</div><div class="chat-st">● متصل دائماً</div></div>
+    <button class="chat-x" onclick="fabCloseAll()">✕</button>
+  </div>
+  <div class="chat-msgs" id="chatMsgs"></div>
+  <div class="chat-quick" id="chatQuick">
+    <button class="cq-btn" onclick="fabSendQ('متى أفضل وقت للعبور؟')">متى أفضل وقت؟</button>
+    <button class="cq-btn" onclick="fabSendQ('هل المعبر مزدحم الآن؟')">الوضع الآن؟</button>
+    <button class="cq-btn" onclick="fabSendQ('كم وقت الانتظار؟')">وقت الانتظار؟</button>
+    <button class="cq-btn" onclick="fabSendQ('أفضل يوم هذا الأسبوع؟')">أفضل يوم؟</button>
+  </div>
+  <div class="chat-inp-wrap">
+    <input class="chat-inp" id="chatInp" placeholder="اسألني أي شيء…" onkeydown="if(event.key==='Enter')fabSend()">
+    <button class="chat-snd" onclick="fabSend()">➤</button>
+  </div>
+</div>
+
+<!-- BUG REPORT -->
+<div id="bugPanel">
+  <div class="bug-ttl"><span data-ar>🐛 أبلغ عن مشكلة</span><span data-es style="display:none">🐛 Reportar problema</span></div>
+  <div class="bug-sub"><span data-ar>سيصلنا تقريرك على واتساب مباشرة</span><span data-es style="display:none">Tu reporte llegará por WhatsApp directamente</span></div>
+  <textarea class="bug-ta" id="bugTa" placeholder="اشرح المشكلة التي واجهتها…"></textarea>
+  <div class="bug-row">
+    <button class="bug-cn" onclick="fabCloseAll()"><span data-ar>إلغاء</span><span data-es style="display:none">Cancelar</span></button>
+    <button class="bug-ok" onclick="fabSendBug()"><span data-ar>📤 إرسال عبر واتساب</span><span data-es style="display:none">📤 Enviar por WhatsApp</span></button>
+  </div>
+</div>
+
+<script>
+// ══ FAB SYSTEM ══
+var _fabOpen = false;
+var _chatInit = false;
+
+var FAB_AI = {
+  ar: {
+    'متى أفضل وقت للعبور؟': 'بناءً على أكثر من 430 تقرير حقيقي:\n\n🟢 أفضل الأوقات:\n• الاثنين–الأربعاء: 10:00–14:00\n• الصباح الباكر: 06:00–07:30\n• الليل: 22:00–00:00\n\n🔴 تجنبي:\n• الجمعة والسبت طوال اليوم',
+    'هل المعبر مزدحم الآن؟': '🔴 بناءً على البيانات التاريخية:\nدخول سبتة: ازدحام شديد\nخروج الفنيدق: متوسط\n\n💡 افتحي التطبيق للمعلومة الفورية',
+    'كم وقت الانتظار؟': '⏱ وقت الانتظار المتوقع:\n\n⬆️ دخول سبتة: 2–3 ساعات\n⬇️ خروج الفنيدق: 45–60 دقيقة\n\nبلّغ عن الوضع الحقيقي لتساعد الآخرين 😊',
+    'أفضل يوم هذا الأسبوع؟': '📅 أفضل الأيام:\n\n1️⃣ الثلاثاء: خفيف جداً\n2️⃣ الأربعاء: خفيف\n3️⃣ الاثنين: مقبول\n\n⚠️ الجمعة والسبت الأكثر ازدحاماً (87%)'
+  },
+  es: {
+    '¿Cuándo es el mejor momento para cruzar?': 'Basado en más de 430 reportes reales:\n\n🟢 Mejores horas:\n• Lun–Mié: 10:00–14:00\n• Madrugada: 06:00–07:30\n• Noche: 22:00–00:00\n\n🔴 Evita:\n• Viernes y sábado todo el día',
+    '¿Está congestionado ahora?': '🔴 Según datos históricos:\nEntrada Ceuta: Atasco fuerte\nSalida Fnideq: Moderado\n\n💡 Abre la app para info en tiempo real',
+    '¿Cuánto tiempo de espera?': '⏱ Espera estimada:\n\n⬆️ Entrada Ceuta: 2–3 horas\n⬇️ Salida Fnideq: 45–60 min\n\nReporta el estado real para ayudar a otros 😊',
+    '¿Mejor día esta semana?': '📅 Mejores días:\n\n1️⃣ Martes: Muy fluido\n2️⃣ Miércoles: Fluido\n3️⃣ Lunes: Aceptable\n\n⚠️ Viernes y sábado: más congestionados (87%)'
+  }
+};
+
+function fabGetLang(){ return window._qLang || document.body.classList.contains('es') ? 'es' : 'ar'; }
+
+function fabGetResponse(msg) {
+  var l = fabGetLang();
+  var responses = FAB_AI[l] || FAB_AI.ar;
+  if (responses[msg]) return responses[msg];
+  var isEs = l==='es';
+  if (msg.includes('ازدحام')||msg.includes('حالة')||msg.includes('معبر')||msg.includes('tráfico')||msg.includes('paso'))
+    return isEs
+      ? '🌉 Estado actual:\n\n⬆️ Entrada Ceuta: 🔴 Atasco\n⬇️ Salida Fnideq: 🟠 Moderado\n\nÚltima actualización: hace 8 min'
+      : '🌉 حالة المعبر الآن:\n\n⬆️ دخول سبتة: 🔴 ازدحام\n⬇️ خروج الفنيدق: 🟠 متوسط\n\nآخر تحديث: منذ 8 دقائق';
+  return isEs
+    ? '🧠 Soy el asistente IA de Qantara.\n\nPuedo ayudarte con:\n• Estado del paso ahora\n• Mejor hora para cruzar\n• Tiempo de espera estimado\n\n¡Pregúntame lo que quieras! 😊'
+    : '🧠 أنا مساعد AI قنطرة.\n\nيمكنني مساعدتك في:\n• حالة المعبر الآن\n• أفضل وقت للعبور\n• وقت الانتظار المتوقع\n\nاسألني بحرية! 😊';
+}
+
+function fabToggle() {
+  _fabOpen = !_fabOpen;
+  document.getElementById('fab').classList.toggle('open',_fabOpen);
+  document.getElementById('fabMenu').classList.toggle('open',_fabOpen);
+  document.getElementById('fab').textContent = _fabOpen ? '+' : '💬';
+}
+
+function fabCloseAll() {
+  _fabOpen=false;
+  document.getElementById('fab').classList.remove('open');
+  document.getElementById('fabMenu').classList.remove('open');
+  document.getElementById('fab').textContent='💬';
+  document.getElementById('chatPanel').classList.remove('open');
+  document.getElementById('bugPanel').classList.remove('open');
+  document.getElementById('fabOv').classList.remove('on');
+}
+
+function fabOpenChat() {
+  fabCloseAll();
+  document.getElementById('chatPanel').classList.add('open');
+  document.getElementById('fabOv').classList.add('on');
+  if (!_chatInit) {
+    _chatInit=true;
+    var l=fabGetLang();
+    var wlc = l==='es'
+      ? '¡Hola! 👋 Soy el asistente IA de Qantara.\n\nPuedo informarte sobre el estado del paso.\n\n¡Pregúntame lo que quieras! 😊'
+      : 'مرحباً! 👋 أنا مساعد قنطرة الذكي.\n\nأستطيع إخبارك بحالة المعبر وأفضل وقت للعبور.\n\nاسألني أي شيء! 😊';
+    fabAddBot(wlc);
+    // تحديث الأزرار السريعة حسب اللغة
+    if (l==='es') {
+      var qw=document.getElementById('chatQuick');
+      var qBtns = [
+        ['¿Mejor hora?','¿Cuándo es el mejor momento para cruzar?'],
+        ['¿Estado ahora?','¿Está congestionado ahora?'],
+        ['¿Tiempo espera?','¿Cuánto tiempo de espera?'],
+        ['¿Mejor día?','¿Mejor día esta semana?']
+      ];
+      qw.innerHTML = '';
+      qBtns.forEach(function(b){
+        var btn = document.createElement('button');
+        btn.className='cq-btn'; btn.textContent=b[0];
+        btn.onclick=function(){ fabSendQ(b[1]); };
+        qw.appendChild(btn);
+      });
+    }
+  }
+}
+
+function fabOpenWA() {
+  fabCloseAll();
+  window.open('https://chat.whatsapp.com/DSXtyE4xzgbLVUxvocgSey','_blank');
+}
+
+function fabOpenBug() {
+  fabCloseAll();
+  document.getElementById('bugPanel').classList.add('open');
+  document.getElementById('fabOv').classList.add('on');
+  document.getElementById('bugTa').value='';
+}
+
+function fabAddBot(txt) {
+  var el=document.getElementById('chatMsgs');
+  var d=document.createElement('div');
+  d.className='cmsg cmsg-bot'; d.textContent=txt;
+  el.appendChild(d); el.scrollTop=el.scrollHeight;
+}
+
+function fabAddUser(txt) {
+  var el=document.getElementById('chatMsgs');
+  var d=document.createElement('div');
+  d.className='cmsg cmsg-user'; d.textContent=txt;
+  el.appendChild(d); el.scrollTop=el.scrollHeight;
+}
+
+function fabTyping(show) {
+  var old=document.getElementById('fabTyp');
+  if (old) old.remove();
+  if (show) {
+    var el=document.getElementById('chatMsgs');
+    var d=document.createElement('div');
+    d.className='cmsg cmsg-bot typing-wrap'; d.id='fabTyp';
+    d.innerHTML='<div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>';
+    el.appendChild(d); el.scrollTop=el.scrollHeight;
+  }
+}
+
+function fabSend() {
+  var inp=document.getElementById('chatInp');
+  var txt=inp.value.trim(); if(!txt)return;
+  inp.value=''; fabAddUser(txt); fabTyping(true);
+  setTimeout(function(){ fabTyping(false); fabAddBot(fabGetResponse(txt)); }, 800+Math.random()*500);
+}
+
+function fabSendQ(txt) { fabAddUser(txt); fabTyping(true); setTimeout(function(){ fabTyping(false); fabAddBot(fabGetResponse(txt)); }, 800+Math.random()*500); }
+
+function fabSendBug() {
+  var txt=document.getElementById('bugTa').value.trim();
+  if (!txt) return;
+  var l=fabGetLang();
+  var prefix = l==='es' ? '🐛 Reporte de problema — Qantara:' : '🐛 بلاغ مشكلة — قنطرة:';
+  var msg = prefix + '\n\n' + txt + '\n\n---\n' + new Date().toLocaleString('ar-MA');
+  var encoded=encodeURIComponent(msg);
+  window.open('https://wa.me/212688838829?text='+encoded,'_blank');
+  fabCloseAll();
+}
+
+function fabUpdateLang(l) {
+  var isEs = l === 'es';
+  window._qLang = l;
+  // تحديث كل [data-ar] و [data-es] في FAB elements
+  // تحديث كل عناصر FAB
+  ['chatPanel','bugPanel','fabMenu'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.querySelectorAll('[data-ar]').forEach(function(e){ e.style.display = isEs ? 'none' : ''; });
+    el.querySelectorAll('[data-es]').forEach(function(e){ e.style.display = isEs ? '' : 'none'; });
+  });
+  // تحديث الأزرار السريعة
+  var qw = document.getElementById('chatQuick');
+  if (qw) {
+    qw.innerHTML = '';
+    var qs = isEs
+      ? [['¿Mejor hora?','¿Cuándo es el mejor momento para cruzar?'],['¿Estado ahora?','¿Está congestionado ahora?'],['¿Tiempo espera?','¿Cuánto tiempo de espera?'],['¿Mejor día?','¿Mejor día esta semana?']]
+      : [['متى أفضل وقت؟','متى أفضل وقت للعبور؟'],['الوضع الآن؟','هل المعبر مزدحم الآن؟'],['وقت الانتظار؟','كم وقت الانتظار؟'],['أفضل يوم؟','أفضل يوم هذا الأسبوع؟']];
+    qs.forEach(function(b){
+      var btn=document.createElement('button');
+      btn.className='cq-btn'; btn.textContent=b[0];
+      btn.onclick=function(){ fabSendQ(b[1]); };
+      qw.appendChild(btn);
+    });
+  }
+  // chat placeholder
+  var chatInp = document.getElementById('chatInp');
+  if (chatInp) chatInp.placeholder = isEs ? 'Pregúntame lo que quieras…' : 'اسألني أي شيء…';
+  // bug textarea placeholder
+  var bugTa = document.getElementById('bugTa');
+  if (bugTa) bugTa.placeholder = isEs ? 'Describe el problema que encontraste…' : 'اشرح المشكلة التي واجهتها…';
+  // تحديث الأزرار السريعة
+  var qw = document.getElementById('chatQuick');
+  if (!qw) return;
+  if (isEs) {
+    var esQ = [
+      ['¿Mejor hora?','¿Cuándo es el mejor momento para cruzar?'],
+      ['¿Estado ahora?','¿Está congestionado ahora?'],
+      ['¿Tiempo espera?','¿Cuánto tiempo de espera?'],
+      ['¿Mejor día?','¿Mejor día esta semana?']
+    ];
+    qw.innerHTML = '';
+    esQ.forEach(function(b){
+      var btn = document.createElement('button');
+      btn.className='cq-btn'; btn.textContent=b[0];
+      btn.onclick=function(){ fabSendQ(b[1]); };
+      qw.appendChild(btn);
+    });
+  } else {
+    qw.innerHTML = '';
+    var arQ = [
+      ['متى أفضل وقت؟','متى أفضل وقت للعبور؟'],
+      ['الوضع الآن؟','هل المعبر مزدحم الآن؟'],
+      ['وقت الانتظار؟','كم وقت الانتظار؟'],
+      ['أفضل يوم؟','أفضل يوم هذا الأسبوع؟']
+    ];
+    arQ.forEach(function(b){
+      var btn = document.createElement('button');
+      btn.className='cq-btn'; btn.textContent=b[0];
+      btn.onclick=function(){ fabSendQ(b[1]); };
+      qw.appendChild(btn);
+    });
+  }
+}
+
+window.fabUpdateLang=fabUpdateLang;
+window.fabToggle=fabToggle; window.fabCloseAll=fabCloseAll;
+window.fabOpenChat=fabOpenChat; window.fabOpenWA=fabOpenWA;
+window.fabOpenBug=fabOpenBug; window.fabSend=fabSend;
+window.fabSendQ=fabSendQ; window.fabSendBug=fabSendBug;
 </script>
 </body>
 </html>
