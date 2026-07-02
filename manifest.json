@@ -1,26 +1,67 @@
 {
-  "name": "Qantara",
+  "id": "com.qantara.app",
+  "name": "Qantara · قنطرة",
   "short_name": "Qantara",
-  "description": "تطبيق لمتابعة حالة الازدحام في معبر باب سبتة",
+  "description": "تطبيق مجاني لمتابعة حالة الازدحام في معبر الفنيدق-سبتة في الوقت الفعلي | App gratuita para monitorear el tráfico en el Paso Tarajal Fnideq-Ceuta en tiempo real",
   "start_url": "/Qantara/",
   "scope": "/Qantara/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
+  "background_color": "#07090f",
+  "theme_color": "#07090f",
   "lang": "ar",
+  "dir": "rtl",
+  "categories": ["navigation", "travel", "utilities", "lifestyle"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshot-1.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "حالة المعبر في الوقت الفعلي"
+    },
+    {
+      "src": "screenshot-2.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Estado del paso en tiempo real"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "حالة المعبر",
+      "short_name": "المعبر",
+      "description": "عرض حالة معبر الفنيدق الآن",
+      "url": "/Qantara/",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
