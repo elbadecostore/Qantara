@@ -178,7 +178,7 @@
 <div class="gem-msg" id="gemMsg"><div class="gem-msg-inner"><span id="gemMsgTxt">شكراً 🌉</span><span class="gem-pts" id="gemMsgPts">+5 ⭐</span></div></div>
 <div class="gem-lvlup" id="gemLvlUp"><div class="gem-lvlup-inner"><span id="gemLvlTxt">🆙 مستوى جديد!</span></div></div>
 <div class="inapp-msg" id="inAppMsg"><div class="inapp-msg-inner"><div class="inapp-msg-ico">📩</div><div class="inapp-msg-txt" id="inAppMsgTxt"></div></div></div>
-<div id="aiBadgeWrap" style="display:none;align-items:center;justify-content:center;gap:6px;padding:5px 14px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);border-radius:99px;font-size:11px;font-weight:700;color:#a78bfa;margin:4px 16px 2px"><span>🧠</span><span data-ar>الذكاء الاصطناعي يتحكم</span><span data-es>Control IA</span></div>
+<div id="aiBadgeWrap" style="display:none!important"><span>🧠</span><span data-ar>الذكاء الاصطناعي يتحكم</span><span data-es>Control IA</span></div>
 <div id="app"><div class="shell">
 <div class="topbar">
 <div class="lang-pick" id="langPick">
@@ -187,6 +187,7 @@
 <span id="langCode">AR</span>
 <span style="font-size:9px;opacity:.6">▼</span>
 </button>
+<div id="tempBadge" style="font-size:10px;font-weight:700;color:rgba(238,240,250,.55);text-align:center;margin-top:3px;letter-spacing:.02em;line-height:1">—</div>
 <div class="lang-dropdown" id="langDropdown">
 <div class="lang-opt on" id="lopt-ar" onclick="pickLang('ar')">🇲🇦 العربية</div>
 <div class="lang-opt"    id="lopt-es" onclick="pickLang('es')">🇪🇸 Español</div>
@@ -195,7 +196,7 @@
 <div style="display:flex;align-items:center;gap:8px">
 <button id="repBtn" onclick="toggleRepPopup()">⭐ <span id="repPts">0</span></button>
 <div class="live-pill" id="livePill"><div class="ldot"></div><span id="pillTxt">—</span></div>
-<div id="aiToggle" style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:5px">
+<div id="aiToggle" style="display:none!important">
   <span style="font-size:9px;font-weight:700;color:#00d46e" id="aiLblLeft">👥</span>
   <div id="aiTrack" style="width:36px;height:18px;border-radius:99px;background:#00d46e;position:relative;transition:background .3s;flex-shrink:0;cursor:default">
     <div id="aiThumb" style="position:absolute;top:2px;left:20px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .3s;box-shadow:0 1px 3px rgba(0,0,0,.3)"></div>
@@ -588,6 +589,7 @@ async function _runAICheck() {
       var cars    = pred.status==='red'?80:pred.status==='orange'?45:15;
       var density = pred.status==='red'?0.8:pred.status==='orange'?0.45:0.15;
       var waitMin = pred.status==='red'?120:pred.status==='orange'?45:10;
+      var _aiNow = Date.now();
       await setDoc(lanesRef[lane], {
         status:    pred.status,
         cars:      cars,
@@ -595,12 +597,26 @@ async function _runAICheck() {
         waitMin:   waitMin,
         count:     0,
         rel:       pred.conf/100,
-        lastTs:    Date.now(),
-        updatedAt: Date.now(),
+        lastTs:    _aiNow,
+        updatedAt: _aiNow,
         source:    'ai',
         aiConf:    pred.conf,
         aiReports: pred.n
       });
+      // AI يكتب تقريراً في reports — يُحدَّث عداد التقارير و آخر تحديث
+      try {
+        await addDoc(reportsCol, {
+          lane:     lane,
+          status:   pred.status,
+          tsMs:     _aiNow,
+          source:   'ai',
+          aiConf:   pred.conf,
+          w:        0.5
+        });
+      } catch(e2) { console.warn('[AI] report write:', e2.message); }
+      // تحديث _lastReportTs و stTime
+      if (typeof setTime === 'function') setTime(_aiNow);
+      else { window._lastReportTs = _aiNow; }
       console.log('[AI] ✅ Wrote to Firebase:', lane, pred.status, pred.conf+'%');
       activated = true;
     } catch(e) {
@@ -614,8 +630,9 @@ async function _runAICheck() {
 }
 
 function _aiShowBadge(show) {
+  // Badge مخفي دائماً — لا يزعج المستخدمين
   var el = document.getElementById('aiBadgeWrap');
-  if (el) el.style.display = show ? 'flex' : 'none';
+  if (el) el.style.display = 'none';
   if (typeof _updateAIToggle === 'function') _updateAIToggle(show);
 }
 const historyCol  = collection(_db, 'lane_reports_history');
@@ -3035,6 +3052,19 @@ setLang(lang);
   initUser();
   startListeners();
   _listenInAppMessages();
+  // جلب درجة الحرارة من Open-Meteo
+  (async function fetchWeather() {
+    try {
+      var res  = await fetch('https://api.open-meteo.com/v1/forecast?latitude=35.87&longitude=-5.35&current=temperature_2m,weathercode&timezone=Africa/Casablanca');
+      var data = await res.json();
+      var temp = Math.round(data.current.temperature_2m);
+      var code = data.current.weathercode;
+      var ico  = code===0?'☀️':code<=2?'⛅':code<=49?'🌫️':code<=69?'🌧️':'🌩️';
+      var el   = document.getElementById('tempBadge');
+      if (el) el.textContent = ico + ' ' + temp + '°';
+    } catch(e) { console.warn('[Q] Weather:', e.message); }
+    setTimeout(fetchWeather, 1800000);
+  })();
   // AI check: بعد 20 ثانية ثم كل 5 دقائق
   setTimeout(_runAICheck, 20000);
   setInterval(function(){ if(!document.hidden) _runAICheck(); }, 300000);
