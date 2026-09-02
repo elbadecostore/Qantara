@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Qantara Admin v5</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06080f;--surf:#0d1020;--card:#111827;--card2:#161f30;
+  --b1:rgba(255,255,255,.07);--b2:rgba(255,255,255,.12);
+  --txt:#e8ecf8;--mut:rgba(232,236,248,.45);--dim:rgba(232,236,248,.2);
+  --grn:#00d46e;--org:#ff8f00;--red:#ff3355;--blu:#3b82f6;--pur:#a855f7;--gld:#ffd700;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--txt);display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:220px;background:var(--surf);border-left:1px solid var(--b1);display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;right:0;bottom:0;z-index:100}
+.sb-logo{padding:20px 16px 16px;border-bottom:1px solid var(--b1)}
+.sb-logo h1{font-size:16px;font-weight:800}
+.sb-logo p{font-size:10px;color:var(--mut);margin-top:2px}
+.sb-nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;font-size:12px;font-weight:600;color:var(--mut);transition:all .15s;border-right:2px solid transparent}
+.nav-item:hover{color:var(--txt);background:rgba(255,255,255,.04)}
+.nav-item.on{color:var(--txt);background:rgba(59,130,246,.08);border-right-color:var(--blu)}
+.nav-ico{font-size:15px;width:20px;text-align:center}
+.sb-foot{padding:12px 16px;border-top:1px solid var(--b1);font-size:10px;color:var(--dim)}
+.live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--grn);animation:blink 1.5s ease infinite;margin-left:4px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* MAIN */
+.main{margin-right:220px;flex:1;padding:24px;min-height:100vh}
+.page{display:none}.page.on{display:block}
+.page-title{font-size:18px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+
+/* GRID */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+
+/* KPI CARD */
+.kc{background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:14px;position:relative;overflow:hidden}
+.kc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kc.blu::before{background:var(--blu)}.kc.grn::before{background:var(--grn)}
+.kc.org::before{background:var(--org)}.kc.red::before{background:var(--red)}
+.kc.pur::before{background:var(--pur)}.kc.gld::before{background:var(--gld)}
+.ki{font-size:18px;margin-bottom:6px}
+.kv{font-size:26px;font-weight:800;font-family:'JetBrains Mono';line-height:1}
+.kl{font-size:10px;color:var(--mut);margin-top:4px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.ks{font-size:10px;color:var(--dim);margin-top:4px}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:14px;margin-bottom:14px}
+.sec{font-size:10px;font-weight:700;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px}
+
+/* TABLE */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:7px 10px;text-align:right;color:var(--dim);font-weight:700;font-size:10px;letter-spacing:.05em;text-transform:uppercase;border-bottom:1px solid var(--b1)}
+td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700}
+.b-grn{background:rgba(0,212,110,.1);color:var(--grn);border:1px solid rgba(0,212,110,.2)}
+.b-red{background:rgba(255,51,85,.1);color:var(--red);border:1px solid rgba(255,51,85,.2)}
+.b-org{background:rgba(255,143,0,.1);color:var(--org);border:1px solid rgba(255,143,0,.2)}
+.b-blu{background:rgba(59,130,246,.1);color:var(--blu);border:1px solid rgba(59,130,246,.2)}
+.b-pur{background:rgba(168,85,247,.1);color:var(--pur);border:1px solid rgba(168,85,247,.2)}
+
+/* STATUS LED */
+.led{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+.led-grn{background:var(--grn)}.led-org{background:var(--org)}.led-red{background:var(--red)}
+
+/* MONO */
+.mono{font-family:'JetBrains Mono';font-size:11px}
+
+/* LOGIN */
+#loginWrap{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center}
+.lbox{width:320px;padding:32px;background:var(--surf);border:1px solid var(--b2);border-radius:16px}
+.lbox h1{font-size:18px;font-weight:800;text-align:center;margin-bottom:16px}
+.lbox input{width:100%;padding:10px 12px;background:var(--card);border:1px solid var(--b2);border-radius:8px;color:var(--txt);font-family:'Sora';font-size:13px;outline:none;margin-bottom:10px}
+.lbox button{width:100%;padding:11px;background:var(--blu);border:none;border-radius:8px;color:#fff;font-family:'Sora';font-size:13px;font-weight:700;cursor:pointer}
+.lerr{font-size:11px;color:var(--red);text-align:center;margin-top:8px;min-height:14px}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(140%);z-index:9999;background:var(--card2);border:1px solid var(--b2);border-radius:10px;padding:10px 18px;font-size:12px;font-weight:600;transition:transform .35s;white-space:nowrap}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+/* REFRESH BTN */
+.btn{padding:7px 14px;border-radius:8px;border:1px solid var(--b1);background:var(--card2);color:var(--txt);font-family:'Sora';font-size:11px;font-weight:700;cursor:pointer;transition:all .15s}
+.btn:hover{background:rgba(255,255,255,.08)}
+.btn-blu{background:var(--blu);border-color:var(--blu);color:#fff}
+
+/* POLL BARS */
+.poll-bar-wrap{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.poll-bar-bg{flex:1;height:8px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden}
+.poll-bar-fill{height:100%;border-radius:99px;transition:width .5s}
+.poll-pct{font-family:'JetBrains Mono';font-size:11px;font-weight:700;width:36px;text-align:left}
+
+/* DIVIDER */
+.div{height:1px;background:var(--b1);margin:12px 0}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:99px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginWrap">
+  <div class="lbox">
+    <h1>🌉 Qantara Admin</h1>
+    <input type="password" id="pwIn" placeholder="كلمة المرور">
+    <button onclick="login()">دخول</button>
+    <div class="lerr" id="lerr"></div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-logo">
+    <h1>🌉 Qantara</h1>
+    <p>Admin Dashboard v5<div class="live-dot"></div></p>
+  </div>
+  <div class="sb-nav">
+    <div class="nav-item on" onclick="showPage('overview')"><span class="nav-ico">📊</span>نظرة عامة</div>
+    <div class="nav-item" onclick="showPage('visitors')"><span class="nav-ico">👥</span>الزوار</div>
+    <div class="nav-item" onclick="showPage('reports')"><span class="nav-ico">📋</span>التقارير</div>
+    <div class="nav-item" onclick="showPage('poll')"><span class="nav-ico">📊</span>استفتاء</div>
+    <div class="nav-item" onclick="showPage('lanes')"><span class="nav-ico">🚦</span>حالة المسارات</div>
+  </div>
+  <div class="sb-foot">
+    <div id="sbTime">—</div>
+    <div style="margin-top:2px">آخر تحديث: <span id="sbRefresh">—</span></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ══ OVERVIEW ══ -->
+  <div class="page on" id="pg-overview">
+    <div class="page-title">📊 نظرة عامة</div>
+    <div class="g4">
+      <div class="kc blu"><div class="ki">👥</div><div class="kv" id="kOnline">—</div><div class="kl">متصلون الآن</div><div class="ks">آخر 90 ثانية</div></div>
+      <div class="kc grn"><div class="ki">📅</div><div class="kv" id="kVisits">—</div><div class="kl">زيارات اليوم</div><div class="ks" id="kVisitsDate">—</div></div>
+      <div class="kc org"><div class="ki">📋</div><div class="kv" id="kReports">—</div><div class="kl">تقارير 24س</div><div class="ks">آخر 24 ساعة</div></div>
+      <div class="kc pur"><div class="ki">🧑‍💻</div><div class="kv" id="kUsers">—</div><div class="kl">إجمالي المستخدمين</div><div class="ks">منذ البداية</div></div>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="sec">🚦 حالة المسارات الآن</div>
+        <div id="lanesOverview"><div style="color:var(--dim);font-size:12px">جارٍ التحميل…</div></div>
+      </div>
+      <div class="card">
+        <div class="sec">📊 استفتاء — هل التطبيق يساعدك؟</div>
+        <div id="pollOverview"><div style="color:var(--dim);font-size:12px">جارٍ التحميل…</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ VISITORS ══ -->
+  <div class="page" id="pg-visitors">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div class="page-title" style="margin:0">👥 الزوار</div>
+      <button class="btn" onclick="loadVisitors()">↩ تحديث</button>
+    </div>
+    <div class="g3">
+      <div class="kc blu"><div class="ki">⚡</div><div class="kv" id="vNow">—</div><div class="kl">الآن (90ث)</div></div>
+      <div class="kc grn"><div class="ki">📅</div><div class="kv" id="vToday">—</div><div class="kl">اليوم</div></div>
+      <div class="kc org"><div class="ki">📆</div><div class="kv" id="vTotal">—</div><div class="kl">إجمالي المستخدمين</div></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="sec" style="margin:0">🕐 سجل الدخول — بالوقت والتاريخ الكامل</div>
+        <div style="font-size:10px;color:var(--dim)" id="visCount">—</div>
+      </div>
+      <div class="tw">
+        <table>
+          <thead><tr>
+            <th>المستخدم</th>
+            <th>آخر دخول — الوقت والتاريخ</th>
+            <th>المستوى</th>
+            <th>التقارير</th>
+            <th>الحالة</th>
+          </tr></thead>
+          <tbody id="visTable"><tr><td colspan="5" style="text-align:center;color:var(--dim);padding:20px">جارٍ التحميل…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ REPORTS ══ -->
+  <div class="page" id="pg-reports">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div class="page-title" style="margin:0">📋 التقارير</div>
+      <button class="btn" onclick="loadReports()">↩ تحديث</button>
+    </div>
+    <div class="card">
+      <div class="sec">آخر 50 تقرير</div>
+      <div class="tw">
+        <table>
+          <thead><tr>
+            <th>الوقت والتاريخ</th>
+            <th>المسار</th>
+            <th>الحالة</th>
+            <th>المصدر</th>
+            <th>المستخدم</th>
+          </tr></thead>
+          <tbody id="repTable"><tr><td colspan="5" style="text-align:center;color:var(--dim);padding:20px">جارٍ التحميل…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ POLL ══ -->
+  <div class="page" id="pg-poll">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div class="page-title" style="margin:0">📊 نتائج الاستفتاء</div>
+      <button class="btn" onclick="loadPoll()">↩ تحديث</button>
+    </div>
+    <div class="g2" style="margin-bottom:16px">
+      <div class="kc grn"><div class="ki">👍</div><div class="kv" id="pollUp">—</div><div class="kl">صوتوا بنعم</div></div>
+      <div class="kc red"><div class="ki">👎</div><div class="kv" id="pollDown">—</div><div class="kl">صوتوا بلا</div></div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="sec">نسبة الأصوات</div>
+      <div id="pollBars"><div style="color:var(--dim);font-size:12px">جارٍ التحميل…</div></div>
+    </div>
+    <div class="card">
+      <div class="sec">جدول الأصوات — كل مستخدم</div>
+      <div class="tw">
+        <table>
+          <thead><tr>
+            <th>المستخدم</th>
+            <th>الصوت</th>
+            <th>اللغة</th>
+            <th>الوقت والتاريخ</th>
+          </tr></thead>
+          <tbody id="pollTable"><tr><td colspan="4" style="text-align:center;color:var(--dim);padding:20px">جارٍ التحميل…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ LANES ══ -->
+  <div class="page" id="pg-lanes">
+    <div class="page-title">🚦 حالة المسارات</div>
+    <div class="g2">
+      <div class="card" id="laneEntryCard">
+        <div class="sec">⬆️ دخول سبتة / Entrada</div>
+        <div id="laneEntryInfo"><div style="color:var(--dim);font-size:12px">جارٍ التحميل…</div></div>
+      </div>
+      <div class="card" id="laneExitCard">
+        <div class="sec">⬇️ خروج الفنيدق / Salida</div>
+        <div id="laneExitInfo"><div style="color:var(--dim);font-size:12px">جارٍ التحميل…</div></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp }   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getFirestore, collection, getDocs, getDoc, doc, onSnapshot, query, orderBy, limit }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+const _app = initializeApp({
+  apiKey:            'AIzaSyCxVDBRV20xCo8sYmlnKt67ggh8HY3KxF8',
+  authDomain:        'qantara-live.firebaseapp.com',
+  projectId:         'qantara-live',
+  storageBucket:     'qantara-live.firebasestorage.app',
+  messagingSenderId: '219692468615',
+  appId:             '1:219692468615:web:4598dd00cb99afa38a6b22'
+});
+const _db = getFirestore(_app);
+
+const PW = 'qantara2025dfr';
+const LEVELS = [
+  {min:0,   label:'🌱 مبتدئ'},  {min:5,  label:'📡 مراسل'},
+  {min:15,  label:'⭐ نشيط'},   {min:30, label:'🔥 محترف'},
+  {min:60,  label:'💎 خبير'},   {min:100,label:'🏆 بطل'},
+  {min:200, label:'👑 أسطورة'}
+];
+const ST = { red:'🔴', orange:'🟠', green:'🟢' };
+var _toastT;
+
+// ── UTILS ──
+function setEl(id, v) { var e=document.getElementById(id); if(e) e.textContent=v; }
+function fmtDT(ts) {
+  if (!ts) return '—';
+  var d = new Date(ts);
+  var date = d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0') + '/' + d.getFullYear();
+  var time = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+  return time + ' — ' + date;
+}
+function toast(msg) {
+  var el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(_toastT);
+  _toastT=setTimeout(function(){ el.classList.remove('show'); }, 2500);
+}
+function getLevel(n) {
+  var lv = LEVELS[0];
+  LEVELS.forEach(function(l){ if(n >= l.min) lv=l; });
+  return lv.label;
+}
+
+// ── AUTH ──
+function login() {
+  if (document.getElementById('pwIn').value === PW) {
+    document.getElementById('loginWrap').style.display='none';
+    init();
+  } else {
+    document.getElementById('lerr').textContent='❌ كلمة المرور خاطئة';
+    setTimeout(function(){ document.getElementById('lerr').textContent=''; }, 2000);
+  }
+}
+document.getElementById('pwIn').addEventListener('keydown',function(e){ if(e.key==='Enter') login(); });
+
+// ── CLOCK ──
+function startClock() {
+  setInterval(function(){
+    var now = new Date();
+    setEl('sbTime', now.toLocaleTimeString('ar-MA',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
+  }, 1000);
+}
+
+// ── PAGES ──
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('on'); });
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('on'); });
+  var pg = document.getElementById('pg-'+id);
+  if (pg) pg.classList.add('on');
+  var nav = document.querySelector('[onclick="showPage(\''+id+'\')"]');
+  if (nav) nav.classList.add('on');
+  if (id==='visitors') loadVisitors();
+  if (id==='reports')  loadReports();
+  if (id==='poll')     loadPoll();
+}
+
+// ── INIT ──
+async function init() {
+  startClock();
+  // lanes — realtime
+  onSnapshot(doc(_db,'lanes_state','entry'), function(d){
+    renderLane('entry', d.exists()?d.data():null);
+    renderLanesOverview();
+  });
+  onSnapshot(doc(_db,'lanes_state','exit'), function(d){
+    renderLane('exit', d.exists()?d.data():null);
+  });
+  // polling
+  fetchStats();
+  setInterval(fetchStats, 60000);
+  loadPoll();
+}
+
+// ── STATS ──
+async function fetchStats() {
+  try {
+    // online users
+    var onSnap = await getDocs(collection(_db,'online_users'));
+    var online = 0;
+    onSnap.forEach(function(d){ if(d.data().ts && Date.now()-d.data().ts < 90000) online++; });
+    setEl('kOnline',online); setEl('vNow',online);
+
+    // today visits
+    var today = new Date().toISOString().slice(0,10);
+    setEl('kVisitsDate', today);
+    var vSnap = await getDoc(doc(_db,'daily_visits',today));
+    var visits = vSnap.exists() ? (vSnap.data().count||0) : 0;
+    setEl('kVisits',visits.toLocaleString()); setEl('vToday',visits.toLocaleString());
+
+    // users total
+    var uSnap = await getDocs(collection(_db,'users'));
+    setEl('kUsers',uSnap.size.toLocaleString()); setEl('vTotal',uSnap.size.toLocaleString());
+
+    // reports 24h
+    var rSnap = await getDocs(collection(_db,'reports'));
+    var now = Date.now(), rep24 = 0;
+    rSnap.forEach(function(d){ if(d.data().tsMs && now-d.data().tsMs < 86400000) rep24++; });
+    setEl('kReports',rep24);
+
+    setEl('sbRefresh', new Date().toLocaleTimeString('ar-MA',{hour:'2-digit',minute:'2-digit'}));
+  } catch(e) { toast('⚠️ '+e.message); }
+}
+
+// ── VISITORS TABLE ──
+async function loadVisitors() {
+  var tbody = document.getElementById('visTable');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--dim);padding:16px">جارٍ التحميل…</td></tr>';
+  try {
+    var snap = await getDocs(collection(_db,'users'));
+    var now  = Date.now();
+    var users = [];
+    snap.forEach(function(d){ users.push({id:d.id,...d.data()}); });
+    users.sort(function(a,b){ return (b.lastSeen||0)-(a.lastSeen||0); });
+    setEl('visCount', users.length + ' مستخدم');
+    tbody.innerHTML = '';
+    users.forEach(function(u) {
+      var isOnline = u.lastSeen && (now-u.lastSeen) < 90000;
+      var level    = getLevel(u.totalReports||0);
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><span class="mono">'+u.id+'</span></td>' +
+        '<td class="mono" style="color:var(--txt);font-weight:700">'+fmtDT(u.lastSeen)+'</td>' +
+        '<td>'+level+'</td>' +
+        '<td><span style="font-family:JetBrains Mono;font-weight:700;color:var(--org)">'+(u.totalReports||0)+'</span></td>' +
+        '<td>'+(isOnline?'<span class="badge b-grn">● متصل</span>':'<span style="color:var(--dim);font-size:10px">غير متصل</span>')+'</td>';
+      tbody.appendChild(tr);
+    });
+  } catch(e) { toast('⚠️ '+e.message); }
+}
+
+// ── REPORTS TABLE ──
+async function loadReports() {
+  var tbody = document.getElementById('repTable');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--dim);padding:16px">جارٍ التحميل…</td></tr>';
+  try {
+    var snap = await getDocs(collection(_db,'reports'));
+    var reps = [];
+    snap.forEach(function(d){ reps.push(d.data()); });
+    reps.sort(function(a,b){ return (b.tsMs||0)-(a.tsMs||0); });
+    tbody.innerHTML = '';
+    reps.slice(0,50).forEach(function(r) {
+      var stIcon = ST[r.status] || '⚪';
+      var stClss = r.status==='red'?'b-red':r.status==='orange'?'b-org':'b-grn';
+      var source = r.source==='ai' ? '<span class="badge b-pur">🧠 AI</span>' : '<span class="badge b-blu">👤 مستخدم</span>';
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td class="mono" style="font-weight:700;color:var(--txt)">'+fmtDT(r.tsMs)+'</td>' +
+        '<td>'+(r.lane==='entry'?'⬆️ دخول':'⬇️ خروج')+'</td>' +
+        '<td><span class="badge '+stClss+'">'+stIcon+' '+(r.status||'—')+'</span></td>' +
+        '<td>'+source+'</td>' +
+        '<td><span class="mono" style="color:var(--dim)">'+(r.userId||r.source||'—').slice(0,14)+'</span></td>';
+      tbody.appendChild(tr);
+    });
+  } catch(e) { toast('⚠️ '+e.message); }
+}
+
+// ── POLL ══
+async function loadPoll() {
+  try {
+    var snap = await getDocs(collection(_db,'poll_votes'));
+    var up=0, down=0, votes=[];
+    snap.forEach(function(d){
+      var v=d.data();
+      if(v.vote==='up') up++; else down++;
+      votes.push(v);
+    });
+    votes.sort(function(a,b){ return (b.createdAt||0)-(a.createdAt||0); });
+    var total = up+down;
+    setEl('pollUp',up); setEl('pollDown',down);
+
+    // bars
+    var barsEl = document.getElementById('pollBars');
+    if (barsEl) {
+      var upPct   = total>0 ? Math.round(up/total*100) : 0;
+      var downPct = total>0 ? Math.round(down/total*100) : 0;
+      barsEl.innerHTML =
+        '<div class="poll-bar-wrap"><span style="font-size:16px">👍</span><div class="poll-bar-bg"><div class="poll-bar-fill" style="width:'+upPct+'%;background:var(--grn)"></div></div><div class="poll-pct" style="color:var(--grn)">'+upPct+'%</div></div>' +
+        '<div class="poll-bar-wrap"><span style="font-size:16px">👎</span><div class="poll-bar-bg"><div class="poll-bar-fill" style="width:'+downPct+'%;background:var(--red)"></div></div><div class="poll-pct" style="color:var(--red)">'+downPct+'%</div></div>' +
+        '<div style="font-size:11px;color:var(--dim);margin-top:8px">إجمالي الأصوات: <strong style="color:var(--txt)">'+total+'</strong></div>';
+    }
+
+    // overview
+    var ovEl = document.getElementById('pollOverview');
+    if (ovEl) ovEl.innerHTML = barsEl ? barsEl.innerHTML : '';
+
+    // table
+    var tbody = document.getElementById('pollTable');
+    if (!tbody) return;
+    if (!votes.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--dim);padding:20px">لا توجد أصوات بعد</td></tr>';
+      return;
+    }
+    tbody.innerHTML = '';
+    votes.forEach(function(v) {
+      var isUp = v.vote==='up';
+      var tr   = document.createElement('tr');
+      tr.innerHTML =
+        '<td><span class="mono">'+(v.userId||'anon').slice(0,16)+'</span></td>' +
+        '<td><span style="font-size:18px">'+(isUp?'👍':'👎')+'</span> <span style="font-size:11px;font-weight:700;color:'+(isUp?'var(--grn)':'var(--red)')+';">'+(isUp?'نعم':'لا')+'</span></td>' +
+        '<td><span class="badge b-blu">'+(v.lang==='es'?'🇪🇸 ES':'🇲🇦 AR')+'</span></td>' +
+        '<td class="mono" style="font-weight:700;color:var(--txt)">'+fmtDT(v.createdAt)+'</td>';
+      tbody.appendChild(tr);
+    });
+  } catch(e) { toast('⚠️ '+e.message); }
+}
+
+// ── LANES ──
+var _lanesData = {};
+function renderLane(lane, data) {
+  _lanesData[lane] = data;
+  var id   = lane==='entry' ? 'laneEntryInfo' : 'laneExitInfo';
+  var el   = document.getElementById(id);
+  if (!el) return;
+  if (!data) { el.innerHTML='<div style="color:var(--dim);font-size:12px">لا بيانات</div>'; return; }
+  var st   = data.status||'—';
+  var stIco= ST[st]||'⚪';
+  var stCls= st==='red'?'b-red':st==='orange'?'b-org':'b-grn';
+  el.innerHTML =
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">' +
+    '<span style="font-size:28px">'+stIco+'</span>' +
+    '<span class="badge '+stCls+' " style="font-size:13px;padding:4px 12px">'+st+'</span>' +
+    '</div>' +
+    '<div style="font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:5px">' +
+    '<div>🚗 السيارات: <strong style="color:var(--txt)">'+(data.cars||0)+'</strong></div>' +
+    '<div>⏱ الانتظار: <strong style="color:var(--txt)">'+(data.waitMin||0)+' دقيقة</strong></div>' +
+    '<div>🕐 آخر تحديث: <strong style="color:var(--txt)">'+fmtDT(data.lastTs||data.updatedAt)+'</strong></div>' +
+    '<div>📡 المصدر: <strong style="color:var(--txt)">'+(data.source==='ai'?'🧠 AI':'👤 مستخدم')+'</strong></div>' +
+    '</div>';
+}
+
+function renderLanesOverview() {
+  var el = document.getElementById('lanesOverview');
+  if (!el) return;
+  var html = '';
+  ['entry','exit'].forEach(function(lane) {
+    var d    = _lanesData[lane];
+    var name = lane==='entry'?'⬆️ دخول سبتة':'⬇️ خروج الفنيدق';
+    var st   = d ? (d.status||'—') : '—';
+    var stIco= ST[st]||'⚪';
+    var stCls= st==='red'?'b-red':st==='orange'?'b-org':'b-grn';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--b1)">' +
+      '<span style="font-size:12px;font-weight:700">'+name+'</span>' +
+      '<span class="badge '+stCls+'">'+stIco+' '+st+'</span>' +
+      '</div>';
+  });
+  el.innerHTML = html || '<div style="color:var(--dim);font-size:12px">جارٍ التحميل…</div>';
+}
+
+// exports
+window.login=login; window.showPage=showPage;
+window.loadVisitors=loadVisitors; window.loadReports=loadReports; window.loadPoll=loadPoll;
+</script>
+</body>
+</html>
